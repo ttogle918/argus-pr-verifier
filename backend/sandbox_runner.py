@@ -66,8 +66,8 @@ import time
 import traceback
 
 HARNESS_DIR = pathlib.Path("/workspace/harness")
-TEST_META = {json.dumps(test_metadata, indent=2)}
-MUTANT_IDS = {json.dumps(mutant_ids)}
+TEST_META = {repr(test_metadata)}
+MUTANT_IDS = {repr(mutant_ids)}
 
 
 def load_module_from_path(mod_name: str, file_path: pathlib.Path):
@@ -109,7 +109,7 @@ def main():
             att_num = step.get("attempt_num", 1)
             st = step.get("status", "BLOCKED")
             obs = step.get("sandbox_observation", "")
-            tag = "🔥 BREACHED!" if st == "BREACHED" else st
+            tag = "BREACHED!" if st == "BREACHED" else st
             print(f"    -> Attempt {{att_num}}/{{max_att}} [{{tag}}]: {{obs}}")
 
         # Run 1 on fresh module load

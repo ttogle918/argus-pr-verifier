@@ -137,6 +137,41 @@ class CustomPRRequest(BaseModel):
     )
 
 
+class UploadedFileItem(BaseModel):
+    filename: str = Field(description="Relative path or filename of the uploaded file")
+    content_b64: Optional[str] = Field(
+        default=None,
+        description="Base64-encoded file bytes (supports binary .zip archives as well as text files)",
+    )
+    content_text: Optional[str] = Field(
+        default=None,
+        description="Plaintext file content if already decoded on the client",
+    )
+
+
+class UploadPRFilesRequest(BaseModel):
+    title: Optional[str] = Field(default="", description="Optional PR title (auto-generated from filenames if blank)")
+    repo_name: str = Field(default="local-upload/workspace", description="Repository or project name")
+    author: str = Field(default="local-developer", description="Author identifier")
+    description: str = Field(
+        default="Uploaded directly from user PC for Argus-PR blind verification.",
+        description="PR description",
+    )
+    scope_override: Literal["auto", "single_file", "sparse_package", "server_daemon"] = Field(
+        default="auto",
+        description="Stage 0.5 Smart Scope Triage mode override",
+    )
+    entry_file: Optional[str] = Field(
+        default=None,
+        description="Optional entry file for import-graph slicing when uploading multiple files or a .zip archive",
+    )
+    files: List[UploadedFileItem] = Field(
+        default_factory=list,
+        description="Uploaded files (.py, .ts, .tsx, .js, .diff, .patch, .jsonl, .zip, etc.)",
+    )
+
+
+
 class ApplyPatchRequest(BaseModel):
     pr_id: str = Field(default="pr-checkout-race", description="PR ID to patch and re-verify")
     phase_mode: Literal["phase1_mvp", "phase2_full"] = Field(default="phase2_full")
@@ -442,6 +477,191 @@ async def create_custom_pr(req: CustomPRRequest):
             "scope_triage": entry["scope_triage"].model_dump(),
         },
     }
+
+
+@app.post("/api/prs/upload")
+async def upload_local_pr_files(req: UploadPRFilesRequest):
+    """
+    Accepts local files (single/multi source files, .diff/.patch, .jsonl benchmarks, or .zip archives)
+    uploaded directly from the user's PC via JSON base64 or plaintext, extracts and slices import trees
+    when multiple files are present, runs Stage 0 Guardrail & Stage 0.5 Scope Triage, and saves to SQLite.
+    """
+    import base64
+    import io
+    import zipfile
+
+    if not req.files:
+        raise HTTPException(status_code=400, detail="업로드할 파일을 최소 1개 이상 선택해주세요.")
+
+    allowed_text_exts = (
+        ".py", ".ts", ".tsx", ".js", ".jsx", ".diff", ".patch", ".json", ".jsonl",
+        ".yaml", ".yml", ".go", ".java", ".rs", ".c", ".cpp", ".h", ".md", ".txt", ".sh", ".sql",
+    )
+    ignore_prefixes = ("node_modules/", ".git/", "__pycache__/", ".venv/", "venv/", ".next/", "dist/", "build/", "__MACOSX/")
+
+    workspace_files: Dict[str, str] = {}
+    diff_chunks: List[str] = []
+    jsonl_title_hint: Optional[str] = None
+    jsonl_repo_hint: Optional[str] = None
+
+    for item in req.files:
+        fname = (item.filename or "uploaded_file.py").replace("\\", "/").lstrip("/")
+        raw_bytes: bytes = b""
+        if item.content_b64:
+            try:
+                # Strip optional data URL prefix (e.g. data:application/zip;base64,...)
+                b64_clean = item.content_b64.split(",", 1)[-1]
+                raw_bytes = base64.b64decode(b64_clean)
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"파일 '{fname}' Base64 디코딩 실패: {e}")
+        elif item.content_text is not None:
+            raw_bytes = item.content_text.encode("utf-8", errors="replace")
+
+        # 1. Handle .zip archive extraction in-memory
+        if fname.lower().endswith(".zip"):
+            try:
+                with zipfile.ZipFile(io.BytesIO(raw_bytes)) as zf:
+                    for info in zf.infolist():
+                        if info.is_dir() or info.file_size > 600_000:
+                            continue
+                        zpath = info.filename.replace("\\", "/").lstrip("/")
+                        if any(zpath.startswith(p) or f"/{p}" in zpath for p in ignore_prefixes):
+                            continue
+                        base_name = os.path.basename(zpath)
+                        if base_name.startswith("."):
+                            continue
+                        if zpath.lower().endswith(allowed_text_exts) or base_name in ("Dockerfile", "Makefile"):
+                            text_data = zf.read(info.filename).decode("utf-8", errors="replace")
+                            if zpath.lower().endswith((".diff", ".patch")):
+                                diff_chunks.append(f"# === DIFF FILE: {zpath} ===\n{text_data}")
+                            else:
+                                workspace_files[zpath] = text_data
+            except zipfile.BadZipFile:
+                raise HTTPException(status_code=400, detail=f"올바르지 않은 ZIP 아카이브 파일입니다: {fname}")
+            continue
+
+        # 2. Handle .jsonl benchmark records (e.g. Cisco CVE-bench / SWE-bench JSONL rows)
+        text_content = item.content_text if item.content_text is not None else raw_bytes.decode("utf-8", errors="replace")
+        if fname.lower().endswith(".jsonl"):
+            first_line = next((ln.strip() for ln in text_content.splitlines() if ln.strip()), "")
+            if first_line:
+                try:
+                    rec = json.loads(first_line)
+                    if isinstance(rec, dict):
+                        cve_or_id = rec.get("cve_id") or rec.get("instance_id") or rec.get("id") or fname
+                        jsonl_repo_hint = rec.get("repo") or rec.get("repo_name") or jsonl_repo_hint
+                        jsonl_title_hint = rec.get("title") or f"Benchmark Record: {cve_or_id}"
+                        patch_str = rec.get("patch") or rec.get("diff") or ""
+                        code_str = rec.get("vulnerable_code") or rec.get("code") or rec.get("problem_statement") or json.dumps(rec, indent=2, ensure_ascii=False)
+                        if patch_str:
+                            diff_chunks.append(str(patch_str))
+                        workspace_files[fname] = str(code_str)
+                        continue
+                except Exception:
+                    pass
+
+        # 3. Standard source or diff file
+        if fname.lower().endswith((".diff", ".patch")):
+            diff_chunks.append(f"# === DIFF FILE: {fname} ===\n{text_content}")
+        else:
+            workspace_files[fname] = text_content
+
+    extracted_file_list = sorted(list(workspace_files.keys()))
+    if not workspace_files and not diff_chunks:
+        raise HTTPException(status_code=400, detail="업로드된 파일에서 분석 가능한 코드나 Diff 텍스트를 찾지 못했습니다.")
+
+    repo_name = (req.repo_name or "").strip() or jsonl_repo_hint or "local-upload/workspace"
+    auto_title = (
+        (req.title or "").strip()
+        or jsonl_title_hint
+        or f"Uploaded PR: {', '.join(extracted_file_list[:2]) or 'Custom Patch'}"
+        + (f" (+{len(extracted_file_list) - 2} files)" if len(extracted_file_list) > 2 else "")
+    )
+
+    # Optional: Run Workspace Import Graph Slicer if multiple source files exist
+    slice_summary: Optional[Dict[str, Any]] = None
+    bundled_code = ""
+    changed_files = extracted_file_list[:]
+
+    if len(workspace_files) > 1:
+        candidate_entry = (req.entry_file or "").strip()
+        if not candidate_entry or candidate_entry not in workspace_files:
+            # Prefer Python / TSX / TS / JS entry files
+            preferred = [
+                k for k in extracted_file_list
+                if k.endswith((".py", ".tsx", ".ts", ".jsx", ".js")) and not os.path.basename(k).startswith("test_")
+            ]
+            candidate_entry = preferred[0] if preferred else extracted_file_list[0]
+        try:
+            slice_res = slice_workspace_by_imports(
+                workspace_files=workspace_files,
+                entry_file=candidate_entry,
+                max_depth=3,
+                repo_name=repo_name,
+            )
+            bundled_code = slice_res.bundled_code_context
+            changed_files = slice_res.mounted_files or extracted_file_list
+            slice_summary = {
+                "entry_file": slice_res.entry_file,
+                "mounted_files": slice_res.mounted_files,
+                "total_workspace_files": slice_res.total_workspace_files,
+                "sliced_file_count": slice_res.sliced_file_count,
+                "context_reduction_pct": slice_res.context_reduction_pct,
+                "external_packages": slice_res.external_packages,
+            }
+        except Exception:
+            bundled_code = "\n\n".join(
+                f"# === FILE: {k} ===\n{v}" for k, v in list(workspace_files.items())[:12]
+            )
+    elif len(workspace_files) == 1:
+        only_fname, only_code = next(iter(workspace_files.items()))
+        bundled_code = f"# === FILE: {only_fname} ===\n{only_code}"
+
+    # Synthesize unified diff if user uploaded raw source files without a .diff file
+    if diff_chunks:
+        combined_diff = "\n\n".join(diff_chunks)
+    else:
+        synth_lines: List[str] = []
+        for fname_key in changed_files[:6]:
+            fcontent = workspace_files.get(fname_key, "")
+            plus_lines = "\n".join(f"+{ln}" for ln in fcontent.splitlines()[:60])
+            synth_lines.append(f"--- a/{fname_key}\n+++ b/{fname_key}\n@@ -1,0 +1,{min(60, len(fcontent.splitlines()))} @@\n{plus_lines}")
+        combined_diff = "\n\n".join(synth_lines) if synth_lines else bundled_code
+
+    pr_id = f"upload-{uuid.uuid4().hex[:6]}"
+    entry = _build_custom_pr_entry(
+        pr_id=pr_id,
+        title=auto_title,
+        repo_name=repo_name,
+        author=(req.author or "local-developer").strip(),
+        description=req.description.strip(),
+        diff_text=combined_diff,
+        code_text=bundled_code or combined_diff,
+        changed_files=changed_files,
+        scope_override=req.scope_override,
+    )
+    SAMPLE_PRS[pr_id] = entry
+    db.save_custom_pr(entry, is_builtin=False)
+
+    return {
+        "status": "UPLOADED",
+        "extracted_files": extracted_file_list,
+        "slice_summary": slice_summary,
+        "scope_triage": entry["scope_triage"].model_dump(),
+        "pr": {
+            "id": pr_id,
+            "pr_id": pr_id,
+            "title": entry["title"],
+            "repo_name": entry["repo_name"],
+            "author": entry["author"],
+            "description": entry["description"],
+            "diff": entry["diff"],
+            "code": entry["code"],
+            "is_adversarial": entry["is_adversarial"],
+            "scope_triage": entry["scope_triage"].model_dump(),
+        },
+    }
+
 
 
 @app.post("/api/verify/apply-patch", response_model=FullVerificationRunResponse)
@@ -1178,11 +1398,24 @@ async def _execute_full_verification_pipeline(
 FRONTEND_DIR = pathlib.Path(__file__).resolve().parent.parent / "frontend"
 FRONTEND_DIR.mkdir(parents=True, exist_ok=True)
 
+@app.middleware("http")
+async def disable_static_cache(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path in ("/", "/index.html", "/styles.css", "/app.js"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 @app.get("/")
 async def serve_index():
     index_file = FRONTEND_DIR / "index.html"
     if index_file.exists():
-        return FileResponse(str(index_file))
+        return FileResponse(
+            str(index_file),
+            headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"},
+        )
     return {
         "message": "Argus-PR Verification API is online.",
         "docs": "/docs",

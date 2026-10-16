@@ -1457,7 +1457,7 @@ _PR4_BLIND_MUTANTS = BlindMutantSet(
             title="Removed output redirection '>' from DENIED_PATTERNS",
             description="Deletes r'[>]' from DENIED_PATTERNS, allowing arbitrary file overwrite via echo payload > ~/.bashrc.",
             diff_snippet="- r'[>]',\n+ # r'[>]' removed",
-            mutated_code=PR_CISCO_SANDBOX_CODE,
+            mutated_code=PR_CISCO_SANDBOX_CODE.replace('    r"[>]",                        # output redirection\n', '    # r"[>]" removed by Mutant M1\n'),
             severity="CRITICAL",
         ),
         PlantedBugMutant(
@@ -1466,7 +1466,7 @@ _PR4_BLIND_MUTANTS = BlindMutantSet(
             title="Removed '$(...)' command substitution check",
             description="Removes r'\\$\\(' from DENIED_PATTERNS, permitting subshell execution inside echo $(id).",
             diff_snippet="- r'\\$\\(',\n+ # removed command substitution check",
-            mutated_code=PR_CISCO_SANDBOX_CODE,
+            mutated_code=PR_CISCO_SANDBOX_CODE.replace('    r"\\$\\(",                       # $() command substitution\n', '    # r"\\$\\(" removed by Mutant M2\n'),
             severity="CRITICAL",
         ),
         PlantedBugMutant(
@@ -1475,7 +1475,7 @@ _PR4_BLIND_MUTANTS = BlindMutantSet(
             title="Whitespace-only command bypasses empty check",
             description="Uses if not cmd: instead of if not cmd.strip(): causing IndexError on tokens[0] when whitespace is passed.",
             diff_snippet="- cmd_stripped = cmd.strip()\n+ cmd_stripped = cmd",
-            mutated_code=PR_CISCO_SANDBOX_CODE,
+            mutated_code=PR_CISCO_SANDBOX_CODE.replace("    cmd_stripped = cmd.strip()", "    cmd_stripped = cmd"),
             severity="MEDIUM",
         ),
         PlantedBugMutant(
@@ -1484,7 +1484,7 @@ _PR4_BLIND_MUTANTS = BlindMutantSet(
             title="Broken backslash escape advance (i += 1 instead of i += 2)",
             description="Advances index by 1 instead of 2 on \\\" inside double quotes, prematurely closing quote state on the escaped quote.",
             diff_snippet="- i += 2\n+ i += 1",
-            mutated_code=PR_CISCO_SANDBOX_CODE,
+            mutated_code=PR_CISCO_SANDBOX_CODE.replace("                i += 2\n                continue", "                i += 1\n                continue"),
             severity="HIGH",
         ),
         PlantedBugMutant(
@@ -1493,7 +1493,7 @@ _PR4_BLIND_MUTANTS = BlindMutantSet(
             title="Replaced os.path.basename(tokens[0]) with raw tokens[0] check",
             description="Fails to normalize '/bin/ls' or '/usr/bin/grep' via basename, breaking absolute path read-only commands.",
             diff_snippet="- base_cmd = os.path.basename(tokens[0])\n+ base_cmd = tokens[0]",
-            mutated_code=PR_CISCO_SANDBOX_CODE,
+            mutated_code=PR_CISCO_SANDBOX_CODE.replace("        base_cmd = os.path.basename(tokens[0])", "        base_cmd = tokens[0]"),
             severity="MEDIUM",
         ),
         PlantedBugMutant(
@@ -1502,7 +1502,7 @@ _PR4_BLIND_MUTANTS = BlindMutantSet(
             title="Dropped single-quote (') tracking in _split_pipeline",
             description="Only checks if ch == '\"': when entering quote mode, breaking grep 'a|b' single-quoted regex pipes.",
             diff_snippet="- if ch in ('\"', \"'\"):\n+ if ch == '\"':",
-            mutated_code=PR_CISCO_SANDBOX_CODE,
+            mutated_code=PR_CISCO_SANDBOX_CODE.replace('            if ch in (\'"\', "\'"):', '            if ch == \'"\':'),
             severity="HIGH",
         ),
         PlantedBugMutant(
@@ -1511,7 +1511,7 @@ _PR4_BLIND_MUTANTS = BlindMutantSet(
             title="Dropped sed -i in-place file mutation block",
             description="Removes r'\\bsed\\b.*\\s-[a-zA-Z]*i' from DENIED_PATTERNS, allowing sed -i file modification.",
             diff_snippet="- r'\\bsed\\b.*\\s-[a-zA-Z]*i',\n+ # removed sed -i check",
-            mutated_code=PR_CISCO_SANDBOX_CODE,
+            mutated_code=PR_CISCO_SANDBOX_CODE.replace('    r"\\bsed\\b.*\\s-[a-zA-Z]*i",     # sed in-place\n', '    # sed -i removed by Mutant M7\n'),
             severity="HIGH",
         ),
         PlantedBugMutant(
@@ -1520,7 +1520,7 @@ _PR4_BLIND_MUTANTS = BlindMutantSet(
             title="ANSI-C $'\\x7c' hex-escaped pipe encoding in bash",
             description="Bash ANSI-C quoting $'\\x7c' decodes after variable expansion in certain subshell wrappers; subtle shell dialect edge case.",
             diff_snippet="# M8: subtle bash ANSI-C $'\\x7c' dialect edge case",
-            mutated_code=PR_CISCO_SANDBOX_CODE,
+            mutated_code=PR_CISCO_SANDBOX_CODE + "\n# M8: ANSI-C $'\\x7c' dialect nuance\n",
             severity="MEDIUM",
         ),
     ]

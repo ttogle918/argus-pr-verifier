@@ -2,6 +2,7 @@
 
 const state = {
     lang: 'ko', // 'ko' | 'en'
+    theme: localStorage.getItem('argus_theme') || 'dark', // 'dark' | 'light'
     prs: {},
     currentPrId: 'pr-checkout-race',
     lastRunData: null,
@@ -11,6 +12,15 @@ const state = {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function escapeHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 // ============================================================================
 // KO / EN LOCALIZATION DICTIONARY (Ported & Expanded from Crucible)
 // ============================================================================
@@ -19,7 +29,7 @@ const I18N = {
         brandTitle: 'AI 스웜 PR 레드팀 공격 & 블라인드 메타 검증기',
         brandSubtitle: '적대적 불변조건(Invariant) 검증 • store=False 블라인드 변이 테스트 • Antigravity 샌드박스',
         targetPrLabel: '검증 대상 Pull Request',
-        importPrBtn: '+ GitHub PR / Diff 불러오기',
+        importPrBtn: '+ 파일 업로드 / GitHub PR 불러오기',
         phaseToggle: 'Phase 2 전체 모드 (공격자 4개 + 2회 재현 필터)',
         modeToggle: '기록 재생 안전 모드 (Recorded Sandbox Replay)',
         viewDiffBtn: 'PR Diff 보기',
@@ -137,7 +147,7 @@ const I18N = {
         brandTitle: 'AI Swarm PR Red-Teaming & Blind Meta-Verifier',
         brandSubtitle: 'Adversarial Invariant Verification • Isolated Blind Mutation Testing • Antigravity Sandbox',
         targetPrLabel: 'Target Pull Request',
-        importPrBtn: '+ Import GitHub PR / Diff',
+        importPrBtn: '+ Upload Files / Import GitHub PR',
         phaseToggle: 'Phase 2 Full (4 Attackers + 2x Repro)',
         modeToggle: 'Recorded Sandbox Replay (Safe Mode)',
         viewDiffBtn: 'View PR Diff',
@@ -222,10 +232,27 @@ function getLocalizedInvariantTitle(prId, inv) {
     return inv.title;
 }
 
+function applyThemeUI() {
+    const isLight = state.theme === 'light';
+    document.body.classList.toggle('light-mode', isLight);
+    const darkBtn = document.getElementById('theme-dark-btn');
+    const lightBtn = document.getElementById('theme-light-btn');
+    if (darkBtn && lightBtn) {
+        darkBtn.classList.toggle('active', !isLight);
+        lightBtn.classList.toggle('active', isLight);
+        darkBtn.textContent = state.lang === 'ko' ? '🌙 다크' : '🌙 Dark';
+        lightBtn.textContent = state.lang === 'ko' ? '☀️ 화이트' : '☀️ Light';
+    }
+    try {
+        localStorage.setItem('argus_theme', state.theme);
+    } catch (_) {}
+}
+
 function applyLanguageUI() {
     const dict = t();
     document.getElementById('lang-ko-btn').classList.toggle('active', state.lang === 'ko');
     document.getElementById('lang-en-btn').classList.toggle('active', state.lang === 'en');
+    applyThemeUI();
 
     document.getElementById('ui-brand-title').textContent = dict.brandTitle;
     document.getElementById('ui-brand-subtitle').textContent = dict.brandSubtitle;
@@ -278,6 +305,11 @@ function applyLanguageUI() {
             renderScopeTriageBanner(state.lastRunData.scope_triage);
         }
         renderInvariants(state.lastRunData.invariant_plan, state.lastRunData.pr_id);
+        const testResultMap = {};
+        ((state.lastRunData.sandbox_report && state.lastRunData.sandbox_report.pr_test_results) || []).forEach((r) => {
+            testResultMap[r.test_id] = r;
+        });
+        renderSwarmAttackers(state.lastRunData.swarm_outputs || [], testResultMap);
         renderSealedMutants(state.lastRunData.deterministic_score.mutant_evaluations || [], state.lastRunData.pr_id);
         (state.lastRunData.deterministic_score.mutant_evaluations || []).forEach((m) => {
             revealMutantOutcome(m, state.lastRunData.pr_id);
@@ -290,14 +322,14 @@ function applyLanguageUI() {
 }
 
 function setStepState(stepKey, status) {
-    const pill = document.querySelector(`.step-pill[data-step="${stepKey}"]`);
-    if (!pill) return;
-    pill.classList.remove('active', 'done', 'blocked');
-    if (status) pill.classList.add(status);
+    document.querySelectorAll(`.step-pill[data-step="${stepKey}"], .topo-node[data-step="${stepKey}"]`).forEach((el) => {
+        el.classList.remove('active', 'done', 'blocked');
+        if (status) el.classList.add(status);
+    });
 }
 
 function resetAllSteps() {
-    document.querySelectorAll('.step-pill').forEach((el) => {
+    document.querySelectorAll('.step-pill, .topo-node').forEach((el) => {
         el.classList.remove('active', 'done', 'blocked');
     });
 }
@@ -305,10 +337,66 @@ function resetAllSteps() {
 function appendTerminalLog(text, cls = 'log-info') {
     const term = document.getElementById('terminal-output');
     const div = document.createElement('div');
-    div.className = cls;
+    div.className = `term-log-line ${cls}`;
+    div.setAttribute('data-log-cls', cls);
     div.textContent = text;
+    const activeFilter = document.getElementById('terminal-log-filter')?.value || 'all';
+    if (activeFilter !== 'all' && cls !== activeFilter) {
+        div.classList.add('hidden');
+    }
     term.appendChild(div);
     term.scrollTop = term.scrollHeight;
+}
+
+function applyTrackAFilter() {
+    const filterVal = document.getElementById('track-a-filter')?.value || 'all';
+    document.querySelectorAll('#swarm-content li[data-test-status]').forEach((li) => {
+        const st = li.getAttribute('data-test-status');
+        li.classList.toggle('hidden', filterVal !== 'all' && st !== filterVal);
+    });
+}
+
+function applyTrackBFilter() {
+    const filterVal = document.getElementById('track-b-filter')?.value || 'all';
+    document.querySelectorAll('#planter-content .mutant-card[data-mutant-status]').forEach((card) => {
+        const st = card.getAttribute('data-mutant-status');
+        card.classList.toggle('hidden', filterVal !== 'all' && st !== filterVal);
+    });
+}
+
+function applyTerminalLogFilter() {
+    const filterVal = document.getElementById('terminal-log-filter')?.value || 'all';
+    document.querySelectorAll('#terminal-output .term-log-line').forEach((line) => {
+        const cls = line.getAttribute('data-log-cls');
+        line.classList.toggle('hidden', filterVal !== 'all' && cls !== filterVal);
+    });
+}
+
+function applyPanelViewFilter() {
+    const mode = document.getElementById('panel-view-filter')?.value || 'all';
+    const oneCard = document.getElementById('one-card-summary');
+    const swimlanes = document.getElementById('swimlanes-panel');
+    const terminal = document.getElementById('terminal-panel');
+
+    if (mode === 'all') {
+        if (state.lastRunData && state.lastRunData.guardrail && state.lastRunData.guardrail.is_safe && oneCard) {
+            oneCard.classList.remove('hidden');
+        }
+        if (swimlanes) swimlanes.classList.remove('hidden');
+        if (terminal) terminal.classList.remove('hidden');
+    } else if (mode === 'summary-only') {
+        if (oneCard && state.lastRunData) oneCard.classList.remove('hidden');
+        if (swimlanes) swimlanes.classList.add('hidden');
+        if (terminal) terminal.classList.add('hidden');
+    } else if (mode === 'swimlanes-only') {
+        if (oneCard) oneCard.classList.add('hidden');
+        if (swimlanes) swimlanes.classList.remove('hidden');
+        if (terminal) terminal.classList.add('hidden');
+    } else if (mode === 'terminal-only') {
+        if (oneCard) oneCard.classList.add('hidden');
+        if (swimlanes) swimlanes.classList.add('hidden');
+        if (terminal) terminal.classList.remove('hidden');
+    }
 }
 
 async function loadSamplePrs() {
@@ -352,6 +440,7 @@ function renderSealedMutants(mutantEvalList, prId = state.currentPrId) {
         const card = document.createElement('div');
         card.className = 'mutant-card sealed';
         card.id = `mutant-card-${m.mutant_id}`;
+        card.setAttribute('data-mutant-status', 'sealed');
         const mTitle = getLocalizedMutantTitle(prId, m);
         card.innerHTML = `
             <div class="mutant-top">
@@ -360,9 +449,18 @@ function renderSealedMutants(mutantEvalList, prId = state.currentPrId) {
             </div>
             <div style="color:#cbd5e1;font-weight:600;">${mTitle}</div>
             <div class="mutant-killer" id="mutant-killer-${m.mutant_id}">${dict.hiddenWallHint}</div>
+            <details class="detail-drawer">
+                <summary class="detail-drawer-summary"><span>&#128269; 변이 상세 정보 & 판정 조건 보기</span></summary>
+                <div class="detail-drawer-body" id="mutant-detail-body-${m.mutant_id}">
+                    <div><strong>Mutant ID:</strong> <code>${m.mutant_id}</code> (${m.category})</div>
+                    <div><strong>Planted Defect:</strong> ${escapeHtml(m.title)}</div>
+                    <div><strong>Kill Rule:</strong> <code>Pass(PR_orig) ∧ Fail(${m.mutant_id})</code></div>
+                </div>
+            </details>
         `;
         container.appendChild(card);
     });
+    applyTrackBFilter();
 }
 
 function revealMutantOutcome(m, prId = state.currentPrId) {
@@ -370,6 +468,7 @@ function revealMutantOutcome(m, prId = state.currentPrId) {
     const card = document.getElementById(`mutant-card-${m.mutant_id}`);
     const statusEl = document.getElementById(`mutant-status-${m.mutant_id}`);
     const killerEl = document.getElementById(`mutant-killer-${m.mutant_id}`);
+    const detailBody = document.getElementById(`mutant-detail-body-${m.mutant_id}`);
     if (!card || !statusEl || !killerEl) return;
 
     card.classList.remove('sealed');
@@ -377,15 +476,31 @@ function revealMutantOutcome(m, prId = state.currentPrId) {
 
     if (m.caught) {
         card.classList.add('caught');
+        card.setAttribute('data-mutant-status', 'caught');
         statusEl.classList.add('caught');
         statusEl.textContent = dict.caughtStatus;
         killerEl.textContent = `${dict.killedByPrefix}${m.caught_by_test_ids.join(', ')}`;
+        if (detailBody) {
+            detailBody.innerHTML = `
+                <div><strong>판정 결과:</strong> <span style="color:#34d399;font-weight:700;">CAUGHT (포획 성공)</span></div>
+                <div><strong>포획한 기준 테스트:</strong> <code>${escapeHtml(m.caught_by_test_ids.join(', '))}</code></div>
+                <div><strong>검증 수식:</strong> <code>Pass(PR_orig) = True ∧ Fail(${m.mutant_id}) = True</code></div>
+            `;
+        }
     } else {
         card.classList.add('survived');
+        card.setAttribute('data-mutant-status', 'survived');
         statusEl.classList.add('survived');
         statusEl.textContent = dict.survivedStatus;
         killerEl.textContent = dict.survivedHint;
+        if (detailBody) {
+            detailBody.innerHTML = `
+                <div><strong>판정 결과:</strong> <span style="color:#fbbf24;font-weight:700;">SURVIVED (미탐지 사각지대)</span></div>
+                <div><strong>원인:</strong> 원본 PR을 통과한 기준 테스트들이 이 인공 변이를 실패시키지 못함 (잔여 리스크 보고 대상)</div>
+            `;
+        }
     }
+    applyTrackBFilter();
 }
 
 function renderInvariants(invariantPlan, prId = state.currentPrId) {
@@ -395,17 +510,28 @@ function renderInvariants(invariantPlan, prId = state.currentPrId) {
     const pillsHtml = items.slice(0, 6).map((inv) => {
         const invTitle = getLocalizedInvariantTitle(prId, inv);
         return `
-            <div class="inv-pill" title="${inv.formal_assertion}">
+            <div class="inv-pill" title="${escapeHtml(inv.formal_assertion)}">
                 <strong>${inv.id}</strong> (${inv.category}): ${invTitle}
             </div>
         `;
     }).join('');
+    const formalRowsHtml = items.map((inv) => `
+        <div style="margin-bottom:6px;">
+            <strong style="color:#38bdf8;">${inv.id} [${inv.category} • ${inv.severity || 'HIGH'}]:</strong>
+            <span>${escapeHtml(getLocalizedInvariantTitle(prId, inv))}</span>
+            <pre class="detail-code-pre">${escapeHtml(inv.formal_assertion || '')}</pre>
+        </div>
+    `).join('');
     box.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;">
             <span><strong>${dict.extractedInvariantsHeader} (${items.length})</strong> — <code>gemini-4-argon (store=False)</code></span>
             <span style="color:#38bdf8;font-size:0.72rem;font-family:var(--font-mono);">${dict.zeroLeakageBadge}</span>
         </div>
         <div class="inv-pills">${pillsHtml}</div>
+        <details class="detail-drawer">
+            <summary class="detail-drawer-summary"><span>&#128220; 정형 불변조건 명세 (Formal Assertions ${items.length}건) 상세 보기</span></summary>
+            <div class="detail-drawer-body">${formalRowsHtml}</div>
+        </details>
     `;
 }
 
@@ -441,13 +567,20 @@ function renderScopeTriageBanner(scopeTriage) {
                 ${srcLabel} • Mounted: <strong>${scopeTriage.estimated_mount_size_kb} KB</strong>
             </div>
         </div>
-        <div style="color:#cbd5e1;font-size:0.78rem;">${scopeTriage.rationale}</div>
-        <div class="scope-files-row">${mountedChips}${skippedChips}</div>
+        <details class="detail-drawer">
+            <summary class="detail-drawer-summary">
+                <span>&#128194; Stage 0.5 스코프 선정 사유 및 마운트/제외 파일 목록 (${(scopeTriage.mounted_files || []).length}개 마운트, ${(scopeTriage.skipped_heavy_paths || []).length}개 대용량 경로 제외)</span>
+            </summary>
+            <div class="detail-drawer-body">
+                <div style="margin-bottom:6px;">${escapeHtml(scopeTriage.rationale)}</div>
+                <div class="scope-files-row">${mountedChips}${skippedChips}</div>
+            </div>
+        </details>
     `;
     el.classList.remove('hidden');
 }
 
-function renderAttemptTimelineHtml(steps, maxAttempts = 5, breachedOnAttempt = null) {
+function renderAttemptTimelineHtml(steps, maxAttempts = 5, breachedOnAttempt = null, compact = false) {
     if (!steps || steps.length === 0) return '';
     const pills = [];
     for (let i = 1; i <= maxAttempts; i++) {
@@ -459,15 +592,37 @@ function renderAttemptTimelineHtml(steps, maxAttempts = 5, breachedOnAttempt = n
                     ? 'blocked'
                     : 'defended';
             const icon = stepObj.status === 'BREACHED' ? '&#128293; BREACHED' : stepObj.status;
-            pills.push(`<span class="attempt-pill ${cls}" title="Attempt ${i}: ${stepObj.attack_hypothesis}">#${i} ${icon}</span>`);
+            const safeTitle = `Attempt ${i}: ${stepObj.attack_hypothesis} -> ${stepObj.sandbox_observation}`
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            pills.push(`<span class="attempt-pill ${cls}" title="${safeTitle}">#${i} ${icon}</span>`);
         } else {
             pills.push(`<span class="attempt-pill unused" title="Attempt ${i}: Not needed (early stop after breach/defense)">#${i} —</span>`);
         }
     }
+    const headerBadge = breachedOnAttempt
+        ? `&#128293; Breached on Attempt ${breachedOnAttempt}/${maxAttempts}`
+        : `Defended (${steps.length}/${maxAttempts} attempts used)`;
+
+    if (compact) {
+        return `
+            <div class="attempt-timeline compact">
+                <div class="attempt-timeline-header">
+                    <span>Adaptive Red-Team Loop (Max ${maxAttempts})</span>
+                    <span style="color:${breachedOnAttempt ? '#fb7185' : '#34d399'};font-weight:700;">${headerBadge}</span>
+                </div>
+                <div class="attempt-pills">${pills.join('')}</div>
+            </div>
+        `;
+    }
+
     const rowsHtml = steps.map((s) => {
         const color = s.status === 'BREACHED' ? '#fda4af' : s.status === 'BLOCKED' ? '#fcd34d' : '#6ee7b7';
+        const rowCls = s.status === 'BREACHED' ? 'breached' : s.status === 'BLOCKED' ? 'blocked' : 'defended';
         return `
-            <div class="attempt-step-row">
+            <div class="attempt-step-row ${rowCls}">
                 <span style="color:${color};font-weight:700;">[Attempt ${s.attempt_num}/${maxAttempts} • ${s.status}]</span>
                 <span style="color:#e2e8f0;">${s.attack_hypothesis}</span>
                 <code style="color:#38bdf8;">${s.payload_snippet}</code>
@@ -475,9 +630,6 @@ function renderAttemptTimelineHtml(steps, maxAttempts = 5, breachedOnAttempt = n
             </div>
         `;
     }).join('');
-    const headerBadge = breachedOnAttempt
-        ? `&#128293; Breached on Attempt ${breachedOnAttempt}/${maxAttempts}`
-        : `Defended (${steps.length}/${maxAttempts} attempts used)`;
     return `
         <div class="attempt-timeline">
             <div class="attempt-timeline-header">
@@ -485,17 +637,34 @@ function renderAttemptTimelineHtml(steps, maxAttempts = 5, breachedOnAttempt = n
                 <span style="color:${breachedOnAttempt ? '#fb7185' : '#34d399'};font-weight:700;">${headerBadge}</span>
             </div>
             <div class="attempt-pills">${pills.join('')}</div>
-            <div class="attempt-step-list">${rowsHtml}</div>
+            <div class="attempt-steps-list">${rowsHtml}</div>
         </div>
     `;
 }
 
+const ATTACKER_TITLE_MAP = {
+    ko: {
+        security: '🛡️ 보안 및 권한 경계 공격자 (Security Attacker)',
+        edge_cases: '⚡ 경계 조건 및 입력 퍼징 공격자 (Edge Cases Attacker)',
+        state: '🔄 상태 머신 및 동시성 공격자 (State & Concurrency)',
+        regression: '📐 하위 호환성 및 스키마 공격자 (Regression & Contract)',
+    },
+    en: {
+        security: '🛡️ Security & Auth Boundary Attacker',
+        edge_cases: '⚡ Edge Cases & Input Fuzzing Attacker',
+        state: '🔄 State Machine & Concurrency Attacker',
+        regression: '📐 Regression & API Contract Attacker',
+    },
+};
+
 function renderSwarmAttackers(swarmOutputs, testResultMap) {
     const grid = document.getElementById('swarm-content');
     grid.innerHTML = '';
+    const langMap = ATTACKER_TITLE_MAP[state.lang] || ATTACKER_TITLE_MAP.ko;
     swarmOutputs.forEach((att) => {
         const card = document.createElement('div');
         card.className = 'attacker-card active';
+        const attackerTitle = att.attacker_name || langMap[att.attacker_id] || `Attacker (${att.attacker_id || 'Swarm'})`;
         const testsHtml = (att.tests || []).map((tItem) => {
             const res = testResultMap[tItem.test_id];
             const steps = (res && res.attempt_history && res.attempt_history.length > 0)
@@ -520,21 +689,40 @@ function renderSwarmAttackers(swarmOutputs, testResultMap) {
                     badge = 'PASS 2/2 (BASELINE)';
                 }
             }
-            const timelineBlock = (res && steps.length > 0 && (!res.passed_on_original || steps.length > 1))
-                ? renderAttemptTimelineHtml(steps, maxAtt, breachedAtt)
+            const compactTimeline = (res && steps.length > 0 && (!res.passed_on_original || steps.length > 1))
+                ? renderAttemptTimelineHtml(steps, maxAtt, breachedAtt, true)
                 : '';
-            return `<li class="${statusCls}">• <strong>${tItem.test_id}</strong> [${badge}]${timelineBlock}</li>`;
+            const fullStepsDrawer = renderAttemptTimelineHtml(steps, maxAtt, breachedAtt, false);
+            const pytestCode = tItem.test_code || tItem.code || '';
+
+            return `
+                <li class="${statusCls}" data-test-status="${statusCls || 'pending'}">
+                    <div>• <strong>${tItem.test_id}</strong> [${badge}]</div>
+                    ${compactTimeline}
+                    <details class="detail-drawer">
+                        <summary class="detail-drawer-summary">
+                            <span>&#128270; 공격 시나리오 (${tItem.target_invariant_id || 'INV'}) & 생성된 pytest 코드 보기</span>
+                        </summary>
+                        <div class="detail-drawer-body">
+                            <div style="margin-bottom:6px;">${escapeHtml(tItem.description || '')}</div>
+                            ${fullStepsDrawer}
+                            ${pytestCode ? `<pre class="detail-code-pre">${escapeHtml(pytestCode)}</pre>` : ''}
+                        </div>
+                    </details>
+                </li>
+            `;
         }).join('');
 
         card.innerHTML = `
             <div class="attacker-top">
-                <span class="attacker-name">${att.attacker_name}</span>
+                <span class="attacker-name">${attackerTitle}</span>
                 <span class="attacker-badge">${(att.tests || []).length} tests • max 5 attempts</span>
             </div>
             <ul class="attacker-tests">${testsHtml}</ul>
         `;
         grid.appendChild(card);
     });
+    applyTrackAFilter();
 }
 
 function renderOneCardSummary(data) {
@@ -613,14 +801,15 @@ function renderOneCardSummary(data) {
     if ((score.confirmed_pr_failures || []).length === 0) {
         bugsContainer.innerHTML = `<div class="empty-state" style="color:#6ee7b7;border-color:rgba(16,185,129,0.4);">${dict.noReproBugs}</div>`;
     } else {
-        bugsContainer.innerHTML = score.confirmed_pr_failures.map((f) => {
+        bugsContainer.innerHTML = score.confirmed_pr_failures.map((f, idx) => {
             const tInfo = testMap[f.test_id] || {};
             const steps = (f.attempt_history && f.attempt_history.length > 0)
                 ? f.attempt_history
                 : (tInfo.attempt_history || []);
             const maxAtt = f.max_attempts || tInfo.max_attempts || 5;
             const breachedAtt = f.breached_on_attempt || tInfo.breached_on_attempt || f.attempts_used || null;
-            const attemptsHtml = renderAttemptTimelineHtml(steps, maxAtt, breachedAtt);
+            const compactTimeline = renderAttemptTimelineHtml(steps, maxAtt, breachedAtt, true);
+            const fullTimeline = renderAttemptTimelineHtml(steps, maxAtt, breachedAtt, false);
 
             return `
                 <div class="bug-card">
@@ -629,8 +818,16 @@ function renderOneCardSummary(data) {
                         <span style="font-family:var(--font-mono);font-size:0.72rem;background:rgba(244,63,94,0.2);padding:2px 7px;border-radius:4px;">2/2 REPRODUCED ${breachedAtt ? `• BREACHED @ ATTEMPT ${breachedAtt}/${maxAtt}` : ''}</span>
                     </div>
                     <div style="color:#cbd5e1;">${tInfo.description || 'Deterministic invariant violation reproduced twice in isolated sandbox.'}</div>
-                    ${attemptsHtml}
-                    <pre class="bug-trace">${f.failure_trace || 'AssertionError: Invariant violated in Track (a) run 1/2 and run 2/2'}</pre>
+                    ${compactTimeline}
+                    <details class="detail-drawer" ${idx === 0 ? 'open' : ''}>
+                        <summary class="detail-drawer-summary">
+                            <span>&#128293; 5회 적응형 레드팀 돌파 로그 & 샌드박스 2/2 Traceback 상세 보기</span>
+                        </summary>
+                        <div class="detail-drawer-body">
+                            ${fullTimeline}
+                            <pre class="bug-trace">${escapeHtml(f.failure_trace || 'AssertionError: Invariant violated in Track (a) run 1/2 and run 2/2')}</pre>
+                        </div>
+                    </details>
                 </div>
             `;
         }).join('');
@@ -643,12 +840,19 @@ function renderOneCardSummary(data) {
         : summary.blind_spot_explanation;
     residualContainer.innerHTML = `
         <div><strong>${dict.whyEscapedLabel}</strong> ${blindSpotText}</div>
-        <div><strong>${dict.recommendedPatchLabel}</strong></div>
-        <pre class="patch-pre">${summary.recommended_fix_snippet}</pre>
+        <details class="detail-drawer" open>
+            <summary class="detail-drawer-summary">
+                <span>&#128736; ${dict.recommendedPatchLabel}</span>
+            </summary>
+            <div class="detail-drawer-body">
+                <pre class="patch-pre">${escapeHtml(summary.recommended_fix_snippet)}</pre>
+            </div>
+        </details>
     `;
 
     card.classList.remove('hidden');
 }
+
 
 async function runVerificationFlow() {
     if (state.isRunning) return;
@@ -1027,6 +1231,8 @@ async function submitCustomPrFromModal() {
     const title = document.getElementById('custom-pr-title').value.trim();
     const repo_name = document.getElementById('custom-pr-repo').value.trim();
     const diff = document.getElementById('custom-pr-diff').value;
+    const scopeEl = document.getElementById('scope-selector');
+    const scopeOverride = scopeEl ? scopeEl.value : 'auto';
 
     try {
         const res = await fetch('/api/prs/custom', {
@@ -1039,17 +1245,195 @@ async function submitCustomPrFromModal() {
                 description: 'Custom PR submitted via Argus-PR Importer Modal',
                 diff,
                 code: diff,
+                scope_override: scopeOverride,
             }),
         });
         if (res.ok) {
             const data = await res.json();
             registerImportedPrInDropdown(data.pr);
+            if (data.pr && data.pr.scope_triage) {
+                renderScopeTriageBanner(data.pr.scope_triage);
+            }
             document.getElementById('import-modal').classList.add('hidden');
             runVerificationFlow();
         }
     } catch (e) {
         console.error('Failed to create custom PR:', e);
     }
+}
+
+// ============================================================================
+// LOCAL FILE / MULTI-FILE / ZIP / JSONL DRAG-AND-DROP UPLOAD
+// ============================================================================
+let pendingUploadedFiles = []; // Array of { filename, size, content_b64 }
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function renderUploadedFilesPreview() {
+    const container = document.getElementById('uploaded-files-preview');
+    if (!container) return;
+    if (!pendingUploadedFiles.length) {
+        container.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+    }
+    container.classList.remove('hidden');
+    container.innerHTML = pendingUploadedFiles
+        .map(
+            (f, idx) => `
+            <span class="uploaded-file-chip">
+                <span>&#128196; ${escapeHtml(f.filename)}</span>
+                <span class="file-size">(${formatFileSize(f.size)})</span>
+                <button type="button" class="remove-file-btn" data-idx="${idx}" title="제거">&times;</button>
+            </span>`
+        )
+        .join('');
+
+    container.querySelectorAll('.remove-file-btn').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(btn.getAttribute('data-idx'), 10);
+            pendingUploadedFiles.splice(idx, 1);
+            renderUploadedFilesPreview();
+        });
+    });
+}
+
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(file);
+    });
+}
+
+async function handleSelectedUploadFiles(fileList) {
+    const statusEl = document.getElementById('upload-modal-status');
+    if (!fileList || !fileList.length) return;
+
+    for (const file of Array.from(fileList)) {
+        try {
+            const dataUrl = await readFileAsBase64(file);
+            const relName = file.webkitRelativePath || file.name;
+            // Replace if same filename already queued
+            const existingIdx = pendingUploadedFiles.findIndex((x) => x.filename === relName);
+            const item = {
+                filename: relName,
+                size: file.size,
+                content_b64: dataUrl,
+            };
+            if (existingIdx >= 0) {
+                pendingUploadedFiles[existingIdx] = item;
+            } else {
+                pendingUploadedFiles.push(item);
+            }
+        } catch (err) {
+            console.error('Failed to read file:', file.name, err);
+        }
+    }
+
+    renderUploadedFilesPreview();
+    if (statusEl) {
+        statusEl.style.color = '#38bdf8';
+        statusEl.textContent = `✔ ${pendingUploadedFiles.length}개 파일 준비 완료 — '업로드한 파일로 블라인드 검증 실행' 버튼을 누르세요.`;
+    }
+}
+
+async function submitUploadedFilesFromModal() {
+    const statusEl = document.getElementById('upload-modal-status');
+    if (!pendingUploadedFiles.length) {
+        if (statusEl) {
+            statusEl.style.color = '#fb7185';
+            statusEl.textContent = '✖ 먼저 업로드할 파일(.py, .ts, .diff, .jsonl, .zip 등)을 선택하거나 드롭해주세요.';
+        }
+        return;
+    }
+
+    const title = (document.getElementById('upload-pr-title')?.value || '').trim();
+    const repo_name = (document.getElementById('upload-pr-repo')?.value || 'local-upload/workspace').trim();
+    const entry_file = (document.getElementById('upload-entry-file')?.value || '').trim() || null;
+    const scopeEl = document.getElementById('scope-selector');
+    const scopeOverride = scopeEl ? scopeEl.value : 'auto';
+
+    if (statusEl) {
+        statusEl.style.color = '#38bdf8';
+        statusEl.textContent = `업로드된 파일 ${pendingUploadedFiles.length}개를 분석하고 Stage 0.5 Smart Scope Triage & Import Graph Slicer를 실행하는 중...`;
+    }
+
+    try {
+        const res = await fetch('/api/prs/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title,
+                repo_name,
+                author: 'local-developer',
+                description: `Uploaded ${pendingUploadedFiles.length} file(s) from user PC via Argus-PR Upload Modal`,
+                scope_override: scopeOverride,
+                entry_file,
+                files: pendingUploadedFiles.map((f) => ({
+                    filename: f.filename,
+                    content_b64: f.content_b64,
+                })),
+            }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.detail || '파일 업로드 처리 실패');
+        }
+
+        registerImportedPrInDropdown(data.pr);
+        if (data.pr && data.pr.scope_triage) {
+            renderScopeTriageBanner(data.pr.scope_triage);
+        }
+
+        if (data.slice_summary) {
+            const s = data.slice_summary;
+            appendTerminalLog(
+                `[Workspace Import Slicer] Entry '${s.entry_file}' -> Mounted ${s.sliced_file_count}/${s.total_workspace_files} files (${s.context_reduction_pct}% pruned)`,
+                'log-pass'
+            );
+        } else if (data.extracted_files && data.extracted_files.length) {
+            appendTerminalLog(
+                `[Local File Upload] Loaded ${data.extracted_files.length} file(s): ${data.extracted_files.slice(0, 5).join(', ')}`,
+                'log-info'
+            );
+        }
+
+        if (statusEl) {
+            statusEl.style.color = '#34d399';
+            statusEl.textContent = `✔ 업로드 완료: ${data.pr.title} (${(data.extracted_files || []).length}개 파일 추출됨)`;
+        }
+
+        setTimeout(() => {
+            document.getElementById('import-modal').classList.add('hidden');
+            runVerificationFlow();
+        }, 400);
+    } catch (err) {
+        if (statusEl) {
+            statusEl.style.color = '#fb7185';
+            statusEl.textContent = `✖ 오류: ${err.message}`;
+        }
+    }
+}
+
+function activateModalTab(activeTabKey) {
+    const tabMap = {
+        upload: { btn: 'tab-upload-btn', body: 'modal-tab-upload' },
+        github: { btn: 'tab-github-btn', body: 'modal-tab-github' },
+        custom: { btn: 'tab-custom-btn', body: 'modal-tab-custom' },
+    };
+    Object.entries(tabMap).forEach(([key, ids]) => {
+        const btnEl = document.getElementById(ids.btn);
+        const bodyEl = document.getElementById(ids.body);
+        if (btnEl) btnEl.classList.toggle('active', key === activeTabKey);
+        if (bodyEl) bodyEl.classList.toggle('hidden', key !== activeTabKey);
+    });
 }
 
 async function submitHumanDecision(decision) {
@@ -1099,6 +1483,20 @@ document.addEventListener('DOMContentLoaded', () => {
     applyLanguageUI();
     loadSamplePrs();
 
+    // Theme toggle buttons (Dark / Light mode)
+    const darkBtn = document.getElementById('theme-dark-btn');
+    const lightBtn = document.getElementById('theme-light-btn');
+    if (darkBtn && lightBtn) {
+        darkBtn.addEventListener('click', () => {
+            state.theme = 'dark';
+            applyThemeUI();
+        });
+        lightBtn.addEventListener('click', () => {
+            state.theme = 'light';
+            applyThemeUI();
+        });
+    }
+
     // Language toggle buttons
     document.getElementById('lang-ko-btn').addEventListener('click', () => {
         state.lang = 'ko';
@@ -1141,7 +1539,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitCustomMutant();
     });
 
-    // Import Modal controls
+    // Import Modal controls (3 Tabs: Local File Upload / GitHub PR URL / Custom Paste)
     const importModal = document.getElementById('import-modal');
     document.getElementById('open-import-modal-btn').addEventListener('click', () => {
         importModal.classList.remove('hidden');
@@ -1149,18 +1547,51 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-import-modal-btn').addEventListener('click', () => {
         importModal.classList.add('hidden');
     });
-    document.getElementById('tab-github-btn').addEventListener('click', () => {
-        document.getElementById('tab-github-btn').classList.add('active');
-        document.getElementById('tab-custom-btn').classList.remove('active');
-        document.getElementById('modal-tab-github').classList.remove('hidden');
-        document.getElementById('modal-tab-custom').classList.add('hidden');
-    });
-    document.getElementById('tab-custom-btn').addEventListener('click', () => {
-        document.getElementById('tab-custom-btn').classList.add('active');
-        document.getElementById('tab-github-btn').classList.remove('active');
-        document.getElementById('modal-tab-custom').classList.remove('hidden');
-        document.getElementById('modal-tab-github').classList.add('hidden');
-    });
+    const tabUploadBtn = document.getElementById('tab-upload-btn');
+    if (tabUploadBtn) {
+        tabUploadBtn.addEventListener('click', () => activateModalTab('upload'));
+    }
+    document.getElementById('tab-github-btn').addEventListener('click', () => activateModalTab('github'));
+    document.getElementById('tab-custom-btn').addEventListener('click', () => activateModalTab('custom'));
+
+    // Local File / ZIP / JSONL Dropzone & Input wiring
+    const dropzone = document.getElementById('file-dropzone');
+    const fileInput = document.getElementById('pr-file-input');
+    if (dropzone && fileInput) {
+        dropzone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            handleSelectedUploadFiles(e.target.files);
+            fileInput.value = '';
+        });
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('drag-over');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('drag-over');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            if (e.dataTransfer && e.dataTransfer.files) {
+                handleSelectedUploadFiles(e.dataTransfer.files);
+            }
+        });
+    }
+    const clearUploadBtn = document.getElementById('clear-upload-files-btn');
+    if (clearUploadBtn) {
+        clearUploadBtn.addEventListener('click', () => {
+            pendingUploadedFiles = [];
+            renderUploadedFilesPreview();
+            const statusEl = document.getElementById('upload-modal-status');
+            if (statusEl) statusEl.textContent = '';
+        });
+    }
+    const submitUploadBtn = document.getElementById('submit-upload-pr-btn');
+    if (submitUploadBtn) {
+        submitUploadBtn.addEventListener('click', () => submitUploadedFilesFromModal());
+    }
+
     document.querySelectorAll('.preset-chip[data-gh]').forEach((btn) => {
         btn.addEventListener('click', () => {
             document.getElementById('github-url-input').value = btn.getAttribute('data-gh');
@@ -1184,4 +1615,91 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('approve-btn').addEventListener('click', () => {
         submitHumanDecision('APPROVE_MERGE');
     });
+
+    // Option 1 UI: Collapsible Panels, Filter Dropdowns, and Diagram Node Jump
+    const toggleOneCardBodyBtn = document.getElementById('toggle-one-card-body-btn');
+    if (toggleOneCardBodyBtn) {
+        toggleOneCardBodyBtn.addEventListener('click', () => {
+            const bodyEl = document.getElementById('one-card-collapsible-body');
+            if (!bodyEl) return;
+            const isHidden = bodyEl.classList.toggle('hidden');
+            toggleOneCardBodyBtn.textContent = isHidden ? '▾ 상세 분석 펼치기' : '▴ 상세 분석 접기';
+        });
+    }
+
+    const panelViewFilter = document.getElementById('panel-view-filter');
+    if (panelViewFilter) {
+        panelViewFilter.addEventListener('change', () => applyPanelViewFilter());
+    }
+
+    const trackAFilter = document.getElementById('track-a-filter');
+    if (trackAFilter) {
+        trackAFilter.addEventListener('change', () => applyTrackAFilter());
+    }
+
+    const trackBFilter = document.getElementById('track-b-filter');
+    if (trackBFilter) {
+        trackBFilter.addEventListener('change', () => applyTrackBFilter());
+    }
+
+    const terminalLogFilter = document.getElementById('terminal-log-filter');
+    if (terminalLogFilter) {
+        terminalLogFilter.addEventListener('change', () => applyTerminalLogFilter());
+    }
+
+    let allDrawersExpanded = false;
+    const toggleAllDetailsBtn = document.getElementById('toggle-all-details-btn');
+    if (toggleAllDetailsBtn) {
+        toggleAllDetailsBtn.addEventListener('click', () => {
+            allDrawersExpanded = !allDrawersExpanded;
+            document.querySelectorAll('details.detail-drawer').forEach((d) => {
+                d.open = allDrawersExpanded;
+            });
+            toggleAllDetailsBtn.textContent = allDrawersExpanded
+                ? '🔼 상세 코드/로그 모두 접기'
+                : '🔽 상세 코드/로그 모두 펼치기';
+        });
+    }
+
+    const toggleSwimlanesBtn = document.getElementById('toggle-swimlanes-panel-btn');
+    if (toggleSwimlanesBtn) {
+        toggleSwimlanesBtn.addEventListener('click', () => {
+            const sw = document.getElementById('swimlanes-panel');
+            if (!sw) return;
+            const isHidden = sw.classList.toggle('hidden');
+            toggleSwimlanesBtn.textContent = isHidden ? '▾ 스윔레인 패널 펼치기' : '▴ 스윔레인 패널 접기';
+        });
+    }
+
+    const toggleTerminalBtn = document.getElementById('toggle-terminal-body-btn');
+    if (toggleTerminalBtn) {
+        toggleTerminalBtn.addEventListener('click', () => {
+            const termOut = document.getElementById('terminal-output');
+            if (!termOut) return;
+            const isHidden = termOut.classList.toggle('hidden');
+            toggleTerminalBtn.textContent = isHidden ? '▾ 터미널 펼치기' : '▴ 터미널 접기';
+        });
+    }
+
+    // Clicking a node in the Diagram Flowchart scrolls smoothly to the relevant section
+    const stepTargetMap = {
+        guardrail: 'guardrail-banner',
+        scope_triage: 'scope-triage-banner',
+        blind_plan: 'swimlanes-panel',
+        swarm: 'swimlanes-panel',
+        sandbox_a: 'terminal-panel',
+        sandbox_b: 'terminal-panel',
+        one_card: 'one-card-summary',
+    };
+    document.querySelectorAll('.step-pill.diagram-node[data-step]').forEach((node) => {
+        node.addEventListener('click', () => {
+            const stepKey = node.getAttribute('data-step');
+            const targetId = stepTargetMap[stepKey];
+            const targetEl = targetId ? document.getElementById(targetId) : null;
+            if (targetEl && !targetEl.classList.contains('hidden')) {
+                targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
 });
+

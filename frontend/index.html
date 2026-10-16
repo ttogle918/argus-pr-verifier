@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARGUS-PR | AI Swarm PR Red-Teaming &amp; Blind Meta-Verifier</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20261016c">
 </head>
 <body>
     <!-- Top Telemetry Header -->
@@ -31,6 +31,10 @@
                     <span class="dot"></span>Sandbox: <strong>antigravity-preview-09-2026</strong>
                 </span>
             </div>
+            <div class="theme-switch-group" role="group" aria-label="Theme Switcher">
+                <button id="theme-dark-btn" class="lang-btn active" type="button" title="Cyber Dark Mode">&#127769; 다크</button>
+                <button id="theme-light-btn" class="lang-btn" type="button" title="Clean White Mode">&#9728;&#65039; 화이트</button>
+            </div>
             <div class="lang-switch-group" role="group" aria-label="Language Switcher">
                 <button id="lang-ko-btn" class="lang-btn active" type="button">KO 한국어</button>
                 <button id="lang-en-btn" class="lang-btn" type="button">EN English</button>
@@ -50,19 +54,20 @@
                     <option value="pr-ratelimiter-offbyone">PR #809: Redis Sliding-Window Token Bucket (cloud-gate/quota-engine)</option>
                     <option value="pr-prompt-injection-attack">PR #666: [ADVERSARIAL] Hidden Prompt Injection in Auth Middleware</option>
                 </select>
-                <button id="open-import-modal-btn" class="import-pr-btn" type="button" title="Import a live GitHub PR by URL or paste custom diff">
-                    + GitHub PR / Diff 불러오기
+                <select id="scope-selector" class="scope-select" title="Stage 0.5 Smart Scope Triage Override (Auto vs Single-File vs Sparse-Package vs Live Server Daemon)">
+                    <option value="auto">Scope: Auto (Smart Triage)</option>
+                    <option value="single_file">Scope: Single-File Unit</option>
+                    <option value="sparse_package">Scope: Sparse Package Tree</option>
+                    <option value="server_daemon">Scope: Live Server Daemon</option>
+                </select>
+                <button id="open-import-modal-btn" class="import-pr-btn" type="button" title="Upload local files (.py, .ts, .diff, .jsonl, .zip), import a live GitHub PR by URL, or paste custom diff">
+                    + 파일 업로드 / GitHub PR 불러오기
                 </button>
+                <button id="toggle-diff-btn" class="secondary-btn" type="button">PR Diff 보기</button>
             </div>
         </div>
 
         <div class="toggles">
-            <select id="scope-selector" class="scope-select" title="Stage 0.5 Smart Scope Triage Override (Auto vs Single-File vs Sparse-Package vs Live Server Daemon)">
-                <option value="auto">Scope: Auto (Smart Triage)</option>
-                <option value="single_file">Scope: Single-File Unit</option>
-                <option value="sparse_package">Scope: Sparse Package Tree</option>
-                <option value="server_daemon">Scope: Live Server Daemon</option>
-            </select>
             <label class="toggle-chip" title="Toggle between Phase 1 MVP (3 attackers, 1x run) and Phase 2 Full (4 attackers, 2x repro, Guardrail)">
                 <input type="checkbox" id="phase-toggle" checked>
                 <span id="ui-phase-toggle-text">Phase 2 Full (4 Attackers + 2x Repro)</span>
@@ -71,12 +76,10 @@
                 <input type="checkbox" id="mode-toggle" checked>
                 <span id="ui-mode-toggle-text">Recorded Sandbox Replay (Safe Mode)</span>
             </label>
-            <button id="toggle-diff-btn" class="secondary-btn" type="button">PR Diff 보기</button>
+            <button id="launch-btn" class="primary-btn" type="button">
+                <span class="btn-icon">&#9889;</span> <span id="ui-launch-btn-text">Launch Blind Verification Swarm</span>
+            </button>
         </div>
-
-        <button id="launch-btn" class="primary-btn" type="button">
-            <span class="btn-icon">&#9889;</span> <span id="ui-launch-btn-text">Launch Blind Verification Swarm</span>
-        </button>
     </section>
 
     <!-- Collapsible PR Diff Drawer -->
@@ -88,31 +91,312 @@
         <pre id="diff-code" class="diff-code"></pre>
     </section>
 
-    <!-- Pipeline Progress Stepper -->
-    <section class="pipeline-stepper" id="pipeline-stepper">
-        <div class="step-pill" data-step="guardrail" id="step-label-guardrail">0. Flash-Lite Guardrail</div>
-        <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="scope_triage" id="step-label-scope">0.5. Smart Scope Triage</div>
-        <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="blind_plan" id="step-label-blind">1. Blind Dual-Track (Argon)</div>
-        <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="swarm" id="step-label-swarm">2. 4x Flash (5-Turn Red-Team)</div>
-        <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="sandbox_a" id="step-label-sandbox-a">3a. Sandbox PR (2x Repro)</div>
-        <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="sandbox_b" id="step-label-sandbox-b">3b. Sandbox 8 Mutants</div>
-        <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="one_card" id="step-label-one-card">4. Deterministic Score &amp; One-Card</div>
+    <!-- Pipeline Architecture Flowchart Stepper -->
+    <section class="pipeline-stepper diagram-flow" id="pipeline-stepper" aria-label="Verification Pipeline Architecture">
+        <div class="step-pill diagram-node" data-step="guardrail" title="Click to view Stage 0 Prompt-Injection Guardrail">
+            <div class="node-header">
+                <span class="node-stage">STAGE 0</span>
+                <span class="node-dot"></span>
+            </div>
+            <div class="node-title" id="step-label-guardrail">0. Flash-Lite Guardrail</div>
+            <div class="node-meta">gemini-3.5-flash-lite</div>
+        </div>
+        <div class="step-arrow diagram-edge" aria-hidden="true">
+            <span class="edge-line"></span>
+            <span class="edge-head">&#9654;</span>
+        </div>
+        <div class="step-pill diagram-node" data-step="scope_triage" title="Click to view Stage 0.5 Smart Scope Triage &amp; Selective Mount">
+            <div class="node-header">
+                <span class="node-stage">STAGE 0.5</span>
+                <span class="node-dot"></span>
+            </div>
+            <div class="node-title" id="step-label-scope">0.5. Smart Scope Triage</div>
+            <div class="node-meta">AST Import Slicer</div>
+        </div>
+        <div class="step-arrow diagram-edge" aria-hidden="true">
+            <span class="edge-line"></span>
+            <span class="edge-head">&#9654;</span>
+        </div>
+        <div class="step-pill diagram-node" data-step="blind_plan" title="Click to view Stage 1 Dual-Track Blind Extraction &amp; Mutation">
+            <div class="node-header">
+                <span class="node-stage">STAGE 1A &parallel; 1B</span>
+                <span class="node-dot"></span>
+            </div>
+            <div class="node-title" id="step-label-blind">1. Blind Dual-Track (Argon)</div>
+            <div class="node-meta">store=False &bull; Wall Active</div>
+        </div>
+        <div class="step-arrow diagram-edge" aria-hidden="true">
+            <span class="edge-line"></span>
+            <span class="edge-head">&#9654;</span>
+        </div>
+        <div class="step-pill diagram-node" data-step="swarm" title="Click to view Stage 2 Parallel 4x Flash Red-Team Swarm">
+            <div class="node-header">
+                <span class="node-stage">STAGE 2</span>
+                <span class="node-dot"></span>
+            </div>
+            <div class="node-title" id="step-label-swarm">2. 4x Flash (5-Turn Red-Team)</div>
+            <div class="node-meta">Observe-Mutate-Attack (x5)</div>
+        </div>
+        <div class="step-arrow diagram-edge" aria-hidden="true">
+            <span class="edge-line"></span>
+            <span class="edge-head">&#9654;</span>
+        </div>
+        <div class="step-pill diagram-node" data-step="sandbox_a" title="Click to view Stage 3a Antigravity Sandbox PR Execution">
+            <div class="node-header">
+                <span class="node-stage">STAGE 3A</span>
+                <span class="node-dot"></span>
+            </div>
+            <div class="node-title" id="step-label-sandbox-a">3a. Sandbox PR (2x Repro)</div>
+            <div class="node-meta">antigravity-preview-09-2026</div>
+        </div>
+        <div class="step-arrow diagram-edge" aria-hidden="true">
+            <span class="edge-line"></span>
+            <span class="edge-head">&#9654;</span>
+        </div>
+        <div class="step-pill diagram-node" data-step="sandbox_b" title="Click to view Stage 3b Differential Execution on 8 Blind Mutants">
+            <div class="node-header">
+                <span class="node-stage">STAGE 3B</span>
+                <span class="node-dot"></span>
+            </div>
+            <div class="node-title" id="step-label-sandbox-b">3b. Sandbox 8 Mutants</div>
+            <div class="node-meta">Pass(PR) &and; Fail(Mutant)</div>
+        </div>
+        <div class="step-arrow diagram-edge" aria-hidden="true">
+            <span class="edge-line"></span>
+            <span class="edge-head">&#9654;</span>
+        </div>
+        <div class="step-pill diagram-node" data-step="one_card" title="Click to view Stage 4 Deterministic M/K Score &amp; One-Card Summary">
+            <div class="node-header">
+                <span class="node-stage">STAGE 4</span>
+                <span class="node-dot"></span>
+            </div>
+            <div class="node-title" id="step-label-one-card">4. Deterministic Score &amp; One-Card</div>
+            <div class="node-meta">scoring.py + Human Gate</div>
+        </div>
     </section>
+
+    <!-- Interactive Multi-Agent Call Graph & Orchestration Architecture Diagram -->
+    <details id="agent-topology-drawer" class="agent-topology-drawer" open>
+        <summary class="agent-topology-summary">
+            <div class="topology-summary-left">
+                <span class="topology-badge">&#129302; MULTI-AGENT CALL GRAPH</span>
+                <span class="topology-title" id="ui-topology-title">에이전트 호출 구조 및 블라인드 이원화 아키텍처 흐름도 (어느 단계에서 어떤 모델/에이전트가 호출되는지 실시간 표시)</span>
+            </div>
+            <span class="topology-toggle-hint">클릭하여 흐름도 접기/펼치기</span>
+        </summary>
+        <div class="agent-topology-canvas">
+            <!-- Phase A: Entry Gate (Stage 0 -> Stage 0.5) -->
+            <div class="topo-column topo-entry">
+                <div class="topo-node" data-step="guardrail">
+                    <div class="topo-stage-tag">STAGE 0 &bull; INPUT GATE</div>
+                    <div class="topo-agent-model model-cyan">gemini-3.5-flash-lite</div>
+                    <div class="topo-fn"><code>run_prompt_injection_guardrail()</code></div>
+                    <div class="topo-desc">PR 제목·설명·Diff 내 적대적 프롬프트 인젝션 실시간 탐지 및 즉시 차단</div>
+                </div>
+                <div class="topo-down-arrow">&#8595; <span>SAFE 통과 시</span></div>
+                <div class="topo-node" data-step="scope_triage">
+                    <div class="topo-stage-tag">STAGE 0.5 &bull; SCOPE SLICER</div>
+                    <div class="topo-agent-model model-slate">Python AST + Selective Loader</div>
+                    <div class="topo-fn"><code>compute_scope_triage()</code></div>
+                    <div class="topo-desc">로컬 import 그래프 분석 &rarr; <code>SINGLE_FILE</code> / <code>SPARSE_PACKAGE</code> / <code>SERVER_DAEMON</code> 선택 마운트</div>
+                </div>
+            </div>
+
+            <div class="topo-branch-connector" aria-hidden="true">
+                <div class="branch-label">병렬 분기<br><code>asyncio.gather</code></div>
+                <div class="branch-arrows">
+                    <span class="branch-up">&#8599; Track A</span>
+                    <span class="branch-down">&#8600; Track B</span>
+                </div>
+            </div>
+
+            <!-- Phase B: Dual-Track Blind Fork (Track A vs Track B separated by store=False Wall) -->
+            <div class="topo-dual-tracks">
+                <!-- Upper Track A: Planner -> 4x Flash Swarm -> Sandbox Track (a) -->
+                <div class="topo-track track-a-box">
+                    <div class="topo-track-label tag-blue">TRACK A &bull; 레드팀 공격자 파이프라인 (심은 버그 정보 0%)</div>
+                    <div class="topo-track-row">
+                        <div class="topo-node" data-step="blind_plan">
+                            <div class="topo-stage-tag">STAGE 1A &bull; PLANNER</div>
+                            <div class="topo-agent-model model-indigo">gemini-4-argon <code>store=False</code></div>
+                            <div class="topo-fn"><code>extract_invariants_and_plan()</code></div>
+                            <div class="topo-desc">PR 정형 불변조건(<code>INV-1..6</code>) 추출 및 4대 공격 벡터 설계</div>
+                        </div>
+                        <div class="topo-right-arrow">&#8594;</div>
+                        <div class="topo-node" data-step="swarm">
+                            <div class="topo-stage-tag">STAGE 2 &bull; PARALLEL SWARM (4x)</div>
+                            <div class="topo-agent-model model-blue">4&times; gemini-3.8-flash (병렬)</div>
+                            <div class="topo-fn"><code>run_parallel_attacker_swarm()</code></div>
+                            <div class="topo-swarm-chips">
+                                <span>&#128737; Security</span>
+                                <span>&#9889; Edge Cases</span>
+                                <span>&#128260; State/Race</span>
+                                <span>&#128208; Regression</span>
+                            </div>
+                        </div>
+                        <div class="topo-right-arrow loop-arrow" title="5-Turn Adaptive Red-Team Loop (Observe -> Mutate -> Attack)">&#8644; <span>최대 5회 루프</span></div>
+                        <div class="topo-node" data-step="sandbox_a">
+                            <div class="topo-stage-tag">STAGE 3A &bull; REMOTE SANDBOX</div>
+                            <div class="topo-agent-model model-emerald">agent="antigravity-preview-09-2026"</div>
+                            <div class="topo-fn"><code>execute_dual_track_...() [Track a]</code></div>
+                            <div class="topo-desc">원본 PR 대상 <code>Observe &rarr; Mutate &rarr; Attack</code> (최대 5회) + <strong>2/2회 연속 재현성 검증</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Isolation Wall Strip -->
+                <div class="topo-isolation-wall">
+                    <span>&#128274; <strong>BLIND INFORMATION WALL (<code>store=False</code>)</strong> &mdash; Track 1A(공격자)와 Track 1B(버그 은닉자)는 서로 다른 격리 세션에서 호출되어 정답지 유출이 원천 차단됨</span>
+                </div>
+
+                <!-- Lower Track B: Blind Bug Planter -> Sandbox Track (b) -->
+                <div class="topo-track track-b-box">
+                    <div class="topo-track-label tag-purple">TRACK B &bull; 메타 검증기 신뢰도 측정 파이프라인 (블라인드 변이 심기)</div>
+                    <div class="topo-track-row">
+                        <div class="topo-node" data-step="blind_plan">
+                            <div class="topo-stage-tag">STAGE 1B &bull; BLIND PLANTER</div>
+                            <div class="topo-agent-model model-purple">gemini-4-argon <code>store=False</code></div>
+                            <div class="topo-fn"><code>plant_blind_bugs()</code></div>
+                            <div class="topo-desc">원본 코드 사본에 은밀한 인공 결함 8개(<code>M1..M8</code>)를 독립적으로 주입·봉인</div>
+                        </div>
+                        <div class="topo-right-arrow">&#8594; <span>격리 마운트</span></div>
+                        <div class="topo-node" data-step="sandbox_b">
+                            <div class="topo-stage-tag">STAGE 3B &bull; MUTANT MATRIX</div>
+                            <div class="topo-agent-model model-emerald">agent="antigravity-preview-09-2026"</div>
+                            <div class="topo-fn"><code>execute_dual_track_...() [Track b]</code></div>
+                            <div class="topo-desc">Track A가 만든 테스트를 <code>M1..M8</code>에 교차 실행해 <code>Pass(PR_orig) &and; Fail(m_i)</code> 매트릭스 생성</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="topo-branch-connector" aria-hidden="true">
+                <div class="branch-label">결과 수렴<br><code>Matrix Merge</code></div>
+                <div class="branch-arrows">
+                    <span class="branch-down">&#8600;</span>
+                    <span class="branch-up">&#8599;</span>
+                </div>
+            </div>
+
+            <!-- Phase C: Deterministic Scoring & One-Card Synthesis (Stage 4 -> Stage 5) -->
+            <div class="topo-column topo-convergence">
+                <div class="topo-node" data-step="one_card">
+                    <div class="topo-stage-tag">STAGE 4A &bull; DETERMINISTIC MATH</div>
+                    <div class="topo-agent-model model-slate">Python <code>backend/scoring.py</code></div>
+                    <div class="topo-fn"><code>compute_deterministic_scores()</code></div>
+                    <div class="topo-desc">LLM 환각 배제 &mdash; 순수 파이썬 수식으로 검증기 포획률(<strong>M/K %</strong>) 및 생존 변이 산출</div>
+                </div>
+                <div class="topo-down-arrow">&#8595;</div>
+                <div class="topo-node" data-step="one_card">
+                    <div class="topo-stage-tag">STAGE 4B &bull; SYNTHESIZER &amp; GATE</div>
+                    <div class="topo-agent-model model-indigo">gemini-4-argon + Human Reviewer</div>
+                    <div class="topo-fn"><code>synthesize_one_card_summary()</code></div>
+                    <div class="topo-desc">생존 변이 사각지대 해설 + 보안 패치 코드 합성 &rarr; <strong>One-Card 최종 병합 승인/거절</strong></div>
+                </div>
+            </div>
+        </div>
+    </details>
 
     <main class="dashboard">
         <!-- Stage 0: Prompt-Injection Guardrail Banner -->
         <div id="guardrail-banner" class="banner hidden"></div>
-        <!-- Stage 0.5: Smart Scope Triage & Selective Mount Banner -->
+        <!-- Stage 0.5: Smart Scope Triage & Selective Mount Banner (with collapsible file list) -->
         <div id="scope-triage-banner" class="scope-banner hidden"></div>
 
+        <!-- OPTION 1 EXECUTIVE-FIRST: Stage 4 Human Reviewer One-Card Executive Summary at Top -->
+        <div id="one-card-summary" class="hero-card hidden">
+            <div class="one-card-top">
+                <div id="hero-verdict" class="hero-header"></div>
+                <div class="one-card-utility-btns">
+                    <button id="apply-patch-btn" class="utility-btn patch-btn" type="button" title="Apply Argon's recommended security patch and re-verify in sandbox">
+                        &#128295; <span id="ui-apply-patch-text">권장 패치 적용 후 재검증</span>
+                    </button>
+                    <button id="copy-prompt-btn" class="utility-btn" type="button" title="Copy structured AI fix prompt to clipboard">
+                        &#128203; <span id="ui-copy-prompt-text">AI 수정 프롬프트 복사</span>
+                    </button>
+                    <button id="export-json-btn" class="utility-btn" type="button" title="Download full verification report &amp; decision as JSON">
+                        &#11015; <span id="ui-export-json-text">JSON 리포트 저장</span>
+                    </button>
+                    <button id="toggle-one-card-body-btn" class="utility-btn" type="button" title="Collapse or expand detailed breaking bug traces and patch code">
+                        &#9660; 상세 분석 접기/펼치기
+                    </button>
+                </div>
+            </div>
+
+            <div id="human-decision-stamp" class="decision-stamp hidden"></div>
+
+            <p id="hero-takeaway" class="hero-takeaway"></p>
+
+            <!-- 3 Deterministic Python-Calculated KPI Boxes (Always Visible in One-Card) -->
+            <div class="metrics">
+                <div class="metric-box" id="metric-bugs"></div>
+                <div class="metric-box" id="metric-score"></div>
+                <div class="metric-box" id="metric-risk"></div>
+            </div>
+
+            <!-- Collapsible Detailed Evidence Body inside One-Card -->
+            <div id="one-card-collapsible-body">
+                <!-- Confirmed 2/2 Breaking Tests & Argon Residual Risk Synthesis -->
+                <div class="one-card-columns">
+                    <div class="one-card-col">
+                        <h4 class="section-subtitle" id="ui-col-left-title">&#128680; Confirmed PR Breaking Tests (Reproduced 2/2 Times in Sandbox)</h4>
+                        <div id="bug-details" class="bug-details"></div>
+                    </div>
+                    <div class="one-card-col">
+                        <h4 class="section-subtitle" id="ui-col-right-title">&#129514; Residual Risk &amp; Recommended Security Patch (Argon Synthesis)</h4>
+                        <div id="residual-details" class="residual-details"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Human-in-the-Loop Merge Gate Actions -->
+            <div class="human-actions">
+                <div class="reviewer-prompt">
+                    <div id="ui-merge-gate-prompt">
+                        <strong>Human Merge Gate:</strong> Review the confirmed 2/2 breaking tests, the deterministic blind detection score (<span id="inline-score-label"></span>), and surviving mutant blind spots before deciding.
+                    </div>
+                    <input id="reviewer-notes-input" type="text" class="reviewer-notes-input" placeholder="리뷰어 코멘트 입력 (선택 사항 — 예: M8 시계 오차 경계 조건 및 음수 환불 패치 후 재요청)">
+                </div>
+                <div class="action-buttons">
+                    <button id="reject-btn" class="danger-btn" type="button">&#10060; <span id="ui-reject-btn-text">Reject Merge &amp; Request Fixes</span></button>
+                    <button id="approve-btn" class="success-btn" type="button">&#9989; <span id="ui-approve-btn-text">Approve &amp; Merge PR</span></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Evidence Workspace Toolbar (Dropdowns, Filters & Panel Toggles) -->
+        <section class="evidence-toolbar" id="evidence-toolbar">
+            <div class="evidence-toolbar-left">
+                <span class="toolbar-badge">&#128269; 상세 검증 워크스페이스 제어 (Evidence Explorer)</span>
+                <select id="panel-view-filter" class="toolbar-select" title="Choose which evidence panels to display below">
+                    <option value="all">패널 보기: 전체 표시 (스윔레인 + 샌드박스 터미널)</option>
+                    <option value="swimlanes_only">패널 보기: Dual-Track 블라인드 스윔레인만</option>
+                    <option value="terminal_only">패널 보기: 샌드박스 실행 터미널만</option>
+                    <option value="summary_only">패널 보기: 상단 결론 카드만 집중 (하단 모두 접기)</option>
+                </select>
+                <select id="track-a-filter" class="toolbar-select" title="Filter Track A Attacker Swarm tests">
+                    <option value="all">Track A 필터: 전체 공격 테스트</option>
+                    <option value="breached">Track A 필터: &#128293; 돌파된 취약점만 (2/2 FAIL)</option>
+                    <option value="passed">Track A 필터: &#10004; 방어된 불변조건만 (PASS)</option>
+                </select>
+                <select id="track-b-filter" class="toolbar-select" title="Filter Track B Blind Mutants (M1..M8)">
+                    <option value="all">Track B 필터: 전체 블라인드 변이 (M1..M8)</option>
+                    <option value="caught">Track B 필터: &#10004; 탐지됨 (Caught)</option>
+                    <option value="survived">Track B 필터: &#9888; 미탐지 사각지대 (Survived)</option>
+                </select>
+            </div>
+            <div class="evidence-toolbar-right">
+                <button id="toggle-all-details-btn" class="secondary-btn mini-toolbar-btn" type="button">
+                    &#128194; 코드/페이로드 상세 모두 펼치기
+                </button>
+                <button id="toggle-swimlanes-panel-btn" class="secondary-btn mini-toolbar-btn" type="button">
+                    &#9660; 스윔레인 패널 접기
+                </button>
+            </div>
+        </section>
+
         <!-- Stage 1 & 2: Dual-Track Blind Verification Swimlanes ("Lane View") -->
-        <div class="swimlanes">
+        <div id="swimlanes-panel" class="swimlanes">
             <!-- Left Lane: Track A (Invariant Planner + Attacker Swarm) -->
             <div class="lane track-a">
                 <div class="lane-header">
@@ -185,7 +469,7 @@
         </div>
 
         <!-- Stage 3: Antigravity Remote Sandbox Terminal -->
-        <div class="sandbox-terminal">
+        <div id="terminal-panel" class="sandbox-terminal">
             <div class="terminal-header">
                 <div class="terminal-dots">
                     <span class="t-dot red"></span>
@@ -195,87 +479,78 @@
                 <div class="terminal-title">
                     <code>agent="antigravity-preview-09-2026"</code> &mdash; <span>python /workspace/harness/run_dual_track_verification.py</span>
                 </div>
-                <div id="sandbox-status-badge" class="sandbox-badge">IDLE</div>
+                <div class="terminal-header-controls">
+                    <select id="terminal-log-filter" class="terminal-filter-select" title="Filter sandbox terminal output">
+                        <option value="all">전체 로그 (All Logs)</option>
+                        <option value="track_a">Track (a): PR Red-Team &amp; 2x Repro</option>
+                        <option value="track_b">Track (b): 8 Blind Mutants &amp; M/K</option>
+                        <option value="breach_only">&#128293; 돌파/실패 로그만 (Failures Only)</option>
+                    </select>
+                    <button id="toggle-terminal-body-btn" class="terminal-collapse-btn" type="button" title="Collapse or expand sandbox terminal logs">&#9660; 터미널 접기</button>
+                    <div id="sandbox-status-badge" class="sandbox-badge">IDLE</div>
+                </div>
             </div>
             <div id="terminal-output" class="terminal-body">
                 <div class="log-muted">[Antigravity Remote Linux Sandbox Ready] Waiting for verification harness payload...</div>
             </div>
         </div>
-
-        <!-- Stage 4: Human Reviewer One-Card Executive Summary -->
-        <div id="one-card-summary" class="hero-card hidden">
-            <div class="one-card-top">
-                <div id="hero-verdict" class="hero-header"></div>
-                <div class="one-card-utility-btns">
-                    <button id="apply-patch-btn" class="utility-btn patch-btn" type="button" title="Apply Argon's recommended security patch and re-verify in sandbox">
-                        &#128295; <span id="ui-apply-patch-text">권장 패치 적용 후 재검증</span>
-                    </button>
-                    <button id="copy-prompt-btn" class="utility-btn" type="button" title="Copy structured AI fix prompt to clipboard">
-                        &#128203; <span id="ui-copy-prompt-text">AI 수정 프롬프트 복사</span>
-                    </button>
-                    <button id="export-json-btn" class="utility-btn" type="button" title="Download full verification report &amp; decision as JSON">
-                        &#11015; <span id="ui-export-json-text">JSON 리포트 저장</span>
-                    </button>
-                </div>
-            </div>
-
-            <div id="human-decision-stamp" class="decision-stamp hidden"></div>
-
-            <p id="hero-takeaway" class="hero-takeaway"></p>
-
-            <!-- 3 Deterministic Python-Calculated KPI Boxes -->
-            <div class="metrics">
-                <div class="metric-box" id="metric-bugs"></div>
-                <div class="metric-box" id="metric-score"></div>
-                <div class="metric-box" id="metric-risk"></div>
-            </div>
-
-            <!-- Confirmed 2/2 Breaking Tests & Argon Residual Risk Synthesis -->
-            <div class="one-card-columns">
-                <div class="one-card-col">
-                    <h4 class="section-subtitle" id="ui-col-left-title">&#128680; Confirmed PR Breaking Tests (Reproduced 2/2 Times in Sandbox)</h4>
-                    <div id="bug-details" class="bug-details"></div>
-                </div>
-                <div class="one-card-col">
-                    <h4 class="section-subtitle" id="ui-col-right-title">&#129514; Residual Risk &amp; Recommended Security Patch (Argon Synthesis)</h4>
-                    <div id="residual-details" class="residual-details"></div>
-                </div>
-            </div>
-
-            <!-- Human-in-the-Loop Merge Gate Actions -->
-            <div class="human-actions">
-                <div class="reviewer-prompt">
-                    <div id="ui-merge-gate-prompt">
-                        <strong>Human Merge Gate:</strong> Review the confirmed 2/2 breaking tests, the deterministic blind detection score (<span id="inline-score-label"></span>), and surviving mutant blind spots before deciding.
-                    </div>
-                    <input id="reviewer-notes-input" type="text" class="reviewer-notes-input" placeholder="리뷰어 코멘트 입력 (선택 사항 — 예: M8 시계 오차 경계 조건 및 음수 환불 패치 후 재요청)">
-                </div>
-                <div class="action-buttons">
-                    <button id="reject-btn" class="danger-btn" type="button">&#10060; <span id="ui-reject-btn-text">Reject Merge &amp; Request Fixes</span></button>
-                    <button id="approve-btn" class="success-btn" type="button">&#9989; <span id="ui-approve-btn-text">Approve &amp; Merge PR</span></button>
-                </div>
-            </div>
-        </div>
     </main>
 
-    <!-- GitHub PR URL & Custom Diff Import Modal (Ported from Crucible) -->
+    <!-- GitHub PR URL, Custom Diff & Local File Upload Modal -->
     <div id="import-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
         <div class="modal-card">
             <div class="modal-header">
                 <div>
-                    <span class="lane-tag tag-blue">LIVE GITHUB API &amp; CUSTOM PR IMPORTER</span>
-                    <h3 id="modal-heading">실제 GitHub PR URL 또는 커스텀 Diff 불러오기</h3>
+                    <span class="lane-tag tag-blue">LIVE GITHUB API &bull; LOCAL FILE / ZIP UPLOAD &bull; CUSTOM DIFF</span>
+                    <h3 id="modal-heading">내 PC 파일 업로드, GitHub PR URL 또는 커스텀 Diff 불러오기</h3>
                 </div>
                 <button id="close-import-modal-btn" class="modal-close-btn" type="button">&times;</button>
             </div>
 
             <div class="modal-tabs">
-                <button id="tab-github-btn" class="modal-tab active" type="button">&#128279; GitHub PR URL 불러오기</button>
-                <button id="tab-custom-btn" class="modal-tab" type="button">&#128221; 커스텀 PR 코드/Diff 직접 붙여넣기</button>
+                <button id="tab-upload-btn" class="modal-tab active" type="button">&#128193; 내 PC 파일 / ZIP 업로드 (.py, .ts, .diff, .jsonl, .zip)</button>
+                <button id="tab-github-btn" class="modal-tab" type="button">&#128279; GitHub PR URL 불러오기</button>
+                <button id="tab-custom-btn" class="modal-tab" type="button">&#128221; 코드/Diff 직접 붙여넣기</button>
             </div>
 
-            <!-- Tab 1: GitHub PR URL -->
-            <div id="modal-tab-github" class="modal-body">
+            <!-- Tab 1 (Default): Local File / Multi-File / ZIP / JSONL Upload -->
+            <div id="modal-tab-upload" class="modal-body">
+                <div id="file-dropzone" class="file-dropzone" tabindex="0">
+                    <input id="pr-file-input" type="file" multiple accept=".py,.ts,.tsx,.js,.jsx,.diff,.patch,.zip,.json,.jsonl,.yaml,.yml,.go,.java,.rs,.c,.cpp,.h,.md,.txt,.sh,.sql" class="hidden-file-input">
+                    <div class="dropzone-icon">&#128228;</div>
+                    <div class="dropzone-title">클릭하거나 파일을 이곳에 드래그 앤 드롭하세요</div>
+                    <div class="dropzone-sub">
+                        단일/다중 소스 파일(<code>.py</code>, <code>.ts</code>, <code>.tsx</code>, <code>.js</code>), 패치(<code>.diff</code>, <code>.patch</code>), 벤치마크(<code>.jsonl</code>), 또는 전체 폴더 압축(<code>.zip</code>) 지원
+                    </div>
+                </div>
+
+                <div id="uploaded-files-preview" class="uploaded-files-preview hidden"></div>
+
+                <div class="modal-grid-2" style="margin-top:10px;">
+                    <div>
+                        <label class="control-label" for="upload-pr-title">PR 제목 (비워두면 파일명으로 자동 생성)</label>
+                        <input id="upload-pr-title" type="text" class="modal-input" placeholder="예: Custom Benchmark / Auth Service Patch">
+                    </div>
+                    <div>
+                        <label class="control-label" for="upload-pr-repo">레포지토리 / 프로젝트명</label>
+                        <input id="upload-pr-repo" type="text" class="modal-input" value="local-upload/workspace">
+                    </div>
+                </div>
+                <div style="margin-top:8px;">
+                    <label class="control-label" for="upload-entry-file">진입점(Entry) 파일 지정 (다중 파일/ZIP 업로드 시 선택사항 — 자동 Import 그래프 슬라이싱)</label>
+                    <input id="upload-entry-file" type="text" class="modal-input" placeholder="예: src/pages/RefundCheckoutPage.tsx 또는 app/api/refund_router.py (자동 감지 가능)">
+                </div>
+
+                <div id="upload-modal-status" class="import-status"></div>
+
+                <div class="modal-footer-actions">
+                    <button id="clear-upload-files-btn" class="secondary-btn" type="button" style="margin-right:8px;">파일 초기화</button>
+                    <button id="submit-upload-pr-btn" class="primary-btn" type="button">&#9889; 업로드한 파일로 블라인드 검증 실행</button>
+                </div>
+            </div>
+
+            <!-- Tab 2: GitHub PR URL -->
+            <div id="modal-tab-github" class="modal-body hidden">
                 <label class="control-label" for="github-url-input" id="ui-gh-url-label">
                     Public GitHub PR URL 또는 <code>owner/repo#번호</code> 입력
                 </label>
@@ -294,7 +569,7 @@
                 <div id="import-modal-status" class="import-status"></div>
             </div>
 
-            <!-- Tab 2: Custom Paste PR -->
+            <!-- Tab 3: Custom Paste PR -->
             <div id="modal-tab-custom" class="modal-body hidden">
                 <div class="modal-grid-2">
                     <div>
@@ -324,6 +599,6 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=20261016c"></script>
 </body>
 </html>
