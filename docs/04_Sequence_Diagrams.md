@@ -166,12 +166,12 @@ sequenceDiagram
 
 ---
 
-## 5. 시나리오 4: 인터랙티브 사각지대 캘리브레이션, 자동 패치 재검증 및 병합 승인 (Interactive Calibration, Patch & Merge Gate)
+## 5. 시나리오 4: 반례 기반 최대 5회 자가 치유 패치(CEGIS), 회귀 테스트 번들 추출 및 병합 승인 (🥇 1위 & 🥈 2위 기능)
 
 초기 검증 완료 후(예: 실제 결함 3건 발견, 블라인드 변이 `7/8 = 87.5%` 포착, `M8` 생존), 인간 리뷰어가:
 1. **커스텀 블라인드 버그(`M9`)**를 직접 추가해 채점기를 테스트하고,
-2. **[권장 패치 적용 후 재검증]**을 실행하여 5회 공격 루프 방어(`5/5 Defended, 0건 결함`) 및 변이 탐지율 `100%`를 확인한 뒤,
-3. 최종 **[Approve & Merge PR]** 결정을 내리는 시퀀스입니다.
+2. **[🔧 권장 패치 적용 후 재검증 (CEGIS Self-Healing Loop)]**을 실행하여 `patch_node` ↔ `patch_verify_node`(`patch_id` 연동, 최대 5회)가 **Attempt 1 실패 반례(`FAILED_COUNTEREXAMPLE`)**를 딛고 **Attempt 2에서 4대 게이트 완주(`VERIFIED`, 결함 0건, 탐지율 100%)**를 달성하는 과정을 확인하며,
+3. **[📦 Export Verified PR + Regression Test Bundle]**로 패치 Diff + 고정된 `pytest` 회귀 테스트 파일 + CI YAML을 추출한 뒤 최종 **[Approve & Merge PR]** 결정을 내리는 시퀀스입니다.
 
 ```mermaid
 sequenceDiagram
@@ -179,30 +179,46 @@ sequenceDiagram
     actor User as 👤 Human Tech Lead
     participant UI as 🖥️ Frontend UI (app.js)
     participant API as ⚡ FastAPI Server (main.py)
+    participant PatchNode as 🔧 Patch Synthesizer<br/>(gemini-4-argon / patch_node)
+    participant VerifyNode as 🐳 4-Gate Patch Verifier<br/>(patch_verify_node, patch_id wired)
     participant Scorer as 📐 Python Scoring Engine<br/>(backend/scoring.py)
     participant Store as 🗄️ Audit Decision Store<br/>(HUMAN_DECISIONS_STORE)
 
-    Note over User,UI: 초기 검증 완료 상태: 결함 3건 (Attempt 2~3/5 돌파), 변이 탐지율 7/8 (87.5%), M8 생존
+    Note over User,UI: 초기 검증 완료 상태: PROVEN 결함 3건 (Attempt 2~3/5 돌파), 변이 탐지율 7/8 (87.5%), M8 생존
 
     %% 1. Custom Blind Mutant Injection
     User->>UI: Click [+ 커스텀 버그 심기] & Submit M9 ("Negative fee bypass")
     UI->>API: POST /api/verify/add-mutant {pr_id, category, title, caught}
-    API->>API: Append M9 to blind_mutants & update mutant_matrix[M9]
-    API->>Scorer: compute_deterministic_scores(swarm_outputs, blind_mutants, sandbox_report)
-    Scorer-->>API: Updated DeterministicScoreReport (e.g., 8 of 9 caught — 88.9%)
+    API->>Scorer: compute_deterministic_scores(swarm_outputs, blind_mutants + M9, sandbox_report)
+    Scorer-->>API: Updated DeterministicScoreReport (8 of 9 caught — 88.9%)
     API-->>UI: FullVerificationRunResponse (with M9 included)
-    UI-->>User: Update Track B Mutant Grid & KPI Score Badge
 
-    %% 2. Apply Recommended Patch & Re-verify
-    User->>UI: Click [🔧 권장 패치 적용 후 재검증 (Apply Patch & Re-verify)]
-    UI->>API: POST /api/verify/apply-patch {pr_id, phase_mode="phase2_full"}
-    Note over API: 1. Argon 권장 보안 패치 적용<br/>2. Track (a) 모든 공격 벡터가 5/5 라운드 방어 성공(DEFENDED, Run 1=PASS, Run 2=PASS)<br/>3. Track (b) 생존 변이(M8)가 보강된 불변성 테스트에 의해 FAIL(사살)됨
+    %% 2. 🥇 1위: Counterexample-Guided Self-Healing Patch Loop (CEGIS, Max 5 Attempts)
+    User->>UI: Click [🔧 권장 패치 적용 후 재검증 (CEGIS Self-Healing Loop)]
+    UI->>API: POST /api/verify/apply-patch {pr_id, max_patch_attempts=5}
+
+    API->>PatchNode: Attempt 1/5: Generate candidate security patch (mint patch_id="patch_3802_...")
+    PatchNode-->>VerifyNode: Candidate Patch #1 + patch_id
+    VerifyNode->>VerifyNode: Gate 1 (AST: PASS) · Gate 2 (Semgrep: PASS) · Gate 3 (Pinned DAST: FAIL!)
+    VerifyNode-->>PatchNode: Status = FAILED_COUNTEREXAMPLE<br/>Counterexample: "Escaped quote blocked, but ';' chaining & Mutant M8 still survive!"
+
+    API->>PatchNode: Attempt 2/5: Re-synthesize patch with Counterexample Trace feedback
+    PatchNode-->>VerifyNode: Candidate Patch #2 + patch_id
+    VerifyNode->>VerifyNode: Gate 1 (AST: PASS) · Gate 2 (Semgrep: PASS) · Gate 3 (Pinned DAST: PASS) · Gate 4 (Mutant Kill 100%: PASS)
+    VerifyNode-->>API: SelfHealingPatchReport (verified_on_attempt=2, final_status="VERIFIED")
+
     API->>Scorer: compute_deterministic_scores()
     Scorer-->>API: DeterministicScoreReport (confirmed_pr_failures=0, detection_score_pct=100.0%)
-    API-->>UI: FullVerificationRunResponse (headline_verdict="APPROVE_RECOMMENDED", risk="LOW")
-    UI-->>User: Update One-Card to Green [APPROVE_RECOMMENDED] (5/5 Defended, 0 Defects, 100% Caught)
+    API-->>UI: FullVerificationRunResponse + SelfHealingPatchReport (headline_verdict="APPROVE_RECOMMENDED")
+    UI-->>User: Render CEGIS Attempt 1 (FAILED) -> Attempt 2 (VERIFIED) Timeline & 100% Score
 
-    %% 3. Final Human Merge Decision
+    %% 3. 🥈 2위: Export Verified PR + Pinned Regression Test Bundle
+    User->>UI: Click [📦 Export Verified PR + Regression Test Bundle]
+    UI->>API: POST /api/prs/export-bundle {pr_id, patch_id}
+    API-->>UI: VerifiedPRBundleResponse {<br/>  verified_patch_diff,<br/>  regression_test_file: "tests/security/test_argus_regression_*.py",<br/>  ci_workflow_snippet: ".github/workflows/argus-security-regression.yml"<br/>}
+    UI-->>User: Show Export Bundle Modal (Copy All / Download Commit Package)
+
+    %% 4. Final Human Merge Decision
     User->>UI: Enter reviewer notes & Click [✅ Approve & Merge PR]
     UI->>API: POST /api/decision {run_id, pr_id, decision="APPROVE_MERGE", reviewer_notes}
     API->>Store: Append decision record (id, run_id, pr_id, decision, recorded_at)
@@ -210,3 +226,35 @@ sequenceDiagram
     API-->>UI: {status: "RECORDED", decision}
     UI-->>User: Render Official Stamp [APPROVED BY HUMAN TECH LEAD]
 ```
+
+---
+
+## 6. 시나리오 5: 다중 페르소나 교차 테넌트 BOLA/IDOR 검증 시퀀스 (🥉 3위 Multi-Persona AuthZ Matrix)
+
+순수 격리 네트워크(`dast-isolated-net`, Nginx 역접근이 완전 분리된 환경)에서 구동되는 백엔드 데몬을 대상으로 3개의 샌드박스 페르소나(`Tenant A Owner`, `Tenant B Attacker`, `Anonymous`)를 발급하여 교차 테넌트 권한 우회(`CWE-639`)를 2회 연속 재현으로 적발하는 시퀀스입니다.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Swarm as 🐝 Security Attacker<br/>(Multi-Persona AuthZ Agent)
+    participant Mint as 🔑 Sandbox Persona Minter
+    participant Server as 🖥️ Target Backend Daemon<br/>(dast-isolated-net :18080)
+    participant Repro as 🔁 2x Differential Verifier
+
+    Swarm->>Mint: Mint 3 Isolated Sandbox Personas
+    Mint-->>Swarm: 1. Tenant A Owner (jwt_tenant_A)<br/>2. Tenant B Attacker (jwt_tenant_B)<br/>3. Anonymous Guest (no token)
+
+    %% Step 1: Victim creates or owns resource
+    Swarm->>Server: [Baseline] POST /api/v1/refunds/instant (Header: Bearer jwt_tenant_A, resource="ch_A100")
+    Server-->>Swarm: HTTP 200 OK (Expected Owner Access)
+
+    %% Step 2: Cross-Tenant Attacker replays against Victim's resource
+    Swarm->>Server: [Cross-Tenant Attack] POST /api/v1/refunds/instant (Header: Bearer jwt_tenant_B, resource="ch_A100")
+    Server-->>Swarm: HTTP 200 OK {"status": "REFUNDED", "hijacked_by": "tenant_B"} — 🚨 BOLA BREACHED!
+
+    %% Step 3: 2x Reproducibility & Pinned Test Generation
+    Swarm->>Repro: Run 1 & Run 2 Differential Replay (Expected: 403 Forbidden, Actual: 200 OK)
+    Repro->>Server: Run 1 & Run 2 with Bearer jwt_tenant_B on ch_A100 -> Both HTTP 200 OK
+    Repro-->>Swarm: Confirmed 2/2 Reproducible BOLA (CWE-639, evidence_tier="PROVEN")
+```
+
