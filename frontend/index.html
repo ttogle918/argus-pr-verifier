@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARGUS-PR | AI Swarm PR Red-Teaming &amp; Blind Meta-Verifier</title>
-    <link rel="stylesheet" href="styles.css?v=20261016c">
+    <link rel="stylesheet" href="styles.css?v=20261016e">
 </head>
 <body>
     <!-- Top Telemetry Header -->
@@ -63,7 +63,7 @@
                 <button id="open-import-modal-btn" class="import-pr-btn" type="button" title="Upload local files (.py, .ts, .diff, .jsonl, .zip), import a live GitHub PR by URL, or paste custom diff">
                     + 파일 업로드 / GitHub PR 불러오기
                 </button>
-                <button id="toggle-diff-btn" class="secondary-btn" type="button">PR Diff 보기</button>
+                <button id="toggle-diff-btn" class="secondary-btn" type="button"><span class="demo-step-badge">🔴 1</span> <span id="ui-view-diff-text">PR Diff 보기</span></button>
             </div>
         </div>
 
@@ -77,7 +77,7 @@
                 <span id="ui-mode-toggle-text">Recorded Sandbox Replay (Safe Mode)</span>
             </label>
             <button id="launch-btn" class="primary-btn" type="button">
-                <span class="btn-icon">&#9889;</span> <span id="ui-launch-btn-text">Launch Blind Verification Swarm</span>
+                <span class="demo-step-badge">🔴 2</span> <span class="btn-icon">&#9889;</span> <span id="ui-launch-btn-text">블라인드 검증 스웜 실행</span>
             </button>
         </div>
     </section>
@@ -309,7 +309,7 @@
                 <div id="hero-verdict" class="hero-header"></div>
                 <div class="one-card-utility-btns">
                     <button id="apply-patch-btn" class="utility-btn patch-btn" type="button" title="Apply Argon's recommended security patch and re-verify in sandbox">
-                        &#128295; <span id="ui-apply-patch-text">권장 패치 적용 후 재검증</span>
+                        <span class="demo-step-badge">🔴 5</span> &#128295; <span id="ui-apply-patch-text">권장 패치 적용 후 재검증</span>
                     </button>
                     <button id="copy-prompt-btn" class="utility-btn" type="button" title="Copy structured AI fix prompt to clipboard">
                         &#128203; <span id="ui-copy-prompt-text">AI 수정 프롬프트 복사</span>
@@ -361,9 +361,9 @@
                     <input id="reviewer-notes-input" type="text" class="reviewer-notes-input" placeholder="리뷰어 코멘트 입력 (선택 사항 — 예: M8 시계 오차 경계 조건 및 음수 환불 패치 후 재요청)">
                 </div>
                 <div class="action-buttons">
-                    <button id="export-bundle-btn" class="utility-btn bundle-export-btn" type="button" title="Export Verified PR Diff + Pinned PROVEN Security Regression Test Bundle">&#128230; <span id="ui-export-bundle-text">Export PR + Pinned Regression Test</span></button>
-                    <button id="reject-btn" class="danger-btn" type="button">&#10060; <span id="ui-reject-btn-text">Reject Merge &amp; Request Fixes</span></button>
-                    <button id="approve-btn" class="success-btn" type="button">&#9989; <span id="ui-approve-btn-text">Approve &amp; Merge PR</span></button>
+                    <button id="export-bundle-btn" class="utility-btn bundle-export-btn" type="button" title="Export Verified PR Diff + Pinned PROVEN Security Regression Test Bundle"><span class="demo-step-badge">🔴 6</span> &#128230; <span id="ui-export-bundle-text">Export PR + Pinned Regression Test</span></button>
+                    <button id="reject-btn" class="danger-btn" type="button"><span class="demo-step-badge">🔴 7</span> &#10060; <span id="ui-reject-btn-text">Reject Merge &amp; Request Fixes</span></button>
+                    <button id="approve-btn" class="success-btn" type="button"><span class="demo-step-badge">🔴 7</span> &#9989; <span id="ui-approve-btn-text">Approve &amp; Merge PR</span></button>
                 </div>
             </div>
         </div>
@@ -438,7 +438,7 @@
                     </div>
                     <div class="lane-header-actions">
                         <button id="toggle-mutant-form-btn" class="mini-action-btn" type="button" title="Plant an additional custom bug to test deterministic M/K calibration">
-                            + 커스텀 버그 심기
+                            <span class="demo-step-badge">🔴 4</span> <span id="ui-add-mutant-text">+ 커스텀 버그 심기</span>
                         </button>
                         <span class="model-tag">gemini-4-argon (Isolated)</span>
                     </div>
@@ -462,7 +462,7 @@
                             <option value="true">Caught (탐지됨)</option>
                             <option value="false">Survived (미탐지 사각지대)</option>
                         </select>
-                        <button id="submit-custom-mutant-btn" class="primary-btn mini-submit-btn" type="button">추가 &amp; 재계산</button>
+                        <button id="submit-custom-mutant-btn" class="primary-btn mini-submit-btn" type="button"><span class="demo-step-badge">🔴 4-1</span> 추가 &amp; 재계산</button>
                     </div>
                 </div>
 

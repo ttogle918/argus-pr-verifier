@@ -1,13 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="100%" style="background:#ffffff; font-family:'IBM Plex Sans KR',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;">
   <defs>
-    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <marker id="arr-blue-cg" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 1 L 10 5 L 0 9 z" fill="#3a5bd0"/>
     </marker>
-    <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <marker id="arr-red-cg" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 1 L 10 5 L 0 9 z" fill="#e11d48"/>
-    </marker>
-    <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1b5e35"/>
     </marker>
   </defs>
 
@@ -15,13 +12,12 @@
     <text x="0" y="10" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#858da8" font-weight="600">POST-REVIEW ENTERPRISE EXPANSION: CEGIS LOOP &amp; ASSET PINNING</text>
   </g>
 
-  <!-- Left: CEGIS Loop (520px wide) -->
+  <!-- Left: CEGIS Loop -->
   <g transform="translate(40, 45)">
     <rect width="520" height="395" rx="8" fill="#f8faff" stroke="#c5d4f8" stroke-width="1.5"/>
     <text x="20" y="26" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">TOP 1 FEATURE · CEGIS SELF-HEALING LOOP</text>
     <text x="20" y="48" font-size="15.5" font-weight="700" fill="#12172b">반례 유도 최대 5회 자가 치유 패치 루프</text>
 
-    <!-- Cycle illustration -->
     <!-- Node 1: Patch Synthesizer -->
     <g transform="translate(20, 75)">
       <rect width="210" height="70" rx="6" fill="#eef2fd" stroke="#c5d4f8"/>
@@ -30,8 +26,7 @@
       <text x="12" y="56" font-size="10.5" fill="#4a5273">patch_id 부여 / 세션당 최대 5회</text>
     </g>
 
-    <!-- Arrow right to Gate Verifier -->
-    <line x1="230" y1="110" x2="275" y2="110" stroke="#3a5bd0" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+    <line x1="230" y1="110" x2="275" y2="110" stroke="#3a5bd0" stroke-width="1.5" marker-end="url(#arr-blue-cg)"/>
 
     <!-- Node 2: 4-Gate Verifier -->
     <g transform="translate(285, 75)">
@@ -52,8 +47,8 @@
       </g>
     </g>
 
-    <!-- Feedback Arrow (Loop back on failure) -->
-    <path d="M 390 225 L 390 260 L 125 260 L 125 155" fill="none" stroke="#e11d48" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arrow-red)"/>
+    <!-- Feedback Arrow -->
+    <path d="M 390 225 L 390 260 L 125 260 L 125 155" fill="none" stroke="#e11d48" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-red-cg)"/>
     <text x="250" y="252" text-anchor="middle" font-size="10" font-weight="600" fill="#e11d48">실패 시: FAILED_COUNTEREXAMPLE 반례 피드백 (Attempt k &lt; 5)</text>
 
     <!-- Success Outcome -->
@@ -61,12 +56,12 @@
       <rect width="480" height="85" rx="6" fill="#e8f5ed" stroke="#bde4ce"/>
       <text x="14" y="22" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="600">4대 게이트 전건 통과 시 ➔ VERIFIED 확정</text>
       <text x="14" y="42" font-size="12" font-weight="700" fill="#12172b">Attempt 1(반례) ➔ Attempt 2(완전 패치)로 결함 0건 &amp; 탐지율 100% 입증</text>
-      <text x="14" y="62" font-size="11" fill="#4a5273">• Cisco sandbox.py 파이프라인 쿼트(\") 및 세미콜론(;) 체이닝 우회 근본 차단</text>
+      <text x="14" y="62" font-size="11" fill="#4a5273">• Cisco sandbox.py 파이프라인 쿼트(") 및 세미콜론(;) 체이닝 우회 근본 차단</text>
       <text x="14" y="76" font-size="11" fill="#1b5e35" font-weight="600">• AI가 짠 패치를 또 다른 샌드박스가 4중 검증하므로 환각 패치 배제</text>
     </g>
   </g>
 
-  <!-- Right: Pinned Regression & Merge Gate (Width 370) -->
+  <!-- Right: Pinned Regression & Merge Gate -->
   <g transform="translate(590, 45)">
     <rect width="370" height="395" rx="8" fill="#fdfbf7" stroke="#eddab3" stroke-width="1.5"/>
     <text x="20" y="26" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#c27803" font-weight="600">TOP 2 &amp; 3 · ASSET PINNING &amp; MERGE GATE</text>

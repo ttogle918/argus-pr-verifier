@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="100%" style="background:#ffffff; font-family:'IBM Plex Sans KR',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;">
+  <g transform="translate(40, 20)">
+    <text x="0" y="10" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#858da8" font-weight="600">LAYER A: IN-APP RUNTIME MODEL ROUTING VS. LAYER B: BUILD-TIME SUBAGENTS</text>
+  </g>
+
+  <!-- Left: Layer A Runtime -->
+  <g transform="translate(40, 45)">
+    <rect width="440" height="395" rx="8" fill="#f8faff" stroke="#c5d4f8" stroke-width="1.5"/>
+    <text x="20" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">LAYER A · IN-APP RUNTIME ROUTING</text>
+    <text x="20" y="52" font-size="16" font-weight="700" fill="#12172b">런타임 특화 모델 배분 (Interactions API)</text>
+
+    <g transform="translate(16, 70)">
+      <rect width="408" height="66" rx="6" fill="#e8f5ed" stroke="#bde4ce"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="600">gemini-3.5-flash-lite · 초저지연 가드레일</text>
+      <text x="14" y="38" font-size="12.5" font-weight="700" fill="#12172b">Stage 0: 비신뢰 PR 프롬프트 인젝션 방어</text>
+      <text x="14" y="54" font-size="11" fill="#4a5273">~68ms 지연시간 | store=False | 악성 주석·탈옥 지시 선제 차단</text>
+    </g>
+
+    <g transform="translate(16, 146)">
+      <rect width="408" height="74" rx="6" fill="#eef2fd" stroke="#c5d4f8"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">gemini-4-argon · 깊은 추론 (High Thinking)</text>
+      <text x="14" y="38" font-size="12.5" font-weight="700" fill="#12172b">Stage 1A/1B 블라인드 격리 &amp; Stage 4b 요약</text>
+      <text x="14" y="54" font-size="11" fill="#4a5273">불변조건 추출 / 8개 변이 심기 (store=False로 상호 격리) / One-Card 생성</text>
+      <text x="14" y="67" font-size="10.5" fill="#2544a8">※ 최고 추론 역량이 필요한 정형 로직 및 패치 합성에만 전략적 배치</text>
+    </g>
+
+    <g transform="translate(16, 230)">
+      <rect width="408" height="74" rx="6" fill="#ffffff" stroke="#dfe3ee"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#4a5273" font-weight="600">gemini-3.8-flash · 4x 병렬 스웜 (asyncio.gather)</text>
+      <text x="14" y="38" font-size="12.5" font-weight="700" fill="#12172b">Stage 2: 4대 레드팀 공격 테스트 동시 작성</text>
+      <text x="14" y="54" font-size="11" fill="#4a5273">Security (BOLA) · Edge · State · Regression 4개 에이전트 병렬</text>
+      <text x="14" y="67" font-size="10.5" fill="#1b5e35">※ 속도와 정밀도 최적 균형으로 대규모 pytest 코드 고속 생성</text>
+    </g>
+
+    <g transform="translate(16, 314)">
+      <rect width="408" height="66" rx="6" fill="#fdfbf7" stroke="#eddab3"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#c27803" font-weight="600">antigravity-preview-09-2026 · 원격 샌드박스</text>
+      <text x="14" y="38" font-size="12.5" font-weight="700" fill="#12172b">Stage 3: 격리망 내 듀얼트랙 실행 및 재현</text>
+      <text x="14" y="54" font-size="11" fill="#684f18">dast-isolated-net | 2회 연속 재현 (2x Repro) | 원본 통과 ∧ 변이 실패 판정</text>
+    </g>
+  </g>
+
+  <!-- Right: Layer B Build-Time Subagents -->
+  <g transform="translate(520, 45)">
+    <rect width="440" height="395" rx="8" fill="#fdfbf7" stroke="#eddab3" stroke-width="1.5"/>
+    <text x="20" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#c27803" font-weight="600">LAYER B · BUILD-TIME DELEGATION</text>
+    <text x="20" y="52" font-size="16" font-weight="700" fill="#12172b">서브에이전트 작업 위임 기준 (invoke_subagent)</text>
+
+    <!-- Top Lead Agent -->
+    <g transform="translate(16, 70)">
+      <rect width="408" height="52" rx="6" fill="#12172b"/>
+      <text x="14" y="22" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#818cf8" font-weight="600">👑 Lead Architect (Parent Session / Antigravity)</text>
+      <text x="14" y="38" font-size="11" fill="#e0f2fe">전체 00~10 스펙 설계, models.py 스키마, 100% 결정론적 scoring.py 직접 구현</text>
+    </g>
+
+    <g transform="translate(16, 132)">
+      <rect width="408" height="120" rx="6" fill="#eef2fd" stroke="#c5d4f8"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">🧠 PRO TIER (Gemini 4 Argon) · 고난도 아키텍처 및 UI</text>
+      <text x="14" y="38" font-size="11.5" font-weight="700" fill="#12172b">• Subagent #1: Blind Verification &amp; Sandbox Architect</text>
+      <text x="24" y="53" font-size="10.5" fill="#4a5273">산출물: gemini_swarm.py, sandbox_runner.py (store=False 정보 격리)</text>
+      <text x="14" y="73" font-size="11.5" font-weight="700" fill="#12172b">• Subagent #3: Swimlane &amp; One-Card UI Engineer</text>
+      <text x="24" y="88" font-size="10.5" fill="#4a5273">산출물: frontend/index.html, styles.css, app.js (실시간 SSE + 8-변이 UI)</text>
+      <text x="14" y="108" font-size="10.5" fill="#2544a8" font-weight="600">위임 기준: 복잡한 상태 머신, 엄격한 보안 격리, 높은 추론이 필수적인 영역</text>
+    </g>
+
+    <g transform="translate(16, 262)">
+      <rect width="408" height="120" rx="6" fill="#ffffff" stroke="#dfe3ee"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="600">⚡ FLASH TIER (Gemini 3.8 Flash) · 초고속 데이터 &amp; E2E 캡처</text>
+      <text x="14" y="38" font-size="11.5" font-weight="700" fill="#12172b">• Subagent #2: PR Benchmark &amp; FastAPI SSE Builder</text>
+      <text x="24" y="53" font-size="10.5" fill="#4a5273">산출물: sample_prs.py, main.py (방대한 시나리오 및 보일러플레이트 고속 생성)</text>
+      <text x="14" y="73" font-size="11.5" font-weight="700" fill="#12172b">• Subagent #4: E2E Verifier &amp; GIF Recorder</text>
+      <text x="24" y="88" font-size="10.5" fill="#4a5273">산출물: scripts/record_gif.py, argus_pr_demo.gif (Playwright E2E 자동 녹화)</text>
+      <text x="14" y="108" font-size="10.5" fill="#1b5e35" font-weight="600">위임 기준: 정형 데이터셋 생성, API 보일러플레이트, 반복 자동화 스크립트</text>
+    </g>
+  </g>
+</svg>

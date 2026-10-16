@@ -1,31 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="100%" style="background:#ffffff; font-family:'IBM Plex Sans KR',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;">
   <defs>
-    <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1b5e35"/>
-    </marker>
-    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <marker id="arr-blue-uj" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 1 L 10 5 L 0 9 z" fill="#3a5bd0"/>
     </marker>
-    <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#c27803"/>
-    </marker>
-    <marker id="arrow-rose" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#e11d48"/>
+    <marker id="arr-green-uj" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1b5e35"/>
     </marker>
   </defs>
 
-  <!-- Step Labels Top -->
   <g transform="translate(40, 20)">
     <text x="0" y="10" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#858da8" font-weight="600">END-TO-END HUMAN REVIEWER FLOW</text>
   </g>
 
-  <!-- Step 1: Input & Scope (Amber tint) -->
+  <!-- Step 1: Input & Scope -->
   <g transform="translate(40, 50)">
     <rect width="210" height="380" rx="8" fill="#fdfbf7" stroke="#eddab3" stroke-width="1.5"/>
     <text x="18" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#c27803" font-weight="600">STEP 1 · INTAKE</text>
     <text x="18" y="52" font-size="15" font-weight="700" fill="#12172b">PR 선택 &amp; 범위 분석</text>
 
-    <!-- Sub blocks -->
     <g transform="translate(14, 70)">
       <rect width="182" height="70" rx="5" fill="#ffffff" stroke="#eddab3"/>
       <text x="10" y="20" font-size="11" font-weight="600" fill="#12172b">1. PR 입력 방식 3종</text>
@@ -54,16 +46,14 @@
     </g>
   </g>
 
-  <!-- Arrow 1 -> 2 -->
-  <line x1="250" y1="240" x2="278" y2="240" stroke="#858da8" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <line x1="250" y1="240" x2="278" y2="240" stroke="#858da8" stroke-width="1.5" marker-end="url(#arr-blue-uj)"/>
 
-  <!-- Step 2: Verification Pipeline (Blue tint) -->
+  <!-- Step 2: Verification Pipeline -->
   <g transform="translate(285, 50)">
     <rect width="210" height="380" rx="8" fill="#eef2fd" stroke="#c5d4f8" stroke-width="1.5"/>
     <text x="18" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">STEP 2 · VERIFICATION</text>
     <text x="18" y="52" font-size="15" font-weight="700" fill="#12172b">블라인드 검증 파이프라인</text>
 
-    <!-- Sub blocks -->
     <g transform="translate(14, 70)">
       <rect width="182" height="85" rx="5" fill="#ffffff" stroke="#c5d4f8"/>
       <text x="10" y="18" font-size="11" font-weight="600" fill="#12172b">1. 듀얼 트랙 스윔레인</text>
@@ -93,16 +83,14 @@
     </g>
   </g>
 
-  <!-- Arrow 2 -> 3 -->
-  <line x1="495" y1="240" x2="523" y2="240" stroke="#858da8" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <line x1="495" y1="240" x2="523" y2="240" stroke="#858da8" stroke-width="1.5" marker-end="url(#arr-blue-uj)"/>
 
-  <!-- Step 3: Synthesis & Review (Neutral/Mint tint) -->
+  <!-- Step 3: Synthesis & Review -->
   <g transform="translate(530, 50)">
     <rect width="210" height="380" rx="8" fill="#e8f5ed" stroke="#bde4ce" stroke-width="1.5"/>
     <text x="18" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="600">STEP 3 · SYNTHESIS</text>
     <text x="18" y="52" font-size="15" font-weight="700" fill="#12172b">One-Card 요약 &amp; 심사</text>
 
-    <!-- Sub blocks -->
     <g transform="translate(14, 70)">
       <rect width="182" height="90" rx="5" fill="#ffffff" stroke="#bde4ce"/>
       <text x="10" y="18" font-size="11" font-weight="600" fill="#12172b">1. 3대 핵심 확정 지표</text>
@@ -131,16 +119,14 @@
     </g>
   </g>
 
-  <!-- Arrow 3 -> 4 -->
-  <line x1="740" y1="240" x2="768" y2="240" stroke="#858da8" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <line x1="740" y1="240" x2="768" y2="240" stroke="#858da8" stroke-width="1.5" marker-end="url(#arr-green-uj)"/>
 
-  <!-- Step 4: Post-Review Actions (Rose tint) -->
+  <!-- Step 4: Post-Review Actions -->
   <g transform="translate(775, 50)">
     <rect width="185" height="380" rx="8" fill="#fdf2f2" stroke="#f6caca" stroke-width="1.5"/>
     <text x="16" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#8e2b2b" font-weight="600">STEP 4 · ACTION</text>
     <text x="16" y="52" font-size="15" font-weight="700" fill="#12172b">후속 조치 &amp; 병합</text>
 
-    <!-- Sub blocks -->
     <g transform="translate(12, 70)">
       <rect width="161" height="90" rx="5" fill="#ffffff" stroke="#f6caca"/>
       <text x="8" y="18" font-size="10.5" font-weight="700" fill="#8e2b2b">🥇 CEGIS 자가 치유</text>
@@ -164,7 +150,7 @@
       <text x="8" y="18" font-size="10.5" font-weight="700" fill="#12172b">🏁 Human Merge Gate</text>
       <text x="8" y="34" font-size="10" fill="#e11d48" font-weight="600">• ❌ Reject Merge</text>
       <text x="8" y="48" font-size="10" fill="#1b5e35" font-weight="600">• ✅ Approve &amp; Merge</text>
-      <text x="8" y="64" font-size="10" fill="#4a5273">• 감사 로그(Store) 영구 보관</text>
+      <text x="8" y="64" font-size="10" fill="#4a5273">• 감사 로그 영구 보관</text>
       <text x="8" y="78" font-size="10" fill="#4a5273">• 리뷰어 스탬프 발행</text>
     </g>
   </g>

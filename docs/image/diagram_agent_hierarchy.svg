@@ -1,24 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="100%" style="background:#ffffff; font-family:'IBM Plex Sans KR',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;">
-  <defs>
-    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#3a5bd0"/>
-    </marker>
-    <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1b5e35"/>
-    </marker>
-  </defs>
-
   <g transform="translate(40, 20)">
     <text x="0" y="10" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#858da8" font-weight="600">LAYER A: IN-APP RUNTIME MODEL ROUTING VS. LAYER B: BUILD-TIME SUBAGENTS</text>
   </g>
 
-  <!-- Left: Layer A Runtime (Width 450) -->
+  <!-- Left: Layer A Runtime -->
   <g transform="translate(40, 45)">
     <rect width="440" height="395" rx="8" fill="#f8faff" stroke="#c5d4f8" stroke-width="1.5"/>
     <text x="20" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">LAYER A · IN-APP RUNTIME ROUTING</text>
     <text x="20" y="52" font-size="16" font-weight="700" fill="#12172b">런타임 특화 모델 배분 (Interactions API)</text>
 
-    <!-- Card 1: Flash-Lite (Green tint) -->
     <g transform="translate(16, 70)">
       <rect width="408" height="66" rx="6" fill="#e8f5ed" stroke="#bde4ce"/>
       <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="600">gemini-3.5-flash-lite · 초저지연 가드레일</text>
@@ -26,7 +16,6 @@
       <text x="14" y="54" font-size="11" fill="#4a5273">~68ms 지연시간 | store=False | 악성 주석·탈옥 지시 선제 차단</text>
     </g>
 
-    <!-- Card 2: Argon (Indigo tint) -->
     <g transform="translate(16, 146)">
       <rect width="408" height="74" rx="6" fill="#eef2fd" stroke="#c5d4f8"/>
       <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">gemini-4-argon · 깊은 추론 (High Thinking)</text>
@@ -35,7 +24,6 @@
       <text x="14" y="67" font-size="10.5" fill="#2544a8">※ 최고 추론 역량이 필요한 정형 로직 및 패치 합성에만 전략적 배치</text>
     </g>
 
-    <!-- Card 3: 3.8-Flash (Purple/Blue tint) -->
     <g transform="translate(16, 230)">
       <rect width="408" height="74" rx="6" fill="#ffffff" stroke="#dfe3ee"/>
       <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#4a5273" font-weight="600">gemini-3.8-flash · 4x 병렬 스웜 (asyncio.gather)</text>
@@ -44,7 +32,6 @@
       <text x="14" y="67" font-size="10.5" fill="#1b5e35">※ 속도와 정밀도 최적 균형으로 대규모 pytest 코드 고속 생성</text>
     </g>
 
-    <!-- Card 4: Antigravity Sandbox (Amber tint) -->
     <g transform="translate(16, 314)">
       <rect width="408" height="66" rx="6" fill="#fdfbf7" stroke="#eddab3"/>
       <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#c27803" font-weight="600">antigravity-preview-09-2026 · 원격 샌드박스</text>
@@ -53,7 +40,7 @@
     </g>
   </g>
 
-  <!-- Right: Layer B Build-Time Subagents (Width 450) -->
+  <!-- Right: Layer B Build-Time Subagents -->
   <g transform="translate(520, 45)">
     <rect width="440" height="395" rx="8" fill="#fdfbf7" stroke="#eddab3" stroke-width="1.5"/>
     <text x="20" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#c27803" font-weight="600">LAYER B · BUILD-TIME DELEGATION</text>
@@ -66,7 +53,6 @@
       <text x="14" y="38" font-size="11" fill="#e0f2fe">전체 00~10 스펙 설계, models.py 스키마, 100% 결정론적 scoring.py 직접 구현</text>
     </g>
 
-    <!-- Subagent 1 & 3: Pro tier -->
     <g transform="translate(16, 132)">
       <rect width="408" height="120" rx="6" fill="#eef2fd" stroke="#c5d4f8"/>
       <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">🧠 PRO TIER (Gemini 4 Argon) · 고난도 아키텍처 및 UI</text>
@@ -77,7 +63,6 @@
       <text x="14" y="108" font-size="10.5" fill="#2544a8" font-weight="600">위임 기준: 복잡한 상태 머신, 엄격한 보안 격리, 높은 추론이 필수적인 영역</text>
     </g>
 
-    <!-- Subagent 2 & 4: Flash tier -->
     <g transform="translate(16, 262)">
       <rect width="408" height="120" rx="6" fill="#ffffff" stroke="#dfe3ee"/>
       <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="600">⚡ FLASH TIER (Gemini 3.8 Flash) · 초고속 데이터 &amp; E2E 캡처</text>

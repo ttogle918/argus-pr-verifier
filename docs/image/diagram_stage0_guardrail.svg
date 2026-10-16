@@ -1,20 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="100%" style="background:#ffffff; font-family:'IBM Plex Sans KR',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;">
   <defs>
-    <marker id="arr-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <marker id="arr-blue-s0" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 1 L 10 5 L 0 9 z" fill="#3a5bd0"/>
     </marker>
-    <marker id="arr-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#e11d48"/>
-    </marker>
-    <marker id="arr-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <marker id="arr-green-s0" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 1 L 10 5 L 0 9 z" fill="#1b5e35"/>
     </marker>
   </defs>
 
-  <!-- Header Category -->
   <g transform="translate(40, 20)">
     <circle cx="6" cy="6" r="4" fill="#c27803"/>
-    <text x="16" y="10" font-size="11" fill="#4a5273" font-family="'IBM Plex Mono', monospace" font-weight="600">STAGE 0 &amp; 0.5 · PRE-FLIGHT INTAKE &amp; SCOPE TRIAGE</text>
+    <text x="16" y="10" font-size="11" fill="#4a5273" font-family="'IBM Plex Mono', monospace" font-weight="600">STAGE 0 &amp; 0.5 · 외곽 보안 검문 &amp; 스마트 스코프 슬라이서</text>
   </g>
 
   <!-- Left: Raw Untrusted PR Ingestion -->
@@ -26,7 +22,7 @@
     <text x="20" y="68" font-size="15" font-weight="700" fill="#12172b">1. 외부 입력 수신</text>
     <text x="20" y="90" font-size="12" fill="#4a5273">• Git Diff &amp; 커밋 메시지</text>
     <text x="20" y="110" font-size="12" fill="#4a5273">• PR 코멘트 및 Docstring</text>
-    <text x="20" y="130" font-size="12" fill="#4a5273">• cisco-foundation-ai 등 실전 PR</text>
+    <text x="20" y="130" font-size="12" fill="#4a5273">• Cisco / Redis 등 실전 PR</text>
 
     <!-- Threat Simulation Pill -->
     <g transform="translate(15, 160)">
@@ -49,7 +45,7 @@
   </g>
 
   <!-- Center Arrow -->
-  <line x1="290" y1="180" x2="340" y2="180" stroke="#858da8" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+  <line x1="290" y1="180" x2="340" y2="180" stroke="#858da8" stroke-width="1.5" marker-end="url(#arr-blue-s0)"/>
 
   <!-- Center: Stage 0 Flash-Lite Guardrail -->
   <g transform="translate(340, 50)">
@@ -87,7 +83,7 @@
   </g>
 
   <!-- Center Arrow to Right -->
-  <line x1="630" y1="340" x2="680" y2="340" stroke="#1b5e35" stroke-width="1.5" marker-end="url(#arr-green)"/>
+  <line x1="630" y1="340" x2="680" y2="340" stroke="#1b5e35" stroke-width="1.5" marker-end="url(#arr-green-s0)"/>
 
   <!-- Right: Stage 0.5 Scope Slicer -->
   <g transform="translate(680, 50)">

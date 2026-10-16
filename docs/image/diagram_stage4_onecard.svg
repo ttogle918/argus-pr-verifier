@@ -41,7 +41,6 @@
   <g transform="translate(420, 45)">
     <rect width="540" height="410" rx="8" fill="#ffffff" stroke="#12172b" stroke-width="2"/>
     
-    <!-- One-Card Header -->
     <g transform="translate(20, 16)">
       <rect width="500" height="40" rx="4" fill="#12172b"/>
       <text x="15" y="25" font-size="12" font-family="'IBM Plex Mono', monospace" fill="#ffffff" font-weight="700">ONE-CARD EXECUTIVE REVIEW SUMMARY</text>
@@ -49,7 +48,6 @@
       <text x="422" y="24" text-anchor="middle" font-size="10.5" font-family="'IBM Plex Mono', monospace" fill="#ffffff" font-weight="700">REJECT RECOMMENDED</text>
     </g>
 
-    <!-- Key Insights Matrix -->
     <g transform="translate(20, 70)">
       <rect width="500" height="100" rx="5" fill="#f8fafc" stroke="#cbd5e1"/>
       <text x="15" y="22" font-size="11.5" font-weight="700" fill="#12172b">🔍 핵심 발견 사항 (Executive Findings)</text>
@@ -58,19 +56,16 @@
       <text x="15" y="78" font-size="11" fill="#4a5273">• <b>사각지대 경고</b>: 변이체 M8(0.001초 미세 딜레이) 생존 → 추가 방어 필요</text>
     </g>
 
-    <!-- CEGIS & Bundle Action Bar -->
     <g transform="translate(20, 185)">
       <rect width="500" height="100" rx="5" fill="#fdfbf7" stroke="#eddab3"/>
       <text x="15" y="22" font-size="11.5" font-weight="700" fill="#c27803">⚡ 추천 차세대 에이전트 액션</text>
       
-      <!-- Button 1 -->
       <g transform="translate(15, 35)">
         <rect width="225" height="48" rx="4" fill="#1b5e35"/>
         <text x="112" y="20" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff">🔧 CEGIS 자가 치유 패치 적용</text>
         <text x="112" y="36" text-anchor="middle" font-size="9.5" fill="#bde4ce">4-Gate 관문 최대 5회 자동 수정</text>
       </g>
 
-      <!-- Button 2 -->
       <g transform="translate(260, 35)">
         <rect width="225" height="48" rx="4" fill="#3a5bd0"/>
         <text x="112" y="20" text-anchor="middle" font-size="11" font-weight="700" fill="#ffffff">📦 영구 PR 번들 다운로드</text>
@@ -78,7 +73,6 @@
       </g>
     </g>
 
-    <!-- Final Human Decision Bar (Bottom) -->
     <g transform="translate(20, 305)">
       <rect width="500" height="90" rx="5" fill="#ffffff" stroke="#dfe3ee"/>
       <text x="15" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#858da8">FINAL MERGE GATE: HUMAN TECH LEAD</text>

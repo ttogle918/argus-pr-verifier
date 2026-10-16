@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="100%" style="background:#ffffff; font-family:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <g transform="translate(40, 20)">
+    <text x="0" y="10" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#858da8" font-weight="600">LAYER A: IN-APP RUNTIME MODEL ROUTING VS. LAYER B: BUILD-TIME SUBAGENTS</text>
+  </g>
+
+  <!-- Left: Layer A Runtime -->
+  <g transform="translate(40, 45)">
+    <rect width="440" height="395" rx="8" fill="#f8faff" stroke="#c5d4f8" stroke-width="1.5"/>
+    <text x="20" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">LAYER A · IN-APP RUNTIME ROUTING</text>
+    <text x="20" y="52" font-size="16" font-weight="700" fill="#12172b">Specialized Runtime Model Allocation</text>
+
+    <g transform="translate(16, 70)">
+      <rect width="408" height="66" rx="6" fill="#e8f5ed" stroke="#bde4ce"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="600">gemini-3.5-flash-lite · Low-Latency Guardrail</text>
+      <text x="14" y="38" font-size="12.5" font-weight="700" fill="#12172b">Stage 0: Untrusted PR Prompt Injection Shield</text>
+      <text x="14" y="54" font-size="11" fill="#4a5273">~68ms latency | store=False | Adversarial comments neutralized</text>
+    </g>
+
+    <g transform="translate(16, 146)">
+      <rect width="408" height="74" rx="6" fill="#eef2fd" stroke="#c5d4f8"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">gemini-4-argon · Deep Reasoning (High Thinking)</text>
+      <text x="14" y="38" font-size="12.5" font-weight="700" fill="#12172b">Stage 1A/1B Blind Isolation &amp; Stage 4b Synthesis</text>
+      <text x="14" y="54" font-size="11" fill="#4a5273">Extracts invariants / Plants 8 mutants (store=False) / Summarizes risk</text>
+      <text x="14" y="67" font-size="10.5" fill="#2544a8">※ Reserved for high-value formal reasoning and patch synthesis</text>
+    </g>
+
+    <g transform="translate(16, 230)">
+      <rect width="408" height="74" rx="6" fill="#ffffff" stroke="#dfe3ee"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#4a5273" font-weight="600">gemini-3.8-flash · 4x Parallel Swarm (asyncio.gather)</text>
+      <text x="14" y="38" font-size="12.5" font-weight="700" fill="#12172b">Stage 2: 4-Persona Red-Team Pytest Generation</text>
+      <text x="14" y="54" font-size="11" fill="#4a5273">Security (BOLA) · Edge · State · Regression agents running in parallel</text>
+      <text x="14" y="67" font-size="10.5" fill="#1b5e35">※ Optimal speed and precision for high-throughput test synthesis</text>
+    </g>
+
+    <g transform="translate(16, 314)">
+      <rect width="408" height="66" rx="6" fill="#fdfbf7" stroke="#eddab3"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#c27803" font-weight="600">antigravity-preview-09-2026 · Remote Sandbox</text>
+      <text x="14" y="38" font-size="12.5" font-weight="700" fill="#12172b">Stage 3: Dual-Track Sandbox Execution &amp; Repro</text>
+      <text x="14" y="54" font-size="11" fill="#684f18">dast-isolated-net | 2x Repro Filter | Pass(orig) ∧ Fail(m_i)</text>
+    </g>
+  </g>
+
+  <!-- Right: Layer B Build-Time Subagents -->
+  <g transform="translate(520, 45)">
+    <rect width="440" height="395" rx="8" fill="#fdfbf7" stroke="#eddab3" stroke-width="1.5"/>
+    <text x="20" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#c27803" font-weight="600">LAYER B · BUILD-TIME DELEGATION</text>
+    <text x="20" y="52" font-size="16" font-weight="700" fill="#12172b">Subagent Task Delegation Criteria (invoke_subagent)</text>
+
+    <!-- Top Lead Agent -->
+    <g transform="translate(16, 70)">
+      <rect width="408" height="52" rx="6" fill="#12172b"/>
+      <text x="14" y="22" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#818cf8" font-weight="600">👑 Lead Architect (Parent Session / Antigravity)</text>
+      <text x="14" y="38" font-size="11" fill="#e0f2fe">Authored 00~10 specifications, models.py schema &amp; 100% deterministic scoring.py</text>
+    </g>
+
+    <g transform="translate(16, 132)">
+      <rect width="408" height="120" rx="6" fill="#eef2fd" stroke="#c5d4f8"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">🧠 PRO TIER (Gemini 4 Argon) · Deep Architecture &amp; UI</text>
+      <text x="14" y="38" font-size="11.5" font-weight="700" fill="#12172b">• Subagent #1: Blind Verification &amp; Sandbox Architect</text>
+      <text x="24" y="53" font-size="10.5" fill="#4a5273">Deliverables: gemini_swarm.py, sandbox_runner.py (store=False isolation)</text>
+      <text x="14" y="73" font-size="11.5" font-weight="700" fill="#12172b">• Subagent #3: Swimlane &amp; One-Card UI Engineer</text>
+      <text x="24" y="88" font-size="10.5" fill="#4a5273">Deliverables: frontend/index.html, styles.css, app.js (Real-time SSE UI)</text>
+      <text x="14" y="108" font-size="10.5" fill="#2544a8" font-weight="600">Criterion: Complex state machines, strict security boundaries, deep reasoning</text>
+    </g>
+
+    <g transform="translate(16, 262)">
+      <rect width="408" height="120" rx="6" fill="#ffffff" stroke="#dfe3ee"/>
+      <text x="14" y="20" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="600">⚡ FLASH TIER (Gemini 3.8 Flash) · High-Speed Data &amp; E2E Capture</text>
+      <text x="14" y="38" font-size="11.5" font-weight="700" fill="#12172b">• Subagent #2: PR Benchmark &amp; FastAPI SSE Builder</text>
+      <text x="24" y="53" font-size="10.5" fill="#4a5273">Deliverables: sample_prs.py, main.py (Rich scenario suites &amp; boilerplate)</text>
+      <text x="14" y="73" font-size="11.5" font-weight="700" fill="#12172b">• Subagent #4: E2E Verifier &amp; GIF Recorder</text>
+      <text x="24" y="88" font-size="10.5" fill="#4a5273">Deliverables: scripts/record_gif.py, argus_pr_demo.gif (Playwright automation)</text>
+      <text x="14" y="108" font-size="10.5" fill="#1b5e35" font-weight="600">Criterion: Structured dataset synthesis, API routes, automated scripts</text>
+    </g>
+  </g>
+</svg>

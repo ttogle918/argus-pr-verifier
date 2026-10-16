@@ -260,7 +260,12 @@ function applyLanguageUI() {
     document.getElementById('open-import-modal-btn').textContent = dict.importPrBtn;
     document.getElementById('ui-phase-toggle-text').textContent = dict.phaseToggle;
     document.getElementById('ui-mode-toggle-text').textContent = dict.modeToggle;
-    document.getElementById('toggle-diff-btn').textContent = dict.viewDiffBtn;
+    const viewDiffTextEl = document.getElementById('ui-view-diff-text');
+    if (viewDiffTextEl) {
+        viewDiffTextEl.textContent = dict.viewDiffBtn;
+    } else {
+        document.getElementById('toggle-diff-btn').textContent = dict.viewDiffBtn;
+    }
     document.getElementById('ui-launch-btn-text').textContent = dict.launchBtn;
 
     document.getElementById('step-label-guardrail').textContent = dict.stepGuardrail;
@@ -279,7 +284,12 @@ function applyLanguageUI() {
     document.getElementById('ui-wall-desc').textContent = dict.wallDesc;
     document.getElementById('ui-track-b-tag').textContent = dict.trackBTag;
     document.getElementById('ui-track-b-title').textContent = dict.trackBTitle;
-    document.getElementById('toggle-mutant-form-btn').textContent = dict.addMutantBtn;
+    const addMutantTextEl = document.getElementById('ui-add-mutant-text');
+    if (addMutantTextEl) {
+        addMutantTextEl.textContent = dict.addMutantBtn;
+    } else {
+        document.getElementById('toggle-mutant-form-btn').textContent = dict.addMutantBtn;
+    }
     document.getElementById('ui-formula-label').textContent = dict.formulaLabel;
 
     document.getElementById('ui-apply-patch-text').textContent = dict.applyPatchText;
@@ -570,7 +580,7 @@ function renderScopeTriageBanner(scopeTriage) {
             <div style="display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:0.73rem;color:#93c5fd;">
                 <span>${srcLabel} • Mounted: <strong>${scopeTriage.estimated_mount_size_kb} KB</strong></span>
                 <button id="run-live-dast-bola-btn" type="button" class="utility-btn" style="padding:3px 10px;font-size:0.72rem;background:rgba(56,189,248,0.16);border:1px solid rgba(56,189,248,0.45);color:#7dd3fc;">
-                    🔐 Run Multi-Persona BOLA DAST
+                    <span class="demo-step-badge">🔴 3</span> 🔐 Run Multi-Persona BOLA DAST
                 </button>
             </div>
         </div>
