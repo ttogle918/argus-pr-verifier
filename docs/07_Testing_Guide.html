@@ -286,15 +286,113 @@
             color: #7dd3fc;
             font-size: 0.84em;
         }
+
+        .walkthrough-banner {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.9));
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+
+        .walkthrough-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+            gap: 16px;
+            margin-top: 14px;
+        }
+
+        .shot-card {
+            background: rgba(7, 11, 20, 0.78);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.15s ease, border-color 0.2s ease;
+        }
+
+        .shot-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--cyan);
+        }
+
+        .shot-card img,
+        .inline-shot img {
+            width: 100%;
+            display: block;
+            cursor: zoom-in;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .shot-meta {
+            padding: 12px 14px;
+            font-size: 0.84rem;
+        }
+
+        .shot-step-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            background: rgba(56, 189, 248, 0.14);
+            color: var(--cyan);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+        }
+
+        .inline-shot {
+            margin-top: 14px;
+            background: #050811;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .inline-shot-caption {
+            padding: 8px 14px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .lightbox-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 7, 18, 0.92);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 24px;
+            cursor: zoom-out;
+        }
+
+        .lightbox-overlay.active {
+            display: flex;
+        }
+
+        .lightbox-overlay img {
+            max-width: 95vw;
+            max-height: 90vh;
+            border-radius: 10px;
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
             <div>
-                <span class="brand-badge">ARGUS-PR • E2E VERIFICATION PLAYBOOK</span>
-                <h1>Argus-PR 기능별 실전 테스트 가이드</h1>
-                <p class="subtitle">Stage 0.5 Smart Scope Triage • 최대 5회 적응형 레드팀 루프 • Cisco 오픈소스 벤치마크 • 이중 트랙 블라인드 메타 검증</p>
+                <span class="brand-badge">ARGUS-PR • E2E VERIFICATION &amp; VISUAL WALKTHROUGH PLAYBOOK</span>
+                <h1>Argus-PR 기능별 실전 테스트 &amp; 화면 전환 가이드</h1>
+                <p class="subtitle">CEGIS 반례 유도 자가 치유 패치 루프 • 회귀 테스트 영구 자산화 PR 번들 • 멀티 페르소나 BOLA 매트릭스 • 이중 트랙 블라인드 메타 검증</p>
             </div>
             <a class="launch-link" href="http://127.0.0.1:8000" target="_blank" rel="noopener">
                 &#128640; 대시보드 열기 (127.0.0.1:8000)
@@ -302,12 +400,49 @@
         </header>
 
         <div class="progress-bar-wrap">
-            <span style="font-weight:700;font-size:0.9rem;">&#9989; 테스트 진행률: <span id="progress-label">0 / 7 완료</span></span>
+            <span style="font-weight:700;font-size:0.9rem;">&#9989; 테스트 진행률: <span id="progress-label">0 / 10 완료</span></span>
             <div class="progress-track">
                 <div class="progress-fill" id="progress-fill"></div>
             </div>
             <button class="reset-btn" onclick="resetChecks()">체크 초기화</button>
         </div>
+
+        <!-- LIVE UI SCREENSHOT WALKTHROUGH GALLERY -->
+        <section class="walkthrough-banner">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                <div>
+                    <span class="brand-badge" style="margin-bottom:4px;">LIVE BROWSER E2E CAPTURES • STEP-BY-STEP VISUAL GUIDE</span>
+                    <h2 style="margin:0;font-size:1.2rem;">&#128248; 차세대 에이전트 3대 핵심 기능 화면 전환 요약 (클릭 시 원본 확대)</h2>
+                </div>
+                <span style="font-size:0.8rem;color:var(--muted);">이미지를 클릭하면 전체 해상도로 확대됩니다</span>
+            </div>
+            <div class="walkthrough-grid">
+                <div class="shot-card">
+                    <img src="screenshots/step_1_bola_dast_matrix.png" alt="Step 1 Multi-Persona BOLA DAST Matrix" onclick="openLightbox(this.src)" />
+                    <div class="shot-meta">
+                        <span class="shot-step-badge">STEP 1 • MULTI-PERSONA BOLA DAST</span>
+                        <div style="font-weight:700;margin-bottom:4px;">교차 테넌트 인가(AuthZ/BOLA) 매트릭스 검증</div>
+                        <div style="color:var(--muted);">Stage 0.5 배너 우측 <code>&#128272; Run Multi-Persona BOLA DAST</code> 클릭 시 3개 페르소나(Victim A / Attacker B / Anon) 합성 및 <code>PROVEN_BOLA_BYPASS</code> 2/2 재현 결과 표시</div>
+                    </div>
+                </div>
+                <div class="shot-card">
+                    <img src="screenshots/step_2_cegis_self_healing_patch.png" alt="Step 2 Blue-Team CEGIS Self-Healing Patch Loop" onclick="openLightbox(this.src)" />
+                    <div class="shot-meta">
+                        <span class="shot-step-badge">STEP 2 • CEGIS SELF-HEALING PATCH LOOP</span>
+                        <div style="font-weight:700;margin-bottom:4px;">반례 유도 자가 치유 루프 (Attempt 1 실패 &rarr; 2 통과)</div>
+                        <div style="color:var(--muted);"><code>&#128295; 권장 패치 적용 후 재검증</code> 클릭 시 Attempt #1(Gate 3 TOCTOU 반례 실패) 피드백을 수용해 Attempt #2(<code>patch_3802_att2</code>)에서 4-Gate 전체 통과</div>
+                    </div>
+                </div>
+                <div class="shot-card">
+                    <img src="screenshots/step_3_export_pr_bundle_modal.png" alt="Step 3 Living Security Regression Suite & PR Bundle Modal" onclick="openLightbox(this.src)" />
+                    <div class="shot-meta">
+                        <span class="shot-step-badge">STEP 3 • LIVING REGRESSION PR BUNDLE</span>
+                        <div style="font-weight:700;margin-bottom:4px;">보안 회귀 테스트 고정(Pinning) &amp; PR 번들 내보내기</div>
+                        <div style="color:var(--muted);">하단 액션 바의 <code>&#128230; Export PR + Pinned Regression Test</code> 클릭 시 2/2 재현 공격을 역전시킨 <code>pytest</code> 회귀 파일 + 검증된 패치 Diff + CI 워크플로우 모달 표시</div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
         <div class="grid">
             <!-- TEST 1 -->
@@ -512,11 +647,150 @@
                 </p>
                 <div class="code-snippet" id="ps-cmd">.\.venv\Scripts\python.exe -c "import urllib.request, json; req = urllib.request.Request('http://127.0.0.1:8000/api/verify', data=json.dumps({'pr_id': 'pr-cisco-sandbox-bypass', 'phase_mode': 'phase2_full', 'execution_mode': 'replay', 'scope_override': 'auto'}).encode(), headers={'Content-Type': 'application/json'}); res = json.loads(urllib.request.urlopen(req).read()); print('Scope Mode:', res['scope_triage']['scope_mode']); print('Score:', res['deterministic_score']['detection_score_label']); print('Red-Team Breaches:', [(f['test_id'], f['breached_on_attempt']) for f in res['deterministic_score']['confirmed_pr_failures']])"<button class="copy-btn" onclick="copyText(this, document.getElementById('ps-cmd').innerText.replace('명령어 복사', '').trim())">명령어 복사</button></div>
             </div>
+
+            <!-- TEST 8: FEATURE 1 (CEGIS SELF-HEALING PATCH LOOP) -->
+            <div class="test-card" id="card-8">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <input type="checkbox" class="check-input" data-id="8" onchange="updateProgress()" />
+                        <span class="scenario-num">TEST 08 • 🥇 1위 기능</span>
+                        <h2 class="card-title">반례 유도 자가 치유 패치 루프 (CEGIS Self-Healing Patch Loop, Max 5 Attempts)</h2>
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag emerald">patch_3802_att2</span>
+                        <span class="tag rose">Attempt 1 Gate 3 Counterexample</span>
+                        <span class="tag cyan">4-Gate Verified</span>
+                    </div>
+                </div>
+                <p style="margin:0;color:var(--muted);font-size:0.9rem;">
+                    Red-Team 5회 공격 루프와 대칭을 이루는 <strong>Blue-Team CEGIS 자가 치유 패치 에이전트</strong>(<code>patch_node &harr; patch_verify_node</code>)를 검증합니다. 1차 패치(<code>patch_3802_att1</code>)가 Gate 3(고정된 DAST 회귀 테스트)에서 TOCTOU 동시성 반례에 의해 기각된 후, 그 반례 피드백을 수용한 2차 패치(<code>patch_3802_att2</code>)가 4대 검증 게이트를 모두 통과하는지 확인합니다.
+                </p>
+                <div class="steps-box">
+                    <strong>&#128073; 테스트 방법:</strong>
+                    <ol>
+                        <li>상단 시나리오에서 <code>PR #412: AI 즉시 환불 및 부분 지갑 정산 파이프라인 (acme-pay/ledger-core)</code>을 선택하고 검증을 실행합니다.</li>
+                        <li>하단 <strong>One-Card 요약</strong> 영역에서 초록색 <strong>&#128295; 권장 패치 적용 후 재검증 (Apply Recommended Fix &amp; Re-Verify)</strong> 버튼을 클릭합니다.</li>
+                        <li>One-Card 상단에 렌더링되는 <strong>&#128737;&#65039; Blue-Team CEGIS Self-Healing Loop</strong> 배너의 <code>Attempt 1/5</code> &rarr; <code>Attempt 2/5</code> 카드와 4-Gate 체크 표시를 확인합니다.</li>
+                    </ol>
+                </div>
+                <div class="expect-box">
+                    <strong>&#127919; 기대 결과 (체크 포인트):</strong><br/>
+                    • <strong>Attempt 1/5 (<code>patch_3802_att1</code> • <code>FAILED AT GATE 3: COUNTEREXAMPLE</code>)</strong>: 음수 가드(<code>refund_amount &lt;= 0</code>)만 추가하여 Gate 1(AST), Gate 2(Semgrep)는 통과했으나, Gate 3에서 <code>Counterexample: 2 concurrent workers entered PENDING_SETTLEMENT before SETTLED commit</code> 반례가 2/2 재현되어 자동 기각됩니다.<br/>
+                    • <strong>Attempt 2/5 (<code>patch_3802_att2</code> • <code>VERIFIED ACROSS ALL 4 GATES</code>)</strong>: 반례 피드백을 받아 <code>cache.set_nx</code> 원자적 분산 락을 추가함으로써 Gate 1~Gate 4(블라인드 변이 100% 사살 포함)를 모두 통과하고 <code>APPROVE RECOMMENDED • RISK: LOW</code>로 전환됩니다.
+                </div>
+                <div class="inline-shot">
+                    <img src="screenshots/step_2_cegis_self_healing_patch.png" alt="CEGIS Self-Healing Patch Loop UI Capture" onclick="openLightbox(this.src)" />
+                    <div class="inline-shot-caption">
+                        <span>&#128247; 실제 캡처 화면: <code>#cegis-patch-banner</code> — Attempt 1 (Gate 3 TOCTOU 반례 실패) &rarr; Attempt 2 (4-Gate 전체 통과)</span>
+                        <span>클릭하여 확대</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TEST 9: FEATURE 2 (LIVING SECURITY REGRESSION SUITE & PR BUNDLE EXPORTER) -->
+            <div class="test-card" id="card-9">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <input type="checkbox" class="check-input" data-id="9" onchange="updateProgress()" />
+                        <span class="scenario-num">TEST 09 • 🥈 2위 기능</span>
+                        <h2 class="card-title">보안 회귀 테스트 영구 자산화 &amp; PR 번들 익스포터 (Living Security Regression Suite)</h2>
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag cyan">POST /api/prs/export-bundle</span>
+                        <span class="tag emerald">Evidence Tier: PROVEN</span>
+                        <span class="tag amber">pytest + Patch Diff + CI YAML</span>
+                    </div>
+                </div>
+                <p style="margin:0;color:var(--muted);font-size:0.9rem;">
+                    일회성 패치로 끝나지 않도록, <strong>2/2 재현된 PROVEN 공격을 방어 테스트로 역전 고정(Pinning)한 <code>pytest</code> 파일</strong>과 <strong>검증된 프로덕션 패치 Diff(<code>patch_3802_att2</code>)</strong>, 그리고 <strong>GitHub Actions CI 게이트 스니펫</strong>을 원클릭 번들로 내보내는 기능을 검증합니다.
+                </p>
+                <div class="steps-box">
+                    <strong>&#128073; 테스트 방법:</strong>
+                    <ol>
+                        <li><strong>One-Card 요약</strong> 하단 액션 바(<code>최종 결정 (병합 승인/보류)</code> 영역)에서 <strong>&#128230; Export PR + Pinned Regression Test</strong> 버튼을 클릭합니다.</li>
+                        <li>모달 창(<code>#export-bundle-modal</code>)이 열리면 상단 메타 배지(브랜치명 <code>fix/argus-verified-patch-3802-att2</code>, 4-Gate 요약)와 3개 코드 패널(<code>pytest</code> 회귀 테스트, 프로덕션 패치 Diff, GitHub Actions YAML)을 확인합니다.</li>
+                        <li>각 패널 우측의 <strong>&#128203; Copy pytest File / Copy Patch Diff / Copy CI YAML</strong> 버튼을 눌러 클립보드 복사가 동작하는지 확인합니다.</li>
+                    </ol>
+                </div>
+                <div class="expect-box">
+                    <strong>&#127919; 기대 결과 (체크 포인트):</strong><br/>
+                    • <code>tests/security/test_argus_regression_pr_checkout_race.py</code> 파일 내에 <code>PROVEN</code> 등급의 공격 벡터가 <strong>Exploit Blocked = Test PASS</strong> 구조의 <code>pytest</code> 함수로 자동 합성됩니다.<br/>
+                    • <code>patch_3802_att2</code>가 적용된 통합 Diff와 매 PR마다 회귀 스위트를 강제 실행하는 GitHub Actions 워크플로우가 함께 제공됩니다.
+                </div>
+                <div class="inline-shot">
+                    <img src="screenshots/step_3_export_pr_bundle_modal.png" alt="Living Security Regression Suite & PR Bundle Modal Capture" onclick="openLightbox(this.src)" />
+                    <div class="inline-shot-caption">
+                        <span>&#128247; 실제 캡처 화면: <code>#export-bundle-modal</code> — Pinned <code>pytest</code> 코드(PROVEN) + <code>patch_3802_att2</code> Diff 번들 모달</span>
+                        <span>클릭하여 확대</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TEST 10: FEATURE 3 (MULTI-PERSONA CROSS-TENANT AUTHZ / BOLA MATRIX) -->
+            <div class="test-card" id="card-10">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <input type="checkbox" class="check-input" data-id="10" onchange="updateProgress()" />
+                        <span class="scenario-num">TEST 10 • 🥉 3위 기능</span>
+                        <h2 class="card-title">멀티 페르소나 인가(AuthZ / BOLA) 교차 테넌트 매트릭스 에이전트</h2>
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag cyan">POST /api/verify/live-dast</span>
+                        <span class="tag rose">PROVEN_BOLA_BYPASS (2/2)</span>
+                        <span class="tag emerald">3 Personas Minted</span>
+                    </div>
+                </div>
+                <p style="margin:0;color:var(--muted);font-size:0.9rem;">
+                    핀테크/SaaS 취약점 1위인 <strong>BOLA(IDOR: 타 테넌트 리소스 조작)</strong>를 결정론적으로 탐지하기 위해 3개의 가상 페르소나(<code>persona_victim_tenant_a</code>, <code>persona_attacker_tenant_b</code>, <code>persona_anon</code>)를 자동 합성하고 교차 호출(Differential Replay) 매트릭스를 생성합니다.
+                </p>
+                <div class="steps-box">
+                    <strong>&#128073; 테스트 방법:</strong>
+                    <ol>
+                        <li>대시보드 상단 <strong>Stage 0.5 배너</strong> 우측에 있는 <strong>&#128272; Run Multi-Persona BOLA DAST</strong> 버튼을 클릭합니다.</li>
+                        <li>배너 하단에 펼쳐지는 <strong>Multi-Persona Cross-Tenant AuthZ / BOLA Matrix</strong> 테이블에서 합성된 3개 페르소나 칩과 엔드포인트별 HTTP 상태 코드(Owner A vs Attacker B vs Anon)를 확인합니다.</li>
+                    </ol>
+                </div>
+                <div class="expect-box">
+                    <strong>&#127919; 기대 결과 (체크 포인트):</strong><br/>
+                    • <code>POST /api/v1/refunds/instant</code> (대상 리소스 <code>ch_tenantA_901</code>): Owner(A)=<code>200</code>, Attacker(B)=<code>200</code>(붉은색 강조), Anon=<code>401</code> &rarr; <strong>&#128293; 2/2 YES • <code>PROVEN_BOLA_BYPASS</code></strong>로 타 테넌트 환불 탈취 취약점이 적발됩니다.<br/>
+                    • 나머지 엔드포인트(<code>GET /api/v1/refunds/receipt/...</code>, <code>POST /api/v1/webhooks/settlement-override</code>)는 Attacker(B)=<code>403</code> &rarr; <code>ENFORCED_ISOLATION</code>으로 정상 격리가 확인됩니다.
+                </div>
+                <div class="inline-shot">
+                    <img src="screenshots/step_1_bola_dast_matrix.png" alt="Multi-Persona Cross-Tenant AuthZ / BOLA Matrix Capture" onclick="openLightbox(this.src)" />
+                    <div class="inline-shot-caption">
+                        <span>&#128247; 실제 캡처 화면: <code>#live-dast-bola-panel</code> — 3개 페르소나 합성 및 교차 테넌트 BOLA 2/2 재현 매트릭스</span>
+                        <span>클릭하여 확대</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- LIGHTBOX MODAL FOR SCREENSHOTS -->
+    <div id="lightbox" class="lightbox-overlay" onclick="closeLightbox()">
+        <img id="lightbox-img" src="" alt="Expanded Screenshot" />
+    </div>
+
     <script>
-        const STORAGE_KEY = 'argus_pr_test_guide_checks_v1';
+        const STORAGE_KEY = 'argus_pr_test_guide_checks_v2';
+
+        function openLightbox(src) {
+            const lb = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            if (lb && img) {
+                img.src = src;
+                lb.classList.add('active');
+            }
+        }
+
+        function closeLightbox() {
+            const lb = document.getElementById('lightbox');
+            if (lb) lb.classList.remove('active');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLightbox();
+        });
 
         function loadChecks() {
             try {

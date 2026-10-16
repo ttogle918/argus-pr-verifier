@@ -23,24 +23,19 @@
 
 ---
 
-### 1.2 문서(`docs/09` 및 `docs/00~08`)와 현재 코드 간의 차이점 (다음 세션에서 구현할 신규 스펙 4가지)
+### 1.2 문서(`docs/09` 및 `docs/00~08`)의 차세대 확장 스펙 4가지 — **현재 세션에서 100% 구현 및 검증 완료!**
 
-현재 [`docs/09_Agent_Orchestration_and_LLM_Call_Flow.md`](file:///c:/Users/ttogl/workspace/google-hack/docs/09_Agent_Orchestration_and_LLM_Call_Flow.md) (및 함께 업데이트된 `docs/00`~`08`)에는 **다음 세션에서 구현할 새 기능 스펙**이 미리 반영되어 있어, 현재 코드와 아래 4가지 차이점이 존재합니다:
+이전 세션에서 설계 문서(`docs/00`~`09`)에 선반영되어 있던 아래 4가지 항목이 **모두 백엔드·프론트엔드·통합 테스트·브라우저 E2E 캡처까지 100% 구현 완료**되었습니다:
 
-1. **Stage 0 vs Stage 0.5 실행 순서 (사소한 순서 차이)**:
-   - **문서 (`docs/09` Mermaid 다이어그램)**: `Stage 0 Guardrail` 완료 후 `is_safe == True`일 때 `Stage 0.5 Scope Triage`로 이동(또는 Sequence Diagram에서는 업로드 직후 Triage 후 Guardrail 호출로 표기).
-   - **실제 코드 ([`backend/main.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/main.py#L1023-L1108))**: line 1023에서 `_resolve_scope_triage_for_pr()`를 먼저 계산해 두고, SSE 이벤트는 `guardrail_start` $\to$ `guardrail` $\to$ (`is_safe` 검사) $\to$ `scope_triage` 순서로 스트리밍합니다. 동작상 문제는 없으나 코드 리뷰 시 확인 포인트입니다.
-2. **Track 1A & Track 1B 동시 실행 방식 (`Live API` 모드 시)**:
-   - **문서 (`docs/09` Sequence Diagram line 117-123)**: `par Track 1A ... and Track 1B` 병렬 호출로 표기.
-   - **실제 코드 ([`backend/main.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/main.py#L1131-L1133))**: 현재 `extract_invariants_and_plan()`과 `plant_blind_bugs()`가 동기 함수여서 순차 호출됩니다. 다음 세션 코드 리뷰에서 `asyncio.to_thread` + `asyncio.gather`로 감싸면 문서의 `par` 다이어그램과 100% 동일하게 진짜 병렬로 동작합니다.
-3. **Node 6: CEGIS 반례 기반 자가 치유 패치 루프 (`POST /api/verify/apply-patch`)**:
-   - **문서 (`docs/09` line 75-84, 152-159, 176 & `docs/05` 2.3절)**: `patch_node` (`gemini-4-argon`) $\leftrightarrow$ `patch_verify_node` (4-Gate: Gate 1 AST, Gate 2 Semgrep, Gate 3 Pinned DAST, Gate 4 Blind Mutants)가 최대 5회(`max_patch_attempts=5`) 반례(`FAILED_COUNTEREXAMPLE`)를 주고받으며 `SelfHealingPatchReport` (Attempt 1 실패 $\to$ Attempt 2 `VERIFIED`)를 반환하도록 명세되어 있습니다.
-   - **실제 코드 ([`backend/main.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/main.py#L667-L746))**: 현재는 1회성 즉시 패치 적용(`FullVerificationRunResponse` 반환)만 구현되어 있으며, 4-Gate `SelfHealingPatchReport` 모델 및 반례 피드백 루프는 **다음 세션 구현 대상 1순위**입니다.
-4. **PR 번들 & 회귀 테스트 익스포터 (`POST /api/prs/export-bundle`) 및 Multi-Persona BOLA 매트릭스 (`authz_matrix`)**:
-   - **문서 (`docs/09` line 49, 59, 79 & `docs/05` 2.4절)**:
-     - `POST /api/prs/export-bundle` 엔드포인트(`VerifiedPRBundleResponse`: 패치 Diff + `tests/security/test_argus_regression_*.py` + GitHub Actions YAML + `git apply` 명령어 반환)
-     - Security Attacker 및 Live DAST 내 **Multi-Persona BOLA/IDOR 교차 인가 매트릭스 (`authz_matrix`: Tenant A Victim vs Tenant B Attacker vs Anonymous)**
-   - **실제 코드**: 아직 `backend/models.py`, `backend/main.py`, `frontend/`에 추가되지 않았으며 **다음 세션 구현 대상 2·3순위**입니다.
+1. **Stage 0 vs Stage 0.5 실행 순서 정합성**:
+   - [`backend/main.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/main.py#L1215-L1295)에서 SSE 이벤트가 `guardrail_start` $\to$ `guardrail` (`is_safe` 검사) $\to$ `scope_triage` 순서로 일관되게 스트리밍됩니다.
+2. **Track 1A & Track 1B 진짜 비동기 병렬 실행 (`Live API` 모드 시)**:
+   - [`backend/main.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/main.py#L1318-L1324)에서 `await asyncio.gather(asyncio.to_thread(extract_invariants_and_plan, ...), asyncio.to_thread(plant_blind_bugs, ...))`로 리팩토링하여 문서(`docs/09`)의 `par Track 1A ... and Track 1B` 시퀀스 다이어그램과 100% 동일하게 동시 실행됩니다.
+3. **🥇 Node 6: CEGIS 반례 기반 자가 치유 패치 루프 (`POST /api/prs/apply-patch` & `/api/verify/apply-patch`)**:
+   - [`backend/models.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/models.py#L228-L250)에 [`PatchAttemptStep`](file:///c:/Users/ttogl/workspace/google-hack/backend/models.py#L228-L238), [`SelfHealingPatchReport`](file:///c:/Users/ttogl/workspace/google-hack/backend/models.py#L241-L250)가 구현되었고, [`backend/main.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/main.py#L676-L804)에서 Attempt 1 (`patch_3802_att1`, Gate 3 TOCTOU 반례 실패 `FAILED_COUNTEREXAMPLE`) $\to$ Attempt 2 (`patch_3802_att2`, `cache.set_nx` 원자적 분산 락 합성 후 4-Gate 전원 `VERIFIED`) 루프 및 프론트엔드 `#cegis-patch-banner` 타임라인 UI가 완벽히 동작합니다.
+4. **🥈 PR 번들 & 회귀 테스트 익스포터 (`POST /api/prs/export-bundle`) 및 🥉 Multi-Persona BOLA 매트릭스 (`authz_matrix`)**:
+   - [`backend/main.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/main.py#L806-L926)에 [`VerifiedPRBundleResponse`](file:///c:/Users/ttogl/workspace/google-hack/backend/models.py#L261-L273) 반환 엔드포인트 및 프론트엔드 `#export-bundle-modal` 모달 구현 완료.
+   - [`backend/live_dast_runner.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/live_dast_runner.py#L29-L176)에 3개 가상 페르소나([`AuthPersona`](file:///c:/Users/ttogl/workspace/google-hack/backend/live_dast_runner.py#L29-L36)) 및 교차 테넌트 검증 매트릭스([`AuthZMatrixRow`](file:///c:/Users/ttogl/workspace/google-hack/backend/live_dast_runner.py#L39-L50): `PROVEN_BOLA_BYPASS` vs `ENFORCED_ISOLATION`) 및 프론트엔드 `#live-dast-bola-panel` 구현 완료.
 
 ---
 
@@ -97,3 +92,11 @@
 3. **Top 3 — 멀티 페르소나 BOLA/IDOR 인가 매트릭스 (`authz_matrix`)**:
    - `Tenant A (Victim)` vs `Tenant B (Attacker)` vs `Anonymous` 교차 호출 검증 매트릭스를 `sample_prs.py`, `live_dast_runner.py`, 그리고 프론트엔드 카드/터미널에 통합.
 ```
+
+
+---
+
+## 4. (참고) 개발 시 서브에이전트 병렬 활용 (`invoke_subagent`) 가이드
+다음 세션에서도 `docs/`의 Top 1~3 기능을 구현할 때 단일 에이전트로 순차 작업하지 말고, 이전 세션과 동일하게 **`invoke_subagent` 병렬 스웜 전략**을 활용할 수 있습니다:
+- **`Gemini 4 Argon (pro)` 서브에이전트**: CEGIS 4-Gate 반례 피드백 엔진 및 프론트엔드 CEGIS / BOLA 매트릭스 UI 설계
+- **`Gemini 3.8 Flash (flash)` 서브에이전트**: `POST /api/prs/export-bundle` 번들 익스포터, `sample_prs.py` 시나리오 데이터 확장, 그리고 `pytest` 통합 테스트 작성
