@@ -1,0 +1,6 @@
+{
+  "name": "Crucible PR Verifier",
+  "description": "Adversarial AI agent swarm that stress-tests pull requests in isolated Antigravity sandboxes and calibrates verification trust via planted bug mutation testing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

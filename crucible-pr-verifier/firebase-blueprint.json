@@ -1,0 +1,108 @@
+{
+  "entities": {
+    "PrTranslation": {
+      "title": "Pull Request Verification Translation",
+      "description": "Stores AI-translated Pull Request metadata and verification report fields in Korean or English.",
+      "type": "object",
+      "properties": {
+        "prId": {
+          "type": "string",
+          "description": "Target Pull Request identifier",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "lang": {
+          "type": "string",
+          "description": "Language code (ko or en)",
+          "enum": ["ko", "en"],
+          "minLength": 2,
+          "maxLength": 8
+        },
+        "prTitle": {
+          "type": "string",
+          "description": "Translated PR title",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "prDescription": {
+          "type": "string",
+          "description": "Translated PR description",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "executiveSummary": {
+          "type": "string",
+          "description": "Translated executive verification summary",
+          "minLength": 1,
+          "maxLength": 4000
+        },
+        "invariants": {
+          "type": "array",
+          "description": "Translated invariant items (bounded to 10 items)",
+          "maxLength": 10
+        },
+        "tests": {
+          "type": "array",
+          "description": "Translated breaking test items (bounded to 10 items)",
+          "maxLength": 10
+        },
+        "plantedBugs": {
+          "type": "array",
+          "description": "Translated planted bug items (bounded to 10 items)",
+          "maxLength": 10
+        },
+        "residualRisks": {
+          "type": "array",
+          "description": "Translated residual risk items (bounded to 10 items)",
+          "maxLength": 10
+        },
+        "sandboxSteps": {
+          "type": "array",
+          "description": "Translated sandbox step items (bounded to 10 items)",
+          "maxLength": 10
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "UID of the user who saved the translation",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server update timestamp"
+        }
+      },
+      "required": [
+        "prId",
+        "lang",
+        "prTitle",
+        "prDescription",
+        "executiveSummary",
+        "invariants",
+        "tests",
+        "plantedBugs",
+        "residualRisks",
+        "sandboxSteps",
+        "ownerId",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/translations/{translationId}": {
+      "schema": {
+        "$ref": "#/entities/PrTranslation"
+      },
+      "description": "Stores AI-translated KO/EN verification reports keyed by translationId"
+    }
+  }
+}

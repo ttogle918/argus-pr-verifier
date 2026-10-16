@@ -1,0 +1,110 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isBoundedList(arr, maxLen) {
+      return arr is list && arr.size() <= maxLen && (arr.size() == 0 || arr[0] is map);
+    }
+
+    function isValidPrTranslation(data) {
+      return data.keys().hasAll([
+        'prId',
+        'lang',
+        'prTitle',
+        'prDescription',
+        'executiveSummary',
+        'invariants',
+        'tests',
+        'plantedBugs',
+        'residualRisks',
+        'sandboxSteps',
+        'ownerId',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'prId',
+        'lang',
+        'prTitle',
+        'prDescription',
+        'executiveSummary',
+        'invariants',
+        'tests',
+        'plantedBugs',
+        'residualRisks',
+        'sandboxSteps',
+        'ownerId',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      isValidId(data.prId) &&
+      data.lang is string && (data.lang == 'ko' || data.lang == 'en') &&
+      data.prTitle is string && data.prTitle.size() >= 1 && data.prTitle.size() <= 500 &&
+      data.prDescription is string && data.prDescription.size() >= 1 && data.prDescription.size() <= 4000 &&
+      data.executiveSummary is string && data.executiveSummary.size() >= 1 && data.executiveSummary.size() <= 4000 &&
+      isBoundedList(data.invariants, 10) &&
+      isBoundedList(data.tests, 10) &&
+      isBoundedList(data.plantedBugs, 10) &&
+      isBoundedList(data.residualRisks, 10) &&
+      isBoundedList(data.sandboxSteps, 10) &&
+      isValidId(data.ownerId) &&
+      data.ownerId == request.auth.uid &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    match /translations/{translationId} {
+      allow get: if isSignedIn() && isValidId(translationId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && existing().ownerId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+        isValidId(translationId) &&
+        isValidPrTranslation(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn() &&
+        isValidId(translationId) &&
+        isValidPrTranslation(incoming()) &&
+        existing().ownerId == request.auth.uid &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().prId == existing().prId &&
+        incoming().lang == existing().lang &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'prTitle',
+          'prDescription',
+          'executiveSummary',
+          'invariants',
+          'tests',
+          'plantedBugs',
+          'residualRisks',
+          'sandboxSteps',
+          'updatedAt'
+        ]);
+
+      allow delete: if isSignedIn() && isValidId(translationId) && existing().ownerId == request.auth.uid;
+    }
+  }
+}
