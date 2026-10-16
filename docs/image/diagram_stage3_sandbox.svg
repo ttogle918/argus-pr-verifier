@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="100%" style="background:#ffffff; font-family:'IBM Plex Sans KR',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;">
+  <defs>
+    <marker id="arr-sand" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#3a5bd0"/>
+    </marker>
+  </defs>
+
+  <g transform="translate(40, 20)">
+    <circle cx="6" cy="6" r="4" fill="#c27803"/>
+    <text x="16" y="10" font-size="11" fill="#4a5273" font-family="'IBM Plex Mono', monospace" font-weight="600">STAGE 3 · ANTIGRAVITY ISOLATED LINUX SANDBOX &amp; 2x REPRO</text>
+  </g>
+
+  <!-- Big Container Frame -->
+  <g transform="translate(40, 45)">
+    <rect width="920" height="410" rx="8" fill="#f8faff" stroke="#c5d4f8" stroke-width="1.5"/>
+    <rect x="20" y="16" width="380" height="24" rx="4" fill="#eef2fd"/>
+    <text x="30" y="32" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="700">GOOGLE CLOUD ANTIGRAVITY REMOTE SANDBOX</text>
+    
+    <text x="420" y="32" font-size="12" fill="#4a5273">agent="antigravity-preview-09-2026" (environment="remote", network="dast-isolated-net")</text>
+
+    <!-- Left Box: Track (a) PR Code + 2x Repro Filter -->
+    <g transform="translate(20, 55)">
+      <rect width="425" height="335" rx="6" fill="#ffffff" stroke="#dfe3ee" stroke-width="1.5"/>
+      <rect x="15" y="15" width="220" height="22" rx="3" fill="#fef2f2"/>
+      <text x="25" y="30" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#e11d48" font-weight="700">TRACK (a): REAL PR DEFECTS</text>
+
+      <text x="15" y="60" font-size="14" font-weight="700" fill="#12172b">미끼 없는 원본 PR 코드 공격</text>
+      <text x="15" y="80" font-size="12" fill="#4a5273">4대 스웜이 생성한 파괴적 테스트 모음(T) 실행</text>
+
+      <!-- 2-Phase Flaky Filter Flow -->
+      <g transform="translate(15, 100)">
+        <rect width="395" height="95" rx="5" fill="#f8fafc" stroke="#cbd5e1"/>
+        <text x="12" y="20" font-size="11" font-weight="700" fill="#2544a8">Phase 1: 1차 탐색 실행 (1x Run)</text>
+        <text x="12" y="38" font-size="11" fill="#4a5273">테스트 실패 발생 시 즉시 '의심(Suspect)' 상태 부여</text>
+        <line x1="12" y1="48" x2="380" y2="48" stroke="#e2e8f0"/>
+        <text x="12" y="66" font-size="11" font-weight="700" fill="#e11d48">Phase 2: 2회 연속 재현 필터 (2x Repro Check)</text>
+        <text x="12" y="84" font-size="11" fill="#4a5273"><b>2회 모두 실패해야만 PROVEN 결함 승격</b> (Flaky 100% 제거)</text>
+      </g>
+
+      <!-- Terminal log snippet inside Track a -->
+      <g transform="translate(15, 210)">
+        <rect width="395" height="105" rx="5" fill="#12172b"/>
+        <text x="12" y="22" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#38bdf8">$ pytest test_state_checkout.py</text>
+        <text x="12" y="40" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#f87171">[FAIL 1/2] RaceCondition: balance negative</text>
+        <text x="12" y="58" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#fbbf24">[RERUN 2/2] Verifying deterministic repro...</text>
+        <text x="12" y="76" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#f87171">[FAIL 2/2] Confirmed race reproduction!</text>
+        <text x="12" y="94" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#4ade80">&gt;&gt; STATUS: PROVEN DEFECT CONFIRMED</text>
+      </g>
+    </g>
+
+    <!-- Right Box: Track (b) Differential Mutant Execution -->
+    <g transform="translate(475, 55)">
+      <rect width="425" height="335" rx="6" fill="#ffffff" stroke="#dfe3ee" stroke-width="1.5"/>
+      <rect x="15" y="15" width="220" height="22" rx="3" fill="#e8f5ed"/>
+      <text x="25" y="30" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="700">TRACK (b): 8 MUTANT COPIES</text>
+
+      <text x="15" y="60" font-size="14" font-weight="700" fill="#12172b">비밀 봉인된 M1..M8 교차 검증</text>
+      <text x="15" y="80" font-size="12" fill="#4a5273">원본 PR에서 통과한 테스트만으로 미끼 처치 판정</text>
+
+      <!-- Strict Kill Formula -->
+      <g transform="translate(15, 100)">
+        <rect width="395" height="95" rx="5" fill="#fdfbf7" stroke="#eddab3"/>
+        <text x="12" y="20" font-size="11" font-weight="700" fill="#c27803">엄격한 차분 변이 사살 수학적 정의</text>
+        <text x="12" y="42" font-size="12" font-family="'IBM Plex Mono', monospace" fill="#12172b" font-weight="600">Caught(M_i) ⇔ Pass(PR_orig) ∧ Fail(M_i)</text>
+        <text x="12" y="64" font-size="11" fill="#78350f">• 원본에서도 깨지는 엉터리 테스트는 점수 산출 배제</text>
+        <text x="12" y="82" font-size="11" fill="#78350f">• 순수하게 해당 변이만 저격한 테스트만 인정</text>
+      </g>
+
+      <!-- Mutant Matrix Display -->
+      <g transform="translate(15, 210)">
+        <rect width="395" height="105" rx="5" fill="#ffffff" stroke="#bde4ce"/>
+        <text x="12" y="20" font-size="11" font-weight="700" fill="#1b5e35">8개 미끼 버그 처치 결과 현황</text>
+        
+        <!-- 8 badges grid -->
+        <g transform="translate(12, 32)">
+          <rect x="0" y="0" width="80" height="26" rx="3" fill="#e8f5ed" stroke="#1b5e35"/>
+          <text x="40" y="17" text-anchor="middle" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="700">M1 KILLED</text>
+
+          <rect x="90" y="0" width="80" height="26" rx="3" fill="#e8f5ed" stroke="#1b5e35"/>
+          <text x="130" y="17" text-anchor="middle" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="700">M2 KILLED</text>
+
+          <rect x="180" y="0" width="80" height="26" rx="3" fill="#e8f5ed" stroke="#1b5e35"/>
+          <text x="220" y="17" text-anchor="middle" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="700">M3 KILLED</text>
+
+          <rect x="270" y="0" width="80" height="26" rx="3" fill="#e8f5ed" stroke="#1b5e35"/>
+          <text x="310" y="17" text-anchor="middle" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="700">M4 KILLED</text>
+
+          <rect x="0" y="34" width="80" height="26" rx="3" fill="#e8f5ed" stroke="#1b5e35"/>
+          <text x="40" y="51" text-anchor="middle" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="700">M5 KILLED</text>
+
+          <rect x="90" y="34" width="80" height="26" rx="3" fill="#e8f5ed" stroke="#1b5e35"/>
+          <text x="130" y="51" text-anchor="middle" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="700">M6 KILLED</text>
+
+          <rect x="180" y="34" width="80" height="26" rx="3" fill="#e8f5ed" stroke="#1b5e35"/>
+          <text x="220" y="51" text-anchor="middle" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="700">M7 KILLED</text>
+
+          <rect x="270" y="34" width="80" height="26" rx="3" fill="#fef2f2" stroke="#e11d48"/>
+          <text x="310" y="51" text-anchor="middle" font-size="10" font-family="'IBM Plex Mono', monospace" fill="#e11d48" font-weight="700">M8 SURVIVED</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

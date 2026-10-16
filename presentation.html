@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Argus-PR System Architecture & Pipeline Deep-Dive Presentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-page: #eaedf3;
+    --paper: #ffffff;
+    --paper-tint: #f5f7fb;
+    --ink: #12172b;
+    --ink-soft: #4a5273;
+    --ink-faint: #858da8;
+    --line: #dfe3ee;
+    --line-soft: #edf0f7;
+    --accent: #3a5bd0;
+    --accent-wash: #eef2fd;
+    --accent-subtle: #c5d4f8;
+    --green: #1b5e35;
+    --green-wash: #e8f5ed;
+    --green-border: #bde4ce;
+    --purple: #6941c6;
+    --purple-wash: #f4f0fd;
+    --purple-border: #e0d4f7;
+    --amber: #c27803;
+    --amber-wash: #fdfbf7;
+    --amber-border: #eddab3;
+    --red: #e11d48;
+    --red-wash: #fdf2f4;
+    --red-border: #f8b4c2;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg-page);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─ Fixed Top Navigation Bar ─ */
+  .top-nav {
+    position: fixed; top: 0; left: 0; right: 0; height: 50px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; z-index: 1000;
+    box-shadow: 0 1px 3px rgba(18, 23, 43, 0.04);
+  }
+  .nav-left { display: flex; align-items: center; gap: 16px; }
+  .nav-brand { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700; color: var(--ink); }
+  .nav-brand span { color: var(--accent); margin-left: 6px; }
+  .nav-title { font-size: 13px; color: var(--ink-soft); font-weight: 500; }
+  
+  .nav-controls { display: flex; align-items: center; gap: 12px; }
+  .lang-toggle {
+    display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; background: #fff;
+  }
+  .lang-btn {
+    border: none; background: transparent; padding: 5px 12px; font-size: 11.5px;
+    font-family: 'IBM Plex Mono', monospace; font-weight: 600; cursor: pointer; color: var(--ink-soft);
+    transition: all 0.15s ease;
+  }
+  .lang-btn.active {
+    background: var(--accent); color: #fff;
+  }
+  .print-btn {
+    border: 1px solid var(--line); background: #fff; padding: 5px 14px;
+    border-radius: 4px; font-size: 11.5px; font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600; cursor: pointer; color: var(--ink-soft);
+  }
+  .print-btn:hover { background: var(--paper-tint); color: var(--accent); }
+
+  /* ─ Presentation Slides Container (A4 Landscape 1122px x 793px) ─ */
+  .page {
+    width: 1122px; height: 793px; max-height: 793px;
+    margin: 64px auto 32px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    box-shadow: 0 4px 20px rgba(18, 23, 43, 0.06);
+    padding: 30px 42px 24px;
+    position: relative;
+    display: flex; flex-direction: column; justify-content: space-between;
+    box-sizing: border-box; overflow: hidden;
+  }
+
+  /* ─ Slide Header ─ */
+  .phead {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .phead .left { display: flex; align-items: baseline; gap: 14px; }
+  .phead .idx {
+    font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 700;
+    color: var(--accent); letter-spacing: -0.04em; line-height: 1;
+  }
+  .phead h2 {
+    font-size: 19px; font-weight: 700; letter-spacing: -0.02em; margin: 0; color: var(--ink);
+  }
+  .phead h2 small {
+    display: block; font-size: 11.5px; font-weight: 400; color: var(--ink-soft);
+    letter-spacing: normal; margin-top: 1px;
+  }
+  .phead .meta {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-faint);
+    text-align: right; line-height: 1.35;
+  }
+
+  /* ─ Slide Main Body Layout ─ */
+  .body {
+    display: grid; grid-template-columns: 310px 1fr; gap: 16px;
+    flex: 1; min-height: 0; overflow: hidden;
+  }
+  .body.single-col { grid-template-columns: 1fr; }
+
+  /* Left Rail */
+  .rail {
+    border-right: 1px solid var(--line); padding-right: 16px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    min-height: 0; overflow: hidden;
+  }
+  .role-badge {
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; font-weight: 700;
+    color: var(--accent); background: var(--accent-wash);
+    padding: 3px 8px; border-radius: 2px; display: inline-block;
+    letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px;
+    border-left: 2.5px solid var(--accent);
+  }
+  .role-badge.green { background: var(--green-wash); color: var(--green); border-left-color: var(--green); }
+  .role-badge.purple { background: var(--purple-wash); color: var(--purple); border-left-color: var(--purple); }
+  .role-badge.amber { background: var(--amber-wash); color: var(--amber); border-left-color: var(--amber); }
+
+  .lead { margin: 0 0 10px; color: var(--ink-soft); font-size: 12.5px; line-height: 1.5; }
+  
+  .figs { border-top: 1px solid var(--line); margin-top: auto; padding-top: 4px; }
+  .figrow { padding: 6px 0; border-bottom: 1px solid var(--line-soft); display: flex; align-items: baseline; gap: 10px; }
+  .figrow:last-child { border-bottom: none; }
+  .figrow .num {
+    font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 700;
+    color: var(--accent); line-height: 1; letter-spacing: -0.02em; min-width: 85px;
+  }
+  .figrow .num.green { color: var(--green); }
+  .figrow .num.purple { color: var(--purple); }
+  .figrow .num.amber { color: var(--amber); }
+  .figrow .num.red { color: var(--red); }
+  .figrow .cap { font-size: 10.5px; color: var(--ink-faint); line-height: 1.3; }
+
+  .stack { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: var(--ink-soft);
+    background: var(--paper-tint); border: 1px solid var(--line); padding: 1.5px 5px;
+    border-radius: 2px;
+  }
+  .chip.highlight { background: var(--accent-wash); border-color: var(--accent-subtle); color: var(--accent); font-weight: 600; }
+
+  /* Main Content Area */
+  .main { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: hidden; }
+  .card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .card-grid.cols-3 { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .card-grid.cols-1 { grid-template-columns: 1fr; gap: 8px; }
+  
+  .card {
+    background: var(--paper); border: 1px solid var(--line);
+    padding: 8px 11px; border-radius: 3px; display: flex; flex-direction: column;
+  }
+  .card.tint-accent { background: var(--paper-tint); border-color: var(--accent-subtle); }
+  .card.tint-green { background: #fbfdfc; border-color: var(--green-border); }
+  .card.tint-purple { background: #faf8fe; border-color: var(--purple-border); }
+  .card.tint-amber { background: #fdfbf7; border-color: var(--amber-border); }
+  .card.tint-red { background: #fef8f9; border-color: var(--red-border); }
+
+  .card-head {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 3px; padding-bottom: 3px; border-bottom: 1px solid var(--line-soft);
+  }
+  .card-title { font-size: 12px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 5px; }
+  .card-badge {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9px; font-weight: 600;
+    padding: 1px 5px; border-radius: 2px; text-transform: uppercase;
+  }
+  .badge-accent { background: var(--accent-wash); color: var(--accent); border: 1px solid var(--accent-subtle); }
+  .badge-green { background: var(--green-wash); color: var(--green); border: 1px solid var(--green-border); }
+  .badge-purple { background: var(--purple-wash); color: var(--purple); border: 1px solid var(--purple-border); }
+  .badge-amber { background: var(--amber-wash); color: var(--amber); border: 1px solid var(--amber-border); }
+  .badge-red { background: var(--red-wash); color: var(--red); border: 1px solid var(--red-border); }
+
+  .card-p { margin: 0 0 3px; font-size: 11px; color: var(--ink-soft); line-height: 1.4; }
+  .card-list { margin: 0; padding-left: 0; list-style: none; font-size: 11px; }
+  .card-list li { position: relative; padding-left: 10px; margin-bottom: 2.5px; color: var(--ink-soft); line-height: 1.35; }
+  .card-list li:last-child { margin-bottom: 0; }
+  .card-list li::before {
+    content: ''; position: absolute; left: 0; top: 5.5px;
+    width: 4px; height: 1.5px; background: var(--ink-faint);
+  }
+  .card-list li b { color: var(--ink); font-weight: 600; }
+
+  /* Diagram Frame - maximized visual impact */
+  .diagram-frame {
+    border: 1px solid var(--line); border-radius: 3px;
+    background: #ffffff; padding: 4px 6px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    flex: 1; min-height: 0; position: relative;
+  }
+  .diagram-frame.standard {
+    height: 440px; flex: none;
+  }
+  .diagram-frame.extra-large {
+    height: 560px; flex: 1;
+    padding: 10px 14px;
+  }
+  .diagram-frame img {
+    width: 100%; height: 100%; max-height: 100%; object-fit: contain;
+  }
+  .diagram-caption {
+    font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; color: var(--ink-faint);
+    margin-top: 3px; text-align: center; flex-shrink: 0;
+  }
+
+  /* Slide Footer */
+  .pfoot {
+    margin-top: auto; padding-top: 6px; border-top: 1px solid var(--line);
+    font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-faint);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0;
+  }
+
+  /* Cover Slide */
+  .cover { justify-content: center; align-items: stretch; padding: 40px 50px 30px; }
+  .cover .kind {
+    font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; font-weight: 700;
+    color: var(--accent); letter-spacing: 0.18em; margin-bottom: 10px; text-transform: uppercase;
+  }
+  .cover h1 {
+    font-size: 40px; font-weight: 700; letter-spacing: -0.04em; margin: 0 0 8px; line-height: 1.15;
+  }
+  .cover h1 span { color: var(--accent); }
+  .cover .tagline {
+    font-size: 16px; color: var(--ink-soft); font-weight: 500; margin: 0 0 20px; max-width: 65ch; line-height: 1.5;
+  }
+  .cover .contact {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ink-faint);
+    padding: 12px 0; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cover .toc {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+    background: var(--line); border: 1px solid var(--line); margin: 20px 0 0;
+  }
+  .cover .toc-item {
+    background: var(--paper); padding: 10px 12px;
+    transition: background 0.15s ease;
+  }
+  .cover .toc-item:hover { background: var(--paper-tint); }
+  .cover .toc-item .n { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--accent); font-weight: 700; }
+  .cover .toc-item .nm { font-size: 12.5px; font-weight: 700; margin-top: 2px; color: var(--ink); }
+  .cover .toc-item .sb { font-size: 10.5px; color: var(--ink-faint); line-height: 1.35; margin-top: 2px; }
+
+  /* Language Switching */
+  .lang-en { display: none !important; }
+  body.lang-mode-en .lang-ko { display: none !important; }
+  body.lang-mode-en .lang-en { display: inline !important; }
+  body.lang-mode-en div.lang-en,
+  body.lang-mode-en p.lang-en,
+  body.lang-mode-en section.lang-en,
+  body.lang-mode-en span.lang-en-block { display: block !important; }
+
+  /* Print Media */
+  @media print {
+    .top-nav { display: none !important; }
+    body { background: #ffffff !important; }
+    .page {
+      width: 100% !important; height: 100vh !important; max-height: none !important;
+      margin: 0 !important; padding: 14mm 16mm 12mm !important;
+      box-shadow: none !important; border-radius: 0 !important;
+      page-break-after: always; break-after: page;
+    }
+    .page:last-child { page-break-after: auto; break-after: auto; }
+    @page { size: A4 landscape; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Persistent Top Navigation Bar ── -->
+<nav class="top-nav">
+  <div class="nav-left">
+    <div class="nav-brand">
+      ARGUS-PR <span>v2.4 PIPELINE EDITION</span>
+    </div>
+    <div class="nav-title">
+      <span class="lang-ko">Google Cloud Agent Hackathon · PR 레드팀 스웜 &amp; 블라인드 메타 검증</span>
+      <span class="lang-en">Google Cloud Agent Hackathon · PR Red-Team Swarm &amp; Blind Meta-Verifier</span>
+    </div>
+  </div>
+
+  <div class="nav-controls">
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-ko" onclick="setLanguage('ko')">KO 한국어</button>
+      <button class="lang-btn" id="btn-en" onclick="setLanguage('en')">EN English</button>
+    </div>
+    <button class="print-btn" onclick="window.print()">
+      PRINT / PDF
+    </button>
+  </div>
+</nav>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 0: COVER & AGENDA                                                   -->
+<!-- ========================================================================= -->
+<section class="page cover" id="p-cover">
+  <div class="kind">
+    <span class="lang-ko">Google Cloud Agent Hackathon · AI 코드 검증 플랫폼</span>
+    <span class="lang-en">Google Cloud Agent Hackathon · AI Code Verification Platform</span>
+  </div>
+  <h1>
+    Argus-PR
+    <span class="lang-ko">파이프라인 단계별 심층 아키텍처 보고서</span>
+    <span class="lang-en">Pipeline Stage-by-Stage Architecture Report</span>
+  </h1>
+  <p class="tagline">
+    <span class="lang-ko">
+      "AI가 작성한 PR의 미묘한 결함을 찾아내는 적대적 레드팀 스웜과, 검증기 자체의 신뢰도를 독립 격리 측정하는 <b>블라인드 메타 검증(Blind Meta-Verification)</b>의 파이프라인 단계별 완벽 해설"
+    </span>
+    <span class="lang-en">
+      "An adversarial red-team attacker swarm that breaks AI-generated PRs before merge, with verification trustworthiness rigorously measured via isolated <b>Blind Meta-Verification</b> across every pipeline stage."
+    </span>
+  </p>
+  
+  <div class="contact">
+    <div>
+      <b>TECH STACK</b>: Gemini 4 Argon · Gemini 3.8 Flash · Gemini 3.5 Flash-Lite · Antigravity Sandbox · FastAPI · Playwright
+    </div>
+    <div>
+      <b>DATE</b>: 2026.10 · <b>VERSION</b>: v2.4 Pipeline Edition (11 Slides)
+    </div>
+  </div>
+
+  <div class="toc">
+    <div class="toc-item">
+      <div class="n">01</div>
+      <div class="nm"><span class="lang-ko">문제 정의 &amp; 핵심 피치</span><span class="lang-en">Problem &amp; Core Pitch</span></div>
+      <div class="sb"><span class="lang-ko">자가 채점 편향과 블라인드 검증</span><span class="lang-en">Self-Grading Bias &amp; Blind Verifier</span></div>
+    </div>
+    <div class="toc-item">
+      <div class="n">02</div>
+      <div class="nm"><span class="lang-ko">전체 엔드투엔드 흐름도</span><span class="lang-en">End-to-End User Flow</span></div>
+      <div class="sb"><span class="lang-ko">Stage 0부터 Stage 4까지의 여정</span><span class="lang-en">Journey from Intake to Decision</span></div>
+    </div>
+    <div class="toc-item">
+      <div class="n">03</div>
+      <div class="nm"><span class="lang-ko">Stage 0 &amp; 0.5 가드레일</span><span class="lang-en">Stage 0 &amp; 0.5 Perimeter</span></div>
+      <div class="sb"><span class="lang-ko">Flash-Lite 인젝션 차단 &amp; 슬라이서</span><span class="lang-en">Flash-Lite Shield &amp; Scope Slicer</span></div>
+    </div>
+    <div class="toc-item">
+      <div class="n">04</div>
+      <div class="nm"><span class="lang-ko">Stage 1 듀얼 트랙 격리</span><span class="lang-en">Stage 1 Dual-Track</span></div>
+      <div class="sb"><span class="lang-ko">정보 격리벽과 8개 미끼 버그 봉인</span><span class="lang-en">Information Wall &amp; Sealed Mutants</span></div>
+    </div>
+    <div class="toc-item">
+      <div class="n">05</div>
+      <div class="nm"><span class="lang-ko">Stage 2 4대 공격자 스웜</span><span class="lang-en">Stage 2 Attacker Swarm</span></div>
+      <div class="sb"><span class="lang-ko">4x Flash 병렬 스웜 &amp; BOLA 매트릭스</span><span class="lang-en">4x Flash Swarm &amp; BOLA Matrix</span></div>
+    </div>
+    <div class="toc-item">
+      <div class="n">06</div>
+      <div class="nm"><span class="lang-ko">Stage 3 샌드박스 실행</span><span class="lang-en">Stage 3 Remote Sandbox</span></div>
+      <div class="sb"><span class="lang-ko">Antigravity 리눅스 격리 &amp; 2x Repro</span><span class="lang-en">Antigravity Sandbox &amp; 2x Repro</span></div>
+    </div>
+    <div class="toc-item">
+      <div class="n">07</div>
+      <div class="nm"><span class="lang-ko">Stage 4 채점 &amp; 원카드</span><span class="lang-en">Stage 4 Scoring &amp; One-Card</span></div>
+      <div class="sb"><span class="lang-ko">Python 결정론 채점 &amp; 인간 결정권</span><span class="lang-en">Deterministic Math &amp; Decision Gate</span></div>
+    </div>
+    <div class="toc-item">
+      <div class="n">08</div>
+      <div class="nm"><span class="lang-ko">확장: CEGIS 자가 치유</span><span class="lang-en">CEGIS Self-Healing</span></div>
+      <div class="sb"><span class="lang-ko">4-Gate 관문과 영구 CI 번들 자산화</span><span class="lang-en">4-Gate Loop &amp; Pinned CI Assets</span></div>
+    </div>
+    <div class="toc-item">
+      <div class="n">09</div>
+      <div class="nm"><span class="lang-ko">AI 모델 라우팅 &amp; 위임</span><span class="lang-en">AI Routing &amp; Delegation</span></div>
+      <div class="sb"><span class="lang-ko">런타임 특화 vs 빌드타임 서브에이전트</span><span class="lang-en">Runtime Routing vs Build Subagents</span></div>
+    </div>
+    <div class="toc-item">
+      <div class="n">10</div>
+      <div class="nm"><span class="lang-ko">안전 재생 및 심층 방어</span><span class="lang-en">Safe Replay &amp; Security</span></div>
+      <div class="sb"><span class="lang-ko">dast-isolated-net 및 오프라인 데모</span><span class="lang-en">Isolated Net &amp; Offline Integrity</span></div>
+    </div>
+    <div class="toc-item">
+      <div class="n">11</div>
+      <div class="nm"><span class="lang-ko">벤치마크 및 검증 결론</span><span class="lang-en">Benchmark &amp; Conclusion</span></div>
+      <div class="sb"><span class="lang-ko">7/8 변이 탐지 실증 및 14개 테스트 전수 통과</span><span class="lang-en">7/8 Blind Rate &amp; 14 Tests Pass</span></div>
+    </div>
+    <div class="toc-item" style="background: var(--accent-wash);">
+      <div class="n" style="color: var(--accent);">STATUS</div>
+      <div class="nm" style="color: var(--accent);"><span class="lang-ko">100% 구현 완료</span><span class="lang-en">100% Implemented</span></div>
+      <div class="sb"><span class="lang-ko">E2E GIF 레코딩 &amp; 실전 검증</span><span class="lang-en">E2E GIF &amp; Verified</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 01: PROBLEM DEFINITION & CORE PITCH                                 -->
+<!-- ========================================================================= -->
+<section class="page" id="p-01">
+  <div class="phead">
+    <div class="left">
+      <span class="idx">01</span>
+      <h2>
+        <span class="lang-ko">문제 정의 및 핵심 피치<small>AI 코드 시대의 치명적 결함과 자가 채점(Self-Grading) 편향의 극복</small></span>
+        <span class="lang-en">Problem Definition &amp; Core Pitch<small>Critical Pitfalls in AI Coding &amp; Overcoming Self-Grading Bias</small></span>
+      </h2>
+    </div>
+    <div class="meta">
+      SEC-PR-01 · CORE CONCEPT<br>
+      BASELINE vs BLIND VERIFICATION
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="role-badge">
+        <span class="lang-ko">핵심 가치 제안</span>
+        <span class="lang-en">CORE VALUE PROPOSITION</span>
+      </div>
+      <p class="lead">
+        <span class="lang-ko">
+          AI 코딩 도구의 보급으로 PR 생성 속도는 10배 빨라졌지만, <b>미묘한 동시성 레이스·인가 탈취(BOLA)·경계값 오류</b>를 인간 리뷰어가 잡아내기는 불가능에 가깝습니다.
+        </span>
+        <span class="lang-en">
+          While AI coding tools accelerate PR creation 10x, detecting <b>subtle race conditions, BOLA exploits, and edge-case leaks</b> before merge remains nearly impossible for humans.
+        </span>
+      </p>
+
+      <div class="figs">
+        <div class="figrow">
+          <div class="num red">0%</div>
+          <div class="cap">
+            <span class="lang-ko">기존 LLM 자가 채점 신뢰도<br>(자신이 만든 버그 간과)</span>
+            <span class="lang-en">Trust in LLM Self-Grading<br>(Confirms own bias)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num">87.5%</div>
+          <div class="cap">
+            <span class="lang-ko">Argus-PR 블라인드 탐지율<br>(8개 미끼 중 7개 포착 확정)</span>
+            <span class="lang-en">Argus-PR Blind Kill Rate<br>(7 of 8 mutants killed)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num green">&lt; 1.5s</div>
+          <div class="cap">
+            <span class="lang-ko">안전 재생 모드 응답 속도<br>(결정론적 Python 실시간 채점)</span>
+            <span class="lang-en">Replay Safe Mode Latency<br>(Deterministic Python scoring)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <span class="chip highlight">Self-Grading Bias</span>
+        <span class="chip">Blind Mutation</span>
+        <span class="chip">Differential Kill</span>
+        <span class="chip">Zero-Knowledge Wall</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="card-grid">
+        <div class="card tint-red">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">❌ 기존 검증: 자가 채점 편향 (Self-Grading Bias)</span>
+              <span class="lang-en">❌ Conventional: Self-Grading LLM Bias</span>
+            </div>
+            <span class="card-badge badge-red">FATAL FLAW</span>
+          </div>
+          <ul class="card-list">
+            <li>
+              <span class="lang-ko"><b>숙제 자가 채점의 오류</b>: 동일한 LLM에게 "코드 리뷰 및 테스트 작성"을 맡기면 본인이 빠뜨린 논리 결함을 그대로 간과함.</span>
+              <span class="lang-en"><b>Grading Own Homework</b>: When the same LLM reviews code, it shares identical inductive blind spots and produces false approvals.</span>
+            </li>
+            <li>
+              <span class="lang-ko"><b>초록불(Green Test)의 환상</b>: "테스트가 모두 통과했으니 안전하다"고 믿지만, 실제로는 아무런 결함도 공격하지 못하는 무의미한 assertion일 뿐임.</span>
+              <span class="lang-en"><b>Illusion of Green Tests</b>: Passing test suites often assert superficial paths without stressing real concurrent boundaries.</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card tint-green">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">✅ Argus-PR: 블라인드 메타 검증 (Blind Verification)</span>
+              <span class="lang-en">✅ Argus-PR: Isolated Blind Meta-Verification</span>
+            </div>
+            <span class="card-badge badge-green">INNOVATION</span>
+          </div>
+          <ul class="card-list">
+            <li>
+              <span class="lang-ko"><b>비밀 미끼 버그(8 Mutants) 주입</b>: 완전히 격리된 <code>Bug Planter</code>가 그림자 사본에 인간도 찾기 힘든 미묘한 결함 8개를 심음.</span>
+              <span class="lang-en"><b>8 Secret Mutants Injected</b>: Isolated <code>Bug Planter</code> injects 8 subtle defects into shadow PR copies without leaking the answers.</span>
+            </li>
+            <li>
+              <span class="lang-ko"><b>공격 스웜에겐 문제지 미공개</b>: <code>Attack Planner</code>와 4대 스웜은 미끼의 위치를 전혀 모른 채 오직 원본 코드 분석만으로 공격 테스트를 생성.</span>
+              <span class="lang-en"><b>Sealed Answer Key</b>: Attacker Swarm receives zero hints about mutants. Verification rigor is calibrated by mutant kill rate ($M/K$).</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card tint-accent">
+        <div class="card-head">
+          <div class="card-title">
+            <span class="lang-ko">📐 엄격한 차분 변이체 처치 정의 (Strict Differential Mutant Kill)</span>
+            <span class="lang-en">📐 Strict Differential Mutant Kill Definition</span>
+          </div>
+          <span class="card-badge badge-accent">MATHEMATICAL GUARANTEE</span>
+        </div>
+        <p class="card-p">
+          <span class="lang-ko">
+            테스트가 원본 PR에서 실패하거나 문법 오류로 깨진 경우는 <b>변이체 탐지 점수에서 완전히 배제</b>됩니다.
+            오직 <b>원본 PR 코드는 무결하게 통과(Pass)</b>하면서 <b>변이 코드에서는 정확히 실패(Fail)</b>를 유발한 테스트만이 유효 처치(Killed)로 인정됩니다:
+          </span>
+          <span class="lang-en">
+            Tests failing on original code or breaking on syntax are strictly excluded. A mutant $M_i$ is caught <b>ONLY IF</b> the test passes on original PR but fails on $M_i$:
+          </span>
+        </p>
+        <div style="background:#ffffff; border:1px solid var(--line); padding:6px 12px; border-radius:3px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent); font-weight:600;">
+          Caught(M_i) &hArr; &exist; t_j &isin; T : Pass(t_j, PR_orig) &and; Fail(t_j, M_i)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pfoot">
+    <div>ARGUS-PR · ARCHITECTURAL SLIDE DECK</div>
+    <div>PAGE 01 / 11</div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 02: END-TO-END FLOW & SEQUENCE                                      -->
+<!-- ========================================================================= -->
+<section class="page" id="p-02">
+  <div class="phead">
+    <div class="left">
+      <span class="idx">02</span>
+      <h2>
+        <span class="lang-ko">전체 엔드투엔드 파이프라인 흐름도<small>PR 수신부터 가드레일, 스웜 공격, 샌드박스, 원카드 의사결정까지의 전체 시퀀스</small></span>
+        <span class="lang-en">End-to-End Pipeline Sequence Flow<small>Full Reviewer Sequence from PR Intake to One-Card Decision Gate</small></span>
+      </h2>
+    </div>
+    <div class="meta">
+      SEC-PR-02 · SEQUENCE<br>
+      STAGE 0 TO STAGE 4
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="role-badge green">
+        <span class="lang-ko">전체 워크플로우</span>
+        <span class="lang-en">END-TO-END WORKFLOW</span>
+      </div>
+      <p class="lead">
+        <span class="lang-ko">
+          Argus-PR 파이프라인은 <b>사전 검문(Stage 0)</b>에서 시작하여 <b>듀얼 트랙 격리(Stage 1)</b>, <b>병렬 스웜 공격(Stage 2)</b>, <b>원격 샌드박스 실행(Stage 3)</b>, 그리고 <b>인간 중심 원카드 의사결정(Stage 4)</b>으로 매끄럽게 연결됩니다.
+        </span>
+        <span class="lang-en">
+          The pipeline flows seamlessly through <b>Stage 0 Perimeter Guardrail</b>, <b>Stage 1 Dual-Track Isolation</b>, <b>Stage 2 Parallel Swarm Attack</b>, <b>Stage 3 Remote Sandbox</b>, and <b>Stage 4 One-Card Decision Gate</b>.
+        </span>
+      </p>
+
+      <div class="figs">
+        <div class="figrow">
+          <div class="num green">5 Stages</div>
+          <div class="cap">
+            <span class="lang-ko">단계별 자동화 파이프라인<br>(Perimeter &rarr; Synth &rarr; Gate)</span>
+            <span class="lang-en">End-to-End Pipeline<br>(Perimeter &rarr; Synth &rarr; Gate)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num">2/2 Repro</div>
+          <div class="cap">
+            <span class="lang-ko">Flaky 알람 100% 제거 필터<br>(연속 2회 재현 실패만 승격)</span>
+            <span class="lang-en">Flaky False Positive Filter<br>(Consecutive 2/2 runs required)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <span class="chip highlight">Stage 0 Guardrail</span>
+        <span class="chip">AST Slicer</span>
+        <span class="chip">Dual-Track Swarm</span>
+        <span class="chip">One-Card Summary</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="diagram-frame standard">
+        <img src="docs/image/diagram_user_journey.svg" alt="End-to-End User Journey Diagram" style="max-height: 405px;">
+        <div class="diagram-caption">
+          <span class="lang-ko">▲ 전체 엔드투엔드 파이프라인 시퀀스 다이어그램 (보안 차단 &rarr; 슬라이싱 &rarr; 스웜 &rarr; 원카드)</span>
+          <span class="lang-en">▲ End-to-End Pipeline Sequence Diagram (Perimeter &rarr; AST Slicing &rarr; Swarm &rarr; One-Card)</span>
+        </div>
+      </div>
+
+      <div class="card-grid" style="flex: 1; min-height: 0;">
+        <div class="card tint-accent">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">파이프라인 단계별 연계 원칙</span>
+              <span class="lang-en">Pipeline Stage Handoff Principles</span>
+            </div>
+            <span class="card-badge badge-accent">ZERO LEAKAGE</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko">각 단계는 이전 단계의 산출물을 검증하여 다음 단계의 비용과 토큰을 최적화하며, 인공 버그 정답지는 평가 단계까지 완벽 봉인됩니다.</span>
+            <span class="lang-en">Each stage filters outputs to optimize downstream token costs, while the mutant answer key remains sealed until scoring.</span>
+          </p>
+        </div>
+
+        <div class="card tint-green">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">인간 리뷰어를 위한 원카드 집약</span>
+              <span class="lang-en">One-Card Reviewer Aggregation</span>
+            </div>
+            <span class="card-badge badge-green">DECISION GATE</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko">복잡한 5개 단계의 텔레메트리와 수천 줄의 로그를 수렴하여, 최종 승인/반려를 위한 <b>단 한 장의 직관적 카드</b>로 종합합니다.</span>
+            <span class="lang-en">Telemetry and logs from all 5 stages converge into a <b>single intuitive card</b> for instant human merge decisions.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pfoot">
+    <div>ARGUS-PR · ARCHITECTURAL SLIDE DECK</div>
+    <div>PAGE 02 / 11</div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 03: STAGE 0 & 0.5 PERIMETER GUARDRAIL & SCOPE TRIAGE                -->
+<!-- ========================================================================= -->
+<section class="page" id="p-03">
+  <div class="phead">
+    <div class="left">
+      <span class="idx">03</span>
+      <h2>
+        <span class="lang-ko">Stage 0 &amp; 0.5: 사전 검문 및 스마트 스코프 슬라이서<small>Gemini 3.5 Flash-Lite 프롬프트 인젝션 방어와 Python AST 의존성 슬라이싱</small></span>
+        <span class="lang-en">Stage 0 &amp; 0.5: Perimeter Guardrail &amp; Smart Scope Slicer<small>Gemini 3.5 Flash-Lite Injection Defense &amp; Python AST Dependency Slicing</small></span>
+      </h2>
+    </div>
+    <div class="meta">
+      SEC-PR-03 · PRE-FLIGHT<br>
+      STAGE 0 &amp; 0.5 DEEP DIVE
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="role-badge amber">
+        <span class="lang-ko">사전 유입 차단</span>
+        <span class="lang-en">PRE-FLIGHT INTAKE</span>
+      </div>
+      <p class="lead">
+        <span class="lang-ko">
+          PR Diff와 주석은 <b>신뢰할 수 없는 외부 입력</b>입니다. 고가의 Frontier 모델과 샌드박스를 호출하기 전에 초저지연 보안 검문과 파일 절삭을 먼저 수행합니다.
+        </span>
+        <span class="lang-en">
+          PR diffs and comments are untrusted inputs. Before invoking frontier models or booting sandboxes, Argus-PR enforces ultra-fast injection quarantine and dependency trimming.
+        </span>
+      </p>
+
+      <div class="figs">
+        <div class="figrow">
+          <div class="num amber">68 ms</div>
+          <div class="cap">
+            <span class="lang-ko">Flash-Lite 가드레일 레이턴시<br>(악성 지시어 즉시 차단)</span>
+            <span class="lang-en">Flash-Lite Guardrail Latency<br>(Instant prompt quarantine)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num green">70~90%</div>
+          <div class="cap">
+            <span class="lang-ko">불필요 파일 자동 절삭률<br>(Python AST BFS depth&le;3)</span>
+            <span class="lang-en">Irrelevant File Trimming<br>(Python AST BFS depth&le;3)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <span class="chip highlight">gemini-3.5-flash-lite</span>
+        <span class="chip">Quarantine Shield</span>
+        <span class="chip">AST Dependency BFS</span>
+        <span class="chip">Sparse Tree</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="diagram-frame standard">
+        <img src="docs/image/diagram_stage0_guardrail.svg" alt="Stage 0 Guardrail and Scope Slicer Diagram" style="max-height: 405px;">
+        <div class="diagram-caption">
+          <span class="lang-ko">▲ Stage 0 초저지연 프롬프트 인젝션 검문 및 Stage 0.5 스마트 범위 슬라이싱 구조도</span>
+          <span class="lang-en">▲ Stage 0 Low-Latency Prompt Injection Quarantine &amp; Stage 0.5 Smart Scope Slicing Topology</span>
+        </div>
+      </div>
+
+      <div class="card-grid" style="flex: 1; min-height: 0;">
+        <div class="card tint-amber">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">Stage 0: 68ms 초저지연 가드레일</span>
+              <span class="lang-en">Stage 0: 68ms Low-Latency Guardrail</span>
+            </div>
+            <span class="card-badge badge-amber">FLASH-LITE</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko"><code># IGNORE ALL PREVIOUS INSTRUCTIONS</code> 등 탈취 시도 발견 시 후속 LLM/샌드박스 호출을 100% 중단하고 비용 0원으로 즉시 격리합니다.</span>
+            <span class="lang-en">Blocks prompt injection at the perimeter, shutting down downstream LLM calls and sandbox boots at zero residual cost.</span>
+          </p>
+        </div>
+
+        <div class="card tint-accent">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">Stage 0.5: 3대 스마트 마운트 모드</span>
+              <span class="lang-en">Stage 0.5: 3 Smart Mount Modes</span>
+            </div>
+            <span class="card-badge badge-accent">AST SLICER</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko"><b>SINGLE_FILE</b>(단일 모듈, ~0.5s), <b>SPARSE_TREE</b>(BFS 로컬 의존성만 슬라이싱, ~1.5s), <b>SERVER_DAEMON</b>(백엔드 데몬 구동) 중 최적 모드를 자동 판정합니다.</span>
+            <span class="lang-en">Automatically selects <b>SINGLE_FILE</b>, <b>SPARSE_TREE</b>, or <b>SERVER_DAEMON</b> to minimize sandbox setup time and token usage.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pfoot">
+    <div>ARGUS-PR · ARCHITECTURAL SLIDE DECK</div>
+    <div>PAGE 03 / 11</div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 04: STAGE 1 DUAL-TRACK ARCHITECTURE & INFORMATION WALL              -->
+<!-- ========================================================================= -->
+<section class="page" id="p-04">
+  <div class="phead">
+    <div class="left">
+      <span class="idx">04</span>
+      <h2>
+        <span class="lang-ko">Stage 1: 듀얼 트랙 시스템 및 정보 격리벽<small>Track A(공격 기획)와 Track B(미끼 주입)의 store=False 무상태 독립 실행</small></span>
+        <span class="lang-en">Stage 1: Dual-Track Architecture &amp; Strict Information Wall<small>Track A (Attack Planner) vs Track B (Bug Planter) via store=False Zero Shared Context</small></span>
+      </h2>
+    </div>
+    <div class="meta">
+      SEC-PR-04 · TOPOLOGY<br>
+      STAGE 1 DEEP DIVE
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="role-badge purple">
+        <span class="lang-ko">블라인드 메타 검증</span>
+        <span class="lang-en">BLIND META-VERIFICATION</span>
+      </div>
+      <p class="lead">
+        <span class="lang-ko">
+          <b>Track A(공격자)</b>와 <b>Track B(미끼 주입자)</b>는 세션과 캐시를 공유하지 않는 <code>store=False</code> 호출로 격리되어, 공격 스웜이 정답을 미리 알고 테스트를 짜는 부정 채점을 원천 차단합니다.
+        </span>
+        <span class="lang-en">
+          <b>Track A (Attack Planner)</b> and <b>Track B (Bug Planter)</b> execute via independent <code>store=False</code> calls, establishing a physical Information Wall against test leakage.
+        </span>
+      </p>
+
+      <div class="figs">
+        <div class="figrow">
+          <div class="num purple">0 State</div>
+          <div class="cap">
+            <span class="lang-ko">트랙 간 상태 공유 차단<br>(Gemini Interactions API)</span>
+            <span class="lang-en">Cross-Track State Leak<br>(Stateless Information Wall)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num">8 EA</div>
+          <div class="cap">
+            <span class="lang-ko">봉인된 인공 변이체 사본<br>(M1~M8 Shadow Modules)</span>
+            <span class="lang-en">Sealed Mutant Modules<br>(M1..M8 Shadow Copies)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <span class="chip highlight">store=False</span>
+        <span class="chip">gemini-4-argon</span>
+        <span class="chip">INV-1..4 Extraction</span>
+        <span class="chip">Sealed Answer Key</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="diagram-frame extra-large">
+        <img src="docs/image/diagram_dual_track.svg" alt="Argus-PR Dual-Track Blind Verification Architecture" style="max-height: 520px;">
+        <div class="diagram-caption">
+          <span class="lang-ko">▲ Argus-PR 듀얼 트랙 블라인드 검증 아키텍처 다이어그램 (중앙 정보 격리벽 및 2-Phase 샌드박스)</span>
+          <span class="lang-en">▲ Argus-PR Dual-Track Blind Verification Architecture Diagram (Central Information Wall &amp; 2-Phase Sandbox)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pfoot">
+    <div>ARGUS-PR · ARCHITECTURAL SLIDE DECK</div>
+    <div>PAGE 04 / 11</div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 05: STAGE 2 4x PARALLEL ATTACKER SWARM & BOLA MATRIX                -->
+<!-- ========================================================================= -->
+<section class="page" id="p-05">
+  <div class="phead">
+    <div class="left">
+      <span class="idx">05</span>
+      <h2>
+        <span class="lang-ko">Stage 2: 4대 공격자 스웜 및 Multi-Persona BOLA 매트릭스<small>Gemini 3.8 Flash 4대 병렬 스웜과 격리망(dast-isolated-net) 테넌트 탈취 적발</small></span>
+        <span class="lang-en">Stage 2: 4x Parallel Attacker Swarm &amp; Multi-Persona BOLA Matrix<small>4x Gemini 3.8 Flash Swarms &amp; dast-isolated-net Cross-Tenant Exploitation Discovery</small></span>
+      </h2>
+    </div>
+    <div class="meta">
+      SEC-PR-05 · ATTACK SWARM<br>
+      STAGE 2 DEEP DIVE
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="role-badge">
+        <span class="lang-ko">적대적 공격 스웜</span>
+        <span class="lang-en">ADVERSARIAL ATTACK SWARM</span>
+      </div>
+      <p class="lead">
+        <span class="lang-ko">
+          <b>4대 도메인 특화 에이전트</b>가 <code>asyncio.gather</code>로 병렬 가동되어 코드를 공격하며, 최대 5회 변형 공격(`Observe-Mutate-Attack`)과 3대 페르소나 BOLA 차분 검증을 수행합니다.
+        </span>
+        <span class="lang-en">
+          <b>4 domain-specialized attackers</b> run concurrently via <code>asyncio.gather</code>, driving up to 5 adaptive exploit rounds and 3-persona BOLA differential replay.
+        </span>
+      </p>
+
+      <div class="figs">
+        <div class="figrow">
+          <div class="num">4x</div>
+          <div class="cap">
+            <span class="lang-ko">동시 병렬 공격 에이전트<br>(Security, Edge, State, Contract)</span>
+            <span class="lang-en">Parallel Attack Swarm<br>(Security, Edge, State, Contract)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num red">CWE-639</div>
+          <div class="cap">
+            <span class="lang-ko">BOLA/IDOR 차분 적발<br>(Tenant B &rarr; Tenant A 리소스 탈취)</span>
+            <span class="lang-en">BOLA/IDOR Discovered<br>(Cross-tenant resource drain)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <span class="chip highlight">4x gemini-3.8-flash</span>
+        <span class="chip">Adaptive Red-Team</span>
+        <span class="chip">BOLA Matrix</span>
+        <span class="chip">asyncio.gather</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="diagram-frame standard">
+        <img src="docs/image/diagram_stage2_swarm.svg" alt="Stage 2 Attacker Swarm and BOLA Matrix Diagram" style="max-height: 405px;">
+        <div class="diagram-caption">
+          <span class="lang-ko">▲ Stage 2 4대 공격자 스웜 구성 및 Multi-Persona BOLA 교차 테넌트 차분 매트릭스</span>
+          <span class="lang-en">▲ Stage 2 4-Attacker Swarm Topology &amp; Multi-Persona BOLA Cross-Tenant Differential Matrix</span>
+        </div>
+      </div>
+
+      <div class="card-grid" style="flex: 1; min-height: 0;">
+        <div class="card tint-accent">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">4대 적대적 스웜 역할 분담</span>
+              <span class="lang-en">4 Specialized Attacker Roles</span>
+            </div>
+            <span class="card-badge badge-accent">PARALLEL SWARM</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko"><b>Security</b>(인가/BOLA), <b>Edge-Case</b>(경계값/오버플로우), <b>State</b>(50스레드 동시성 레이스), <b>Regression</b>(API 계약/스키마)으로 사각지대를 전방위 압박합니다.</span>
+            <span class="lang-en"><b>Security</b>, <b>Edge-Case</b>, <b>State</b>, and <b>Regression</b> attackers apply multi-faceted pressure to eliminate blind spots.</span>
+          </p>
+        </div>
+
+        <div class="card tint-red">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">🥉 3위 기능: BOLA 교차 테넌트 리플레이</span>
+              <span class="lang-en">Top 3: Multi-Persona BOLA Replay</span>
+            </div>
+            <span class="card-badge badge-red">BREACH DETECTED</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko">격리망 내부에서 <code>Victim(A)</code>, <code>Attacker(B)</code>, <code>Anonymous</code> 3개 페르소나를 자동 민팅하여, B 토큰으로 A 채널 환불 탈취가 2/2 재현되는 결함을 포착합니다.</span>
+            <span class="lang-en">Mints Victim(A), Attacker(B), and Anonymous personas to prove BOLA token-hijacking defects via 2/2 reproducible runs.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pfoot">
+    <div>ARGUS-PR · ARCHITECTURAL SLIDE DECK</div>
+    <div>PAGE 05 / 11</div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 06: STAGE 3 REMOTE SANDBOX & 2x REPRO FILTER                        -->
+<!-- ========================================================================= -->
+<section class="page" id="p-06">
+  <div class="phead">
+    <div class="left">
+      <span class="idx">06</span>
+      <h2>
+        <span class="lang-ko">Stage 3: 원격 리눅스 샌드박스 및 2회 연속 재현 필터<small>Google Cloud Antigravity Sandbox 격리와 Flaky 테스트 거짓 양성 100% 제거</small></span>
+        <span class="lang-en">Stage 3: Remote Linux Sandbox &amp; 2x Repro Differential Execution<small>Antigravity Sandbox Isolation &amp; 100% Elimination of Flaky False Positives</small></span>
+      </h2>
+    </div>
+    <div class="meta">
+      SEC-PR-06 · EXECUTION<br>
+      STAGE 3 DEEP DIVE
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="role-badge green">
+        <span class="lang-ko">격리 실행 보증</span>
+        <span class="lang-en">SANDBOX EXECUTION</span>
+      </div>
+      <p class="lead">
+        <span class="lang-ko">
+          AI가 생성한 적대적 테스트 코드는 호스트에서 직접 실행되지 않습니다. <b>독립 원격 Linux 샌드박스</b>에서 실행되며, 2회 연속 재현으로 Flaky 결함을 완전 배제합니다.
+        </span>
+        <span class="lang-en">
+          Untrusted attacker-generated code never runs on the host. Execution is confined inside <b>isolated remote Linux sandboxes</b>, enforcing a 2x consecutive run filter.
+        </span>
+      </p>
+
+      <div class="figs">
+        <div class="figrow">
+          <div class="num amber">0 Host</div>
+          <div class="cap">
+            <span class="lang-ko">호스트 머신 직접 실행 배제<br>(순수 격리 컨테이너 실행)</span>
+            <span class="lang-en">Host Execution Excluded<br>(Confined container runtimes)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num green">2/2 Run</div>
+          <div class="cap">
+            <span class="lang-ko">연속 실패만 PROVEN 승격<br>(Flaky 거짓 알람 100% 차단)</span>
+            <span class="lang-en">Consecutive Failures Only<br>(Zero flaky false alarms)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <span class="chip highlight">antigravity-preview</span>
+        <span class="chip">dast-isolated-net</span>
+        <span class="chip">2x Repro Filter</span>
+        <span class="chip">Differential Kill</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="diagram-frame standard">
+        <img src="docs/image/diagram_stage3_sandbox.svg" alt="Stage 3 Sandbox and Differential Execution Diagram" style="max-height: 405px;">
+        <div class="diagram-caption">
+          <span class="lang-ko">▲ Stage 3 Antigravity 격리 리눅스 샌드박스 및 Track (a)/(b) 차분 실행 구조도</span>
+          <span class="lang-en">▲ Stage 3 Antigravity Remote Linux Sandbox &amp; Track (a)/(b) Differential Execution Flow</span>
+        </div>
+      </div>
+
+      <div class="card-grid" style="flex: 1; min-height: 0;">
+        <div class="card tint-green">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">Track (a): 원본 PR 2회 연속 재현 (2x Repro)</span>
+              <span class="lang-en">Track (a): 2x Consecutive Repro Filter</span>
+            </div>
+            <span class="card-badge badge-green">PROVEN DEFECTS</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko">동시성 타이밍 차이로 1회만 실패하고 사라지는 일시적 테스트는 폐기하고, <b>연속 2회 모두 실패한 실제 결함(2/2)</b>만 PROVEN으로 확정 보고합니다.</span>
+            <span class="lang-en">Discards intermittent failures. Only bugs reproducing in <b>2 of 2 consecutive runs</b> are elevated to confirmed PR defects.</span>
+          </p>
+        </div>
+
+        <div class="card tint-accent">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">Track (b): 8개 변이 교차 사살 (Pass ∧ Fail)</span>
+              <span class="lang-en">Track (b): 8-Mutant Differential Kill</span>
+            </div>
+            <span class="card-badge badge-accent">FORMAL CRITERIA</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko">원본 PR에서 통과한 테스트 중 변이 사본(M1..M8)을 정확히 탈락시킨 경우만 유효 처치로 산출하여, 8개 중 7개 처치(87.5%)를 검증합니다.</span>
+            <span class="lang-en">Only tests passing on PR but failing on M1..M8 count as kills, achieving 7 of 8 mutants killed (87.5% visibility).</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pfoot">
+    <div>ARGUS-PR · ARCHITECTURAL SLIDE DECK</div>
+    <div>PAGE 06 / 11</div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 07: STAGE 4 DETERMINISTIC SCORING & ONE-CARD MERGE GATE             -->
+<!-- ========================================================================= -->
+<section class="page" id="p-07">
+  <div class="phead">
+    <div class="left">
+      <span class="idx">07</span>
+      <h2>
+        <span class="lang-ko">Stage 4: Python 결정론적 채점 및 One-Card 의사결정 게이트<small>수학적 채점(scoring.py) 무결성과 인간 테크 리드의 최종 승인/반려 권한</small></span>
+        <span class="lang-en">Stage 4: Deterministic Scoring &amp; One-Card Human Decision Gate<small>Deterministic Math Integrity (scoring.py) &amp; Tech Lead Final Approval Authority</small></span>
+      </h2>
+    </div>
+    <div class="meta">
+      SEC-PR-07 · DECISION<br>
+      STAGE 4 DEEP DIVE
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="role-badge green">
+        <span class="lang-ko">결정론적 신뢰 보증</span>
+        <span class="lang-en">DECISION INTEGRITY</span>
+      </div>
+      <p class="lead">
+        <span class="lang-ko">
+          점수 계산에 LLM의 환각이 개입할 여지를 0%로 차단하기 위해 <b>수학적 채점은 순수 Python</b>으로 계산하며, 최종 의사결정은 <b>인간 리뷰어의 One-Card</b>로 위임합니다.
+        </span>
+        <span class="lang-en">
+          To eliminate LLM hallucination in trust scores, <b>math is 100% computed in deterministic Python</b>, with final merge authority reserved for the <b>human tech lead</b>.
+        </span>
+      </p>
+
+      <div class="figs">
+        <div class="figrow">
+          <div class="num green">0%</div>
+          <div class="cap">
+            <span class="lang-ko">채점 점수 LLM 환각률<br>(Python 집합 대수 연산)</span>
+            <span class="lang-en">LLM Score Hallucination<br>(Pure Python set algebra)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num">7 / 8</div>
+          <div class="cap">
+            <span class="lang-ko">변이체 블라인드 처치 점수<br>(87.5% 검증기 시야 증명)</span>
+            <span class="lang-en">Blind Mutation Score<br>(87.5% calibrated visibility)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <span class="chip highlight">Deterministic Math</span>
+        <span class="chip">One-Card Summary</span>
+        <span class="chip">Residual Risk</span>
+        <span class="chip">Human Decision Gate</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="diagram-frame standard">
+        <img src="docs/image/diagram_stage4_onecard.svg" alt="Stage 4 Scoring and One-Card Gate Diagram" style="max-height: 405px;">
+        <div class="diagram-caption">
+          <span class="lang-ko">▲ Stage 4 Python 결정론적 채점 엔진 및 리뷰어 원카드(One-Card) 의사결정 게이트</span>
+          <span class="lang-en">▲ Stage 4 Deterministic Python Scoring Engine &amp; Reviewer One-Card Decision Gate</span>
+        </div>
+      </div>
+
+      <div class="card-grid" style="flex: 1; min-height: 0;">
+        <div class="card tint-green">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">Python scoring.py 결정론적 채점</span>
+              <span class="lang-en">Deterministic Python scoring.py</span>
+            </div>
+            <span class="card-badge badge-green">PURE MATH</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko">실제 결함 수(2개)와 변이 탐지율(7/8)을 Python이 확정하여 넘기며, Gemini 4 Argon Synthesizer는 오직 <b>생존 변이체(M8) 잔여 리스크</b> 설명만 담당합니다.</span>
+            <span class="lang-en">Python computes exact bug counts and kill rates. Gemini 4 Argon Synthesizer only writes qualitative residual risk summaries.</span>
+          </p>
+        </div>
+
+        <div class="card tint-accent">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">인간 중심 의사결정 (Human-in-the-Loop)</span>
+              <span class="lang-en">Human-in-the-Loop Decision</span>
+            </div>
+            <span class="card-badge badge-accent">MERGE GATE</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko">AI가 독단적으로 머지하지 않으며, 리뷰어가 원카드를 보고 <b>[Reject]</b>, <b>[CEGIS 패치 적용]</b>, <b>[Approve]</b> 버튼을 직접 눌러 통제합니다.</span>
+            <span class="lang-en">Argus-PR never auto-merges code. The human engineer reviews the summary and clicks [Reject], [Apply Patch], or [Approve].</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pfoot">
+    <div>ARGUS-PR · ARCHITECTURAL SLIDE DECK</div>
+    <div>PAGE 07 / 11</div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 08: POST-VERIFICATION CEGIS & PERMANENT ASSET PINNING               -->
+<!-- ========================================================================= -->
+<section class="page" id="p-08">
+  <div class="phead">
+    <div class="left">
+      <span class="idx">08</span>
+      <h2>
+        <span class="lang-ko">포스트 검증: CEGIS 자가 치유 및 영구 CI 자산 번들 수출<small>반례 유도 패치 정제(4-Gate Verifier)와 Pinned Security Regression 번들</small></span>
+        <span class="lang-en">Post-Verification: CEGIS Self-Healing &amp; Permanent CI Asset Export<small>Counterexample-Guided Patch Refinement &amp; Pinned Security Regression Bundles</small></span>
+      </h2>
+    </div>
+    <div class="meta">
+      SEC-PR-08 · EXPANSION<br>
+      POST-VERIFY CEGIS &amp; ASSETS
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="role-badge green">
+        <span class="lang-ko">엔터프라이즈 확장 기능</span>
+        <span class="lang-en">ENTERPRISE EXTENSION</span>
+      </div>
+      <p class="lead">
+        <span class="lang-ko">
+          결함을 발견하는 데 그치지 않고, <b>반례(Counterexample)를 AI에 재주입하여 4대 관문으로 자가 치유</b>하고, 공격 코드를 영구 CI 회귀 테스트로 번들링합니다.
+        </span>
+        <span class="lang-en">
+          Beyond bug detection, failed counterexamples guide a <b>4-Gate CEGIS self-healing loop</b>, exporting verified diffs and permanent regression test suites into git.
+        </span>
+      </p>
+
+      <div class="figs">
+        <div class="figrow">
+          <div class="num green">4 Gates</div>
+          <div class="cap">
+            <span class="lang-ko">자가 치유 검증 관문<br>(AST &rarr; Semgrep &rarr; DAST &rarr; Mutant)</span>
+            <span class="lang-en">Self-Healing Gates<br>(AST &rarr; Semgrep &rarr; DAST &rarr; Mutant)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num">Max 5x</div>
+          <div class="cap">
+            <span class="lang-ko">세션당 최대 재시도 상한<br>(무한 루프 및 비용 폭주 방지)</span>
+            <span class="lang-en">Max Attempts per Session<br>(Infinite loop &amp; budget guard)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <span class="chip highlight">CEGIS Patch Loop</span>
+        <span class="chip">4-Gate Verifier</span>
+        <span class="chip">Pinned Regression Test</span>
+        <span class="chip">CI Gatekeeper YAML</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="diagram-frame standard">
+        <img src="docs/image/diagram_cegis_and_bundle.svg" alt="CEGIS Self-Healing Loop and Bundle Export Diagram" style="max-height: 405px;">
+        <div class="diagram-caption">
+          <span class="lang-ko">▲ 반례 유도 자가 치유(CEGIS) 4-Gate 루프 및 영구 PR 자산 번들 수출 흐름</span>
+          <span class="lang-en">▲ Counterexample-Guided Self-Healing (CEGIS) 4-Gate Loop &amp; Permanent PR Bundle Export</span>
+        </div>
+      </div>
+
+      <div class="card-grid" style="flex: 1; min-height: 0;">
+        <div class="card tint-green">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">1. CEGIS 자가 치유 패치 루프 (Top 1)</span>
+              <span class="lang-en">1. CEGIS Self-Healing Patch Loop (Top 1)</span>
+            </div>
+            <span class="card-badge badge-green">4-GATE VERIFIER</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko">
+              패치가 문법을 깨거나 기존 테스트를 탈락시키면 실패 로그와 생존 변이 Diff를 피드백하여 <b>최대 5회까지 자가 수정</b>합니다. Gate 1(문법) &rarr; Gate 2(Semgrep) &rarr; Gate 3(DAST 2/2 통과) &rarr; Gate 4(변이 탐지율 &ge; 87.5%)를 모두 통과해야 <code>VERIFIED</code> 판정을 받습니다.
+            </span>
+            <span class="lang-en">
+              When patches break syntax or tests, error traces feed back into Argon for <b>up to 5 self-healing iterations</b> across Gate 1 (AST), Gate 2 (Semgrep), Gate 3 (DAST 2/2), and Gate 4 (Mutant Kill Rate &ge; 87.5%).
+            </span>
+          </p>
+        </div>
+
+        <div class="card tint-accent">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">2. 보안 회귀 테스트 영구 자산화 (Top 2)</span>
+              <span class="lang-en">2. Pinned Regression Asset Export (Top 2)</span>
+            </div>
+            <span class="card-badge badge-accent">DRIFT PREVENTION</span>
+          </div>
+          <p class="card-p">
+            <span class="lang-ko">
+              검증 완료 시 <code>POST /api/prs/export-bundle</code>을 통해 <b>검증된 Diff</b>, <b><code>test_argus_regression_*.py</code> 회귀 테스트 파일</b>, 그리고 <b>GitHub Actions CI 워크플로우 YAML</b>을 영구 PR 아티팩트로 다운로드/커밋할 수 있습니다.
+            </span>
+            <span class="lang-en">
+              Verified outcomes export via <code>POST /api/prs/export-bundle</code>: <b>unified diff</b>, <b><code>test_argus_regression_*.py</code> test suite</b>, and <b>GitHub Actions CI workflow YAML</b> for permanent drift protection.
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pfoot">
+    <div>ARGUS-PR · ARCHITECTURAL SLIDE DECK</div>
+    <div>PAGE 08 / 11</div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 09: AI MODEL ROUTING & SUBAGENT DELEGATION                          -->
+<!-- ========================================================================= -->
+<section class="page" id="p-09">
+  <div class="phead">
+    <div class="left">
+      <span class="idx">09</span>
+      <h2>
+        <span class="lang-ko">AI 모델 라우팅 및 서브에이전트 위임 기준<small>런타임 모델 특화(Layer A)와 빌드타임 invoke_subagent 협업(Layer B)</small></span>
+        <span class="lang-en">AI Model Routing &amp; Subagent Delegation Criteria<small>Runtime Model Specialization (Layer A) vs Build-Time invoke_subagent (Layer B)</small></span>
+      </h2>
+    </div>
+    <div class="meta">
+      SEC-PR-09 · ORCHESTRATION<br>
+      DUAL-LAYER MULTI-AGENT
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="role-badge purple">
+        <span class="lang-ko">이중 멀티 에이전트 구조</span>
+        <span class="lang-en">DUAL-LAYER MULTI-AGENT</span>
+      </div>
+      <p class="lead">
+        <span class="lang-ko">
+          Argus-PR은 <b>1) 앱 실행 시 실시간으로 동작하는 런타임 모델 라우팅</b>과 <b>2) 시스템 자체를 구축할 때 적용한 개발용 서브에이전트 오케스트레이션</b>의 이중 구조를 갖춥니다.
+        </span>
+        <span class="lang-en">
+          Argus-PR features a dual-layer architecture: <b>1) In-app runtime model routing</b> and <b>2) Build-time subagent swarm delegation</b> via <code>invoke_subagent</code>.
+        </span>
+      </p>
+
+      <div class="figs">
+        <div class="figrow">
+          <div class="num">68 ms</div>
+          <div class="cap">
+            <span class="lang-ko">Flash-Lite 가드레일 지연시간<br>(악의적 프롬프트 즉시 차단)</span>
+            <span class="lang-en">Flash-Lite Guardrail Latency<br>(Immediate injection quarantine)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num purple">pro / flash</div>
+          <div class="cap">
+            <span class="lang-ko">작업 난이도별 모델 배정 티어<br>(고난도 아키텍처 vs 대량 데이터)</span>
+            <span class="lang-en">Task-Tiered Delegation Model<br>(Deep reasoning vs Fast execution)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <span class="chip highlight">gemini-4-argon</span>
+        <span class="chip highlight">gemini-3.8-flash</span>
+        <span class="chip">gemini-3.5-flash-lite</span>
+        <span class="chip">invoke_subagent</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="diagram-frame standard">
+        <img src="docs/image/diagram_agent_hierarchy.svg" alt="Dual-Layer AI Hierarchy and Delegation Diagram" style="max-height: 405px;">
+        <div class="diagram-caption">
+          <span class="lang-ko">▲ 런타임 모델 라우팅 (Layer A) vs 빌드타임 서브에이전트 위임 기준 (Layer B)</span>
+          <span class="lang-en">▲ Runtime Model Routing (Layer A) vs Build-Time Subagent Delegation (Layer B)</span>
+        </div>
+      </div>
+
+      <div class="card-grid" style="flex: 1; min-height: 0;">
+        <div class="card tint-purple">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">Layer A: 런타임 모델 배정 기준</span>
+              <span class="lang-en">Layer A: Runtime Model Allocation</span>
+            </div>
+            <span class="card-badge badge-purple">INTERACTIONS API</span>
+          </div>
+          <ul class="card-list">
+            <li><b>gemini-3.5-flash-lite</b>: ~68ms 초저지연 프롬프트 인젝션 스캐너 (Stage 0).</li>
+            <li><b>gemini-4-argon</b>: 고난도 불변성(INV-1..4) 추출, 비밀 미끼 주입, 최종 리스크 종합.</li>
+            <li><b>4x gemini-3.8-flash</b>: 동시성/보안 파괴 테스트 생성을 위한 고속 4대 병렬 스웜.</li>
+          </ul>
+        </div>
+
+        <div class="card tint-accent">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">Layer B: 서브에이전트 위임 기준</span>
+              <span class="lang-en">Layer B: Build-Time Delegation Criteria</span>
+            </div>
+            <span class="card-badge badge-accent">INVOKE_SUBAGENT</span>
+          </div>
+          <ul class="card-list">
+            <li><b>pro (Argon)</b>: 정보 격리벽·샌드박스 하네스 설계, 실시간 터미널 &amp; UI 상태 머신.</li>
+            <li><b>flash (3.8 Flash)</b>: 대량 벤치마크 PR 데이터셋 생성, Playwright E2E GIF 자동 캡처.</li>
+            <li><b>원칙</b>: 깊은 추론·무결성은 <code>pro</code>, 병렬 구현·반복 보일러플레이트는 <code>flash</code>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pfoot">
+    <div>ARGUS-PR · ARCHITECTURAL SLIDE DECK</div>
+    <div>PAGE 09 / 11</div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 10: REMOTE SANDBOX & DETERMINISTIC REPLAY SAFETY                    -->
+<!-- ========================================================================= -->
+<section class="page" id="p-10">
+  <div class="phead">
+    <div class="left">
+      <span class="idx">10</span>
+      <h2>
+        <span class="lang-ko">원격 샌드박스 및 결정론적 안전 재생 폴백<small>Google Cloud Antigravity Sandbox 격리와 무결성 안전 재생 모드</small></span>
+        <span class="lang-en">Remote Sandbox &amp; Deterministic Safe Replay Fallback<small>Google Cloud Antigravity Sandbox Isolation &amp; Zero-Risk Offline Replay</small></span>
+      </h2>
+    </div>
+    <div class="meta">
+      SEC-PR-10 · SECURITY<br>
+      ISOLATION &amp; FAIL-SAFE
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="role-badge amber">
+        <span class="lang-ko">안전 실행 보증</span>
+        <span class="lang-en">SAFE EXECUTION GUARANTEE</span>
+      </div>
+      <p class="lead">
+        <span class="lang-ko">
+          AI가 작성한 공격 코드는 호스트나 서버 컨테이너에서 직접 실행되지 않습니다. <b>독립 원격 Linux 샌드박스</b>와 <b>결정론적 로컬 재생기</b>의 2중 방어로 보호됩니다.
+        </span>
+        <span class="lang-en">
+          Untrusted attacker-generated code is never executed on the host. Execution is confined inside <b>isolated remote Linux sandboxes</b> backed by a <b>deterministic replay fallback</b>.
+        </span>
+      </p>
+
+      <div class="figs">
+        <div class="figrow">
+          <div class="num amber">0 Host</div>
+          <div class="cap">
+            <span class="lang-ko">호스트 머신 직접 실행 배제<br>(순수 격리 컨테이너 실행)</span>
+            <span class="lang-en">Host Execution Excluded<br>(Confined container runtimes)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num green">100%</div>
+          <div class="cap">
+            <span class="lang-ko">재현 보장 안전 모드 지원<br>(오프라인 데모 무결성)</span>
+            <span class="lang-en">Zero-Failure Safe Mode<br>(Deterministic offline replay)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <span class="chip highlight">antigravity-preview</span>
+        <span class="chip">dast-isolated-net</span>
+        <span class="chip">Deterministic Replay</span>
+        <span class="chip">Fail-Safe Fallback</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="card-grid">
+        <div class="card tint-accent">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">🛡️ 1차 방어: antigravity-preview-09-2026</span>
+              <span class="lang-en">🛡️ Tier 1: antigravity-preview-09-2026</span>
+            </div>
+            <span class="card-badge badge-accent">CLOUD SANDBOX</span>
+          </div>
+          <ul class="card-list">
+            <li>
+              <span class="lang-ko"><b>Google Cloud 호스팅 격리 샌드박스</b>: <code>environment="remote"</code> 환경에서 듀얼 트랙 하네스 스크립트(<code>run_dual_track_verification.py</code>)를 마운트 후 안전 실행.</span>
+              <span class="lang-en"><b>Isolated Remote Sandboxes</b>: Mounts and executes harness scripts in isolated remote Linux instances with ephemeral file systems.</span>
+            </li>
+            <li>
+              <span class="lang-ko"><b>인터넷 접근 차단</b>: <code>dast-isolated-net</code> 격리 네트워크 프로파일을 적용하여 크리덴셜 유출 및 외부 C2 통신을 원천 차단.</span>
+              <span class="lang-en"><b>Air-Gapped Network Profile</b>: Enforces network containment to prevent credential exfiltration or rogue outbound C2 traffic.</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card tint-green">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">📦 2차 방어: 결정론적 안전 재생 모드</span>
+              <span class="lang-en">📦 Tier 2: Deterministic Safe Replay</span>
+            </div>
+            <span class="card-badge badge-green">HIGH FIDELITY</span>
+          </div>
+          <ul class="card-list">
+            <li>
+              <span class="lang-ko"><b>해커톤 데모 무결성 보장</b>: 상단 바의 <code>기록 재생 안전 모드</code> 토글 시 사전 검증된 벤치마크 트레이스를 로드하여 1.5초 내에 완벽 재현.</span>
+              <span class="lang-en"><b>Hackathon Demo Reliability</b>: The <code>기록 재생 안전 모드</code> toggle serves pre-verified high-fidelity traces within 1.5 seconds.</span>
+            </li>
+            <li>
+              <span class="lang-ko"><b>채점 엔진은 100% 실시간 실행</b>: 트레이스를 재생하더라도 <code>backend/scoring.py</code>의 수학적 채점 엔진은 실시간 계산되어 점수의 조작이 불가능함.</span>
+              <span class="lang-en"><b>Live Python Scoring</b>: Even in replay mode, <code>backend/scoring.py</code> executes live set algebra to guarantee 100% calculation integrity.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card tint-amber">
+        <div class="card-head">
+          <div class="card-title">
+            <span class="lang-ko">⚙️ 2회 반복 검증(2x Repro)으로 Flaky 거짓 알람 제거</span>
+            <span class="lang-en">⚙️ 2x Repro Filter: 100% Flaky False Positive Elimination</span>
+          </div>
+          <span class="card-badge badge-amber">REPRODUCIBILITY</span>
+        </div>
+        <p class="card-p">
+          <span class="lang-ko">
+            AI가 생성한 동시성 및 네트워크 테스트는 일시적인 타이밍 차이로 1회만 실패하고 사라지는 'Flaky 테스트'가 빈번합니다.
+            Argus-PR은 원본 코드에서 실패한 테스트를 <b>반드시 연속 2회 재실행(2x Repro)</b>하여 <b>2/2 모두 동일하게 실패한 진짜 버그</b>만 사용자에게 보고합니다.
+          </span>
+          <span class="lang-en">
+            AI-generated concurrent tests often produce flaky, intermittent failures. Argus-PR enforces a <b>strict 2-run reproduction check</b>: only tests failing <b>consecutively in 2 of 2 executions</b> are classified as confirmed PR defects.
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pfoot">
+    <div>ARGUS-PR · ARCHITECTURAL SLIDE DECK</div>
+    <div>PAGE 10 / 11</div>
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- SLIDE 11: BENCHMARK RESULTS & CONCLUSION                                  -->
+<!-- ========================================================================= -->
+<section class="page" id="p-08">
+  <div class="phead">
+    <div class="left">
+      <span class="idx">11</span>
+      <h2>
+        <span class="lang-ko">벤치마크 검증 결과 및 프로젝트 결론<small>3대 대표 시나리오 실증 및 14개 테스트 전수 통과 완료</small></span>
+        <span class="lang-en">Benchmark Results &amp; Final Conclusion<small>Empirical Validation Across 3 Scenarios &amp; 14 Tests Fully Passing</small></span>
+      </h2>
+    </div>
+    <div class="meta">
+      SEC-PR-11 · VALIDATION<br>
+      PROJECT CONCLUSION
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="rail">
+      <div class="role-badge green">
+        <span class="lang-ko">실증 검증 완료</span>
+        <span class="lang-en">PROVEN VERIFICATION</span>
+      </div>
+      <p class="lead">
+        <span class="lang-ko">
+          Argus-PR은 결함을 가차 없이 찾아내는 레드팀 스웜과, 검증기의 시야를 객관적으로 증명하는 블라인드 메타 검증을 통해 <b>AI 코드 머지의 새로운 표준</b>을 제시합니다.
+        </span>
+        <span class="lang-en">
+          Argus-PR establishes a new standard for AI code verification by combining ruthless red-team swarms with mathematically calibrated blind mutation meta-verification.
+        </span>
+      </p>
+
+      <div class="figs">
+        <div class="figrow">
+          <div class="num green">14 / 14</div>
+          <div class="cap">
+            <span class="lang-ko">단위/통합 테스트 전수 통과<br>(pytest test_scoring_and_guardrail)</span>
+            <span class="lang-en">Unit &amp; Integration Tests Pass<br>(pytest test_scoring_and_guardrail)</span>
+          </div>
+        </div>
+        <div class="figrow">
+          <div class="num">100%</div>
+          <div class="cap">
+            <span class="lang-ko">Playwright E2E 시나리오 검증<br>(녹화본: argus_pr_demo.gif)</span>
+            <span class="lang-en">Playwright E2E Scenario Pass<br>(Recorded: argus_pr_demo.gif)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <span class="chip highlight">Human-in-the-Loop</span>
+        <span class="chip">One-Card Summary</span>
+        <span class="chip">Multi-Persona BOLA</span>
+        <span class="chip">Zero False Positives</span>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="card-grid cols-3">
+        <div class="card tint-green">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">시나리오 1: 체크아웃 동시성 레이스</span>
+              <span class="lang-en">Scenario 1: Checkout Race Condition</span>
+            </div>
+            <span class="card-badge badge-green">CAUGHT</span>
+          </div>
+          <p class="card-p"><b>PR ID</b>: <code>pr-checkout-race</code></p>
+          <ul class="card-list">
+            <li><b>탐지 결함</b>: 결제 잔액 중복 차감 동시성 레이스 (State Attacker 2/2 포착).</li>
+            <li><b>변이체 점수</b>: 8개 중 7개 처치 (87.5% 검증 신뢰도).</li>
+            <li><b>인간 결정</b>: 🛑 Merge Rejected &rarr; 자가 치유 패치 적용.</li>
+          </ul>
+        </div>
+
+        <div class="card tint-accent">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">시나리오 2: 레이트 리미터 경계값</span>
+              <span class="lang-en">Scenario 2: Rate Limiter Off-By-One</span>
+            </div>
+            <span class="card-badge badge-accent">CAUGHT</span>
+          </div>
+          <p class="card-p"><b>PR ID</b>: <code>pr-ratelimiter-offbyone</code></p>
+          <ul class="card-list">
+            <li><b>탐지 결함</b>: 슬라이딩 윈도우 &gt; 대신 &ge; 비교로 인한 1회 오버플로우 허용.</li>
+            <li><b>변이체 점수</b>: 8개 중 8개 처치 (100% 무결성 달성).</li>
+            <li><b>인간 결정</b>: 🛑 Merge Rejected &rarr; 경계 연산자 수정 패치 반영.</li>
+          </ul>
+        </div>
+
+        <div class="card tint-red">
+          <div class="card-head">
+            <div class="card-title">
+              <span class="lang-ko">시나리오 3: 프롬프트 인젝션 공격</span>
+              <span class="lang-en">Scenario 3: Prompt Injection Attack</span>
+            </div>
+            <span class="card-badge badge-red">BLOCKED</span>
+          </div>
+          <p class="card-p"><b>PR ID</b>: <code>pr-prompt-injection-attack</code></p>
+          <ul class="card-list">
+            <li><b>공격 페이로드</b>: PR 주석 내 <code>IGNORE PREVIOUS INSTRUCTIONS</code>.</li>
+            <li><b>가드레일 방어</b>: Gemini 3.5 Flash-Lite가 68ms 만에 즉시 격리 차단.</li>
+            <li><b>인간 결정</b>: 🛑 Quarantined (LLM 및 샌드박스 비용 0원 방어).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card tint-accent">
+        <div class="card-head">
+          <div class="card-title">
+            <span class="lang-ko">🏛️ 인간 중심 의사결정 원칙 (Human Decision Gate)</span>
+            <span class="lang-en">🏛️ Human-in-the-Loop Decision Authority</span>
+          </div>
+          <span class="card-badge badge-accent">FINAL GATEKEEPER</span>
+        </div>
+        <p class="card-p">
+          <span class="lang-ko">
+            AI 에이전트는 결함을 가차 없이 찾아내고(Red-Team Swarm), 검증기의 시야를 객관적으로 증명(7/8 Blind Score)할 뿐입니다.
+            최종 코드 머지(Merge), 패치 수용(Accept Patch), 또는 반려(Reject PR)의 권한은 언제나 <b>인간 리뷰어의 One-Card 승인 버튼</b>에 있습니다.
+          </span>
+          <span class="lang-en">
+            AI agents ruthlessly discover defects and objectively prove verification visibility (7/8 Blind Score).
+            The ultimate authority to merge, accept self-healing patches, or reject code rests entirely in the hands of the <b>human engineer via the One-Card Decision Gate</b>.
+          </span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="pfoot">
+    <div>ARGUS-PR · ARCHITECTURAL SLIDE DECK</div>
+    <div>PAGE 11 / 11 · FINISHED</div>
+  </div>
+</section>
+
+<!-- ── Language Toggle Script ── -->
+<script>
+  function setLanguage(lang) {
+    if (lang === 'en') {
+      document.body.classList.add('lang-mode-en');
+      document.getElementById('btn-en').classList.add('active');
+      document.getElementById('btn-ko').classList.remove('active');
+      localStorage.setItem('argus_presentation_lang', 'en');
+    } else {
+      document.body.classList.remove('lang-mode-en');
+      document.getElementById('btn-ko').classList.add('active');
+      document.getElementById('btn-en').classList.remove('active');
+      localStorage.setItem('argus_presentation_lang', 'ko');
+    }
+  }
+
+  // Restore saved language preference or default to ko
+  document.addEventListener('DOMContentLoaded', function() {
+    const saved = localStorage.getItem('argus_presentation_lang');
+    if (saved === 'en') {
+      setLanguage('en');
+    } else {
+      setLanguage('ko');
+    }
+  });
+
+  // Keyboard navigation for presentation slides
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+      const slides = Array.from(document.querySelectorAll('.page'));
+      const currentScroll = window.scrollY;
+      for (const slide of slides) {
+        if (slide.offsetTop > currentScroll + 20) {
+          slide.scrollIntoView({ behavior: 'smooth' });
+          break;
+        }
+      }
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      const slides = Array.from(document.querySelectorAll('.page')).reverse();
+      const currentScroll = window.scrollY;
+      for (const slide of slides) {
+        if (slide.offsetTop < currentScroll - 20) {
+          slide.scrollIntoView({ behavior: 'smooth' });
+          break;
+        }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

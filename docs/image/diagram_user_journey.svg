@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 480" width="100%" height="100%" style="background:#ffffff; font-family:'IBM Plex Sans KR',-apple-system,BlinkMacSystemFont,'Malgun Gothic',sans-serif;">
+  <defs>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1b5e35"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#3a5bd0"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#c27803"/>
+    </marker>
+    <marker id="arrow-rose" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#e11d48"/>
+    </marker>
+  </defs>
+
+  <!-- Step Labels Top -->
+  <g transform="translate(40, 20)">
+    <text x="0" y="10" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#858da8" font-weight="600">END-TO-END HUMAN REVIEWER FLOW</text>
+  </g>
+
+  <!-- Step 1: Input & Scope (Amber tint) -->
+  <g transform="translate(40, 50)">
+    <rect width="210" height="380" rx="8" fill="#fdfbf7" stroke="#eddab3" stroke-width="1.5"/>
+    <text x="18" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#c27803" font-weight="600">STEP 1 · INTAKE</text>
+    <text x="18" y="52" font-size="15" font-weight="700" fill="#12172b">PR 선택 &amp; 범위 분석</text>
+
+    <!-- Sub blocks -->
+    <g transform="translate(14, 70)">
+      <rect width="182" height="70" rx="5" fill="#ffffff" stroke="#eddab3"/>
+      <text x="10" y="20" font-size="11" font-weight="600" fill="#12172b">1. PR 입력 방식 3종</text>
+      <text x="10" y="38" font-size="10.5" fill="#684f18">• 벤치마크 (Cisco/Redis 등)</text>
+      <text x="10" y="52" font-size="10.5" fill="#684f18">• GitHub PR 연동 (GET /api/pr)</text>
+      <text x="10" y="66" font-size="10.5" fill="#684f18">• 커스텀 Diff 직접 입력</text>
+    </g>
+
+    <g transform="translate(14, 150)">
+      <rect width="182" height="85" rx="5" fill="#ffffff" stroke="#eddab3"/>
+      <text x="10" y="20" font-size="11" font-weight="600" fill="#12172b">2. Stage 0 &amp; 0.5 Triage</text>
+      <text x="10" y="38" font-size="10.5" fill="#684f18">• Flash-Lite 가드레일 (인젝션 차단)</text>
+      <text x="10" y="54" font-size="10.5" fill="#684f18">• SINGLE_FILE_UNIT (~0.5s)</text>
+      <text x="10" y="68" font-size="10.5" fill="#684f18">• SPARSE_PACKAGE (BFS 슬라이스)</text>
+      <text x="10" y="82" font-size="10.5" fill="#684f18">• LIVE_SERVER_DAEMON</text>
+    </g>
+
+    <g transform="translate(14, 245)">
+      <rect width="182" height="110" rx="5" fill="#ffffff" stroke="#eddab3"/>
+      <text x="10" y="20" font-size="11" font-weight="600" fill="#12172b">3. 제어 패널 옵션</text>
+      <text x="10" y="38" font-size="10.5" fill="#684f18">• Phase 2 Full / Phase 1</text>
+      <text x="10" y="54" font-size="10.5" fill="#684f18">• Replay 안전모드 / Live API</text>
+      <text x="10" y="70" font-size="10.5" fill="#684f18">• 한/영 실시간 토글</text>
+      <rect x="10" y="80" width="162" height="22" rx="3" fill="#c27803"/>
+      <text x="91" y="95" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">⚡ Launch Swarm 클릭</text>
+    </g>
+  </g>
+
+  <!-- Arrow 1 -> 2 -->
+  <line x1="250" y1="240" x2="278" y2="240" stroke="#858da8" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+  <!-- Step 2: Verification Pipeline (Blue tint) -->
+  <g transform="translate(285, 50)">
+    <rect width="210" height="380" rx="8" fill="#eef2fd" stroke="#c5d4f8" stroke-width="1.5"/>
+    <text x="18" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#2544a8" font-weight="600">STEP 2 · VERIFICATION</text>
+    <text x="18" y="52" font-size="15" font-weight="700" fill="#12172b">블라인드 검증 파이프라인</text>
+
+    <!-- Sub blocks -->
+    <g transform="translate(14, 70)">
+      <rect width="182" height="85" rx="5" fill="#ffffff" stroke="#c5d4f8"/>
+      <text x="10" y="18" font-size="11" font-weight="600" fill="#12172b">1. 듀얼 트랙 스윔레인</text>
+      <text x="10" y="34" font-size="10.5" fill="#4a5273">• Track A: 4대 에이전트 가설 수립</text>
+      <text x="10" y="48" font-size="10.5" fill="#4a5273">• Track B: 8개 변이(M1..M8) 봉인</text>
+      <text x="10" y="62" font-size="10.5" fill="#4a5273">• 중앙 store=False 정보격리벽</text>
+      <text x="10" y="76" font-size="10.5" fill="#2544a8" font-weight="600">※ 실시간 SSE 스트리밍 UI</text>
+    </g>
+
+    <g transform="translate(14, 165)">
+      <rect width="182" height="95" rx="5" fill="#ffffff" stroke="#c5d4f8"/>
+      <text x="10" y="18" font-size="11" font-weight="600" fill="#12172b">2. 샌드박스 적응형 루프</text>
+      <text x="10" y="34" font-size="10.5" fill="#4a5273">• 최대 5회 레드팀 우회 루프</text>
+      <text x="10" y="48" font-size="10.5" fill="#4a5273">• Observe ➔ Mutate ➔ Attack</text>
+      <text x="10" y="62" font-size="10.5" fill="#4a5273">• 돌파 시 2회 연속 재현 (2x Repro)</text>
+      <text x="10" y="76" font-size="10.5" fill="#e11d48" font-weight="600">• PROVEN 등급 승격</text>
+      <text x="10" y="90" font-size="10.5" fill="#4a5273">• BOLA 테넌트 교차 타격</text>
+    </g>
+
+    <g transform="translate(14, 270)">
+      <rect width="182" height="85" rx="5" fill="#ffffff" stroke="#c5d4f8"/>
+      <text x="10" y="18" font-size="11" font-weight="600" fill="#12172b">3. 변이 교차 채점</text>
+      <text x="10" y="34" font-size="10.5" fill="#4a5273">• 8개 변이본 병렬 실행</text>
+      <text x="10" y="48" font-size="10.5" fill="#4a5273">• Pass(orig) ∧ Fail(mutant)</text>
+      <text x="10" y="62" font-size="10.5" fill="#2544a8" font-weight="600">• Python 결정론적 100% 점수</text>
+      <text x="10" y="78" font-size="10.5" fill="#1b5e35" font-weight="600">• 예: 7/8 Caught (87.5%)</text>
+    </g>
+  </g>
+
+  <!-- Arrow 2 -> 3 -->
+  <line x1="495" y1="240" x2="523" y2="240" stroke="#858da8" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+  <!-- Step 3: Synthesis & Review (Neutral/Mint tint) -->
+  <g transform="translate(530, 50)">
+    <rect width="210" height="380" rx="8" fill="#e8f5ed" stroke="#bde4ce" stroke-width="1.5"/>
+    <text x="18" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#1b5e35" font-weight="600">STEP 3 · SYNTHESIS</text>
+    <text x="18" y="52" font-size="15" font-weight="700" fill="#12172b">One-Card 요약 &amp; 심사</text>
+
+    <!-- Sub blocks -->
+    <g transform="translate(14, 70)">
+      <rect width="182" height="90" rx="5" fill="#ffffff" stroke="#bde4ce"/>
+      <text x="10" y="18" font-size="11" font-weight="600" fill="#12172b">1. 3대 핵심 확정 지표</text>
+      <text x="10" y="34" font-size="10.5" fill="#1b5e35" font-weight="600">• 확정된 2/2 결함 건수 (PROVEN)</text>
+      <text x="10" y="48" font-size="10.5" fill="#1b5e35" font-weight="600">• 변이 탐지율 (7/8 = 87.5%)</text>
+      <text x="10" y="62" font-size="10.5" fill="#1b5e35" font-weight="600">• 잔여 리스크: HIGH / LOW</text>
+      <text x="10" y="76" font-size="10.5" fill="#4a5273">• 권장 판정: REJECT / APPROVE</text>
+    </g>
+
+    <g transform="translate(14, 170)">
+      <rect width="182" height="85" rx="5" fill="#ffffff" stroke="#bde4ce"/>
+      <text x="10" y="18" font-size="11" font-weight="600" fill="#12172b">2. 심층 분석 섹션</text>
+      <text x="10" y="34" font-size="10.5" fill="#4a5273">• 생존 변이(M8) 사각지대 설명</text>
+      <text x="10" y="48" font-size="10.5" fill="#4a5273">• BOLA 테넌트 침해 매트릭스</text>
+      <text x="10" y="62" font-size="10.5" fill="#4a5273">• 5단계 우회 타임라인</text>
+      <text x="10" y="76" font-size="10.5" fill="#4a5273">• AI 추천 패치 코드 Diff</text>
+    </g>
+
+    <g transform="translate(14, 265)">
+      <rect width="182" height="90" rx="5" fill="#ffffff" stroke="#bde4ce"/>
+      <text x="10" y="18" font-size="11" font-weight="600" fill="#12172b">3. Human Reviewer 판단</text>
+      <text x="10" y="34" font-size="10.5" fill="#4a5273">• 근거 기반의 1장 요약 카드 확인</text>
+      <text x="10" y="48" font-size="10.5" fill="#4a5273">• 추가 변이(M9) 주입 테스트</text>
+      <text x="10" y="62" font-size="10.5" fill="#1b5e35" font-weight="600">• 자가 치유 패치 적용 결정</text>
+      <text x="10" y="76" font-size="10.5" fill="#4a5273">• 최종 승인 또는 반려 확정</text>
+    </g>
+  </g>
+
+  <!-- Arrow 3 -> 4 -->
+  <line x1="740" y1="240" x2="768" y2="240" stroke="#858da8" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+  <!-- Step 4: Post-Review Actions (Rose tint) -->
+  <g transform="translate(775, 50)">
+    <rect width="185" height="380" rx="8" fill="#fdf2f2" stroke="#f6caca" stroke-width="1.5"/>
+    <text x="16" y="28" font-size="11" font-family="'IBM Plex Mono', monospace" fill="#8e2b2b" font-weight="600">STEP 4 · ACTION</text>
+    <text x="16" y="52" font-size="15" font-weight="700" fill="#12172b">후속 조치 &amp; 병합</text>
+
+    <!-- Sub blocks -->
+    <g transform="translate(12, 70)">
+      <rect width="161" height="90" rx="5" fill="#ffffff" stroke="#f6caca"/>
+      <text x="8" y="18" font-size="10.5" font-weight="700" fill="#8e2b2b">🥇 CEGIS 자가 치유</text>
+      <text x="8" y="34" font-size="10" fill="#4a5273">• 최대 5회 자가 치유 루프</text>
+      <text x="8" y="48" font-size="10" fill="#4a5273">• 4대 검증 게이트 (AST/DAST)</text>
+      <text x="8" y="62" font-size="10" fill="#4a5273">• 실패 반례 피드백 재생성</text>
+      <text x="8" y="76" font-size="10" fill="#1b5e35" font-weight="600">• 결함 0 &amp; 사살 100% 달성</text>
+    </g>
+
+    <g transform="translate(12, 170)">
+      <rect width="161" height="85" rx="5" fill="#ffffff" stroke="#f6caca"/>
+      <text x="8" y="18" font-size="10.5" font-weight="700" fill="#8e2b2b">🥈 회귀 번들 익스포트</text>
+      <text x="8" y="34" font-size="10" fill="#4a5273">• 검증된 보안 패치 Diff</text>
+      <text x="8" y="48" font-size="10.5" fill="#8e2b2b" font-weight="600">• test_argus_regression.py</text>
+      <text x="8" y="62" font-size="10" fill="#4a5273">• GitHub Actions CI YAML</text>
+      <text x="8" y="76" font-size="10" fill="#4a5273">• 영구 보안 자산화</text>
+    </g>
+
+    <g transform="translate(12, 265)">
+      <rect width="161" height="90" rx="5" fill="#ffffff" stroke="#f6caca"/>
+      <text x="8" y="18" font-size="10.5" font-weight="700" fill="#12172b">🏁 Human Merge Gate</text>
+      <text x="8" y="34" font-size="10" fill="#e11d48" font-weight="600">• ❌ Reject Merge</text>
+      <text x="8" y="48" font-size="10" fill="#1b5e35" font-weight="600">• ✅ Approve &amp; Merge</text>
+      <text x="8" y="64" font-size="10" fill="#4a5273">• 감사 로그(Store) 영구 보관</text>
+      <text x="8" y="78" font-size="10" fill="#4a5273">• 리뷰어 스탬프 발행</text>
+    </g>
+  </g>
+</svg>
