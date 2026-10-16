@@ -349,7 +349,9 @@ function appendTerminalLog(text, cls = 'log-info') {
 }
 
 function applyTrackAFilter() {
-    const filterVal = document.getElementById('track-a-filter')?.value || 'all';
+    const rawVal = document.getElementById('track-a-filter')?.value || 'all';
+    const filterMap = { breached: 'fail-2x', passed: 'pass-base', flaky: 'flaky-1x' };
+    const filterVal = filterMap[rawVal] || rawVal;
     document.querySelectorAll('#swarm-content li[data-test-status]').forEach((li) => {
         const st = li.getAttribute('data-test-status');
         li.classList.toggle('hidden', filterVal !== 'all' && st !== filterVal);
@@ -365,7 +367,9 @@ function applyTrackBFilter() {
 }
 
 function applyTerminalLogFilter() {
-    const filterVal = document.getElementById('terminal-log-filter')?.value || 'all';
+    const rawVal = document.getElementById('terminal-log-filter')?.value || 'all';
+    const logMap = { fail: 'log-fail', pass: 'log-pass', flaky: 'log-flaky', info: 'log-info' };
+    const filterVal = logMap[rawVal] || rawVal;
     document.querySelectorAll('#terminal-output .term-log-line').forEach((line) => {
         const cls = line.getAttribute('data-log-cls');
         line.classList.toggle('hidden', filterVal !== 'all' && cls !== filterVal);
@@ -373,7 +377,7 @@ function applyTerminalLogFilter() {
 }
 
 function applyPanelViewFilter() {
-    const mode = document.getElementById('panel-view-filter')?.value || 'all';
+    const mode = (document.getElementById('panel-view-filter')?.value || 'all').replace('_', '-');
     const oneCard = document.getElementById('one-card-summary');
     const swimlanes = document.getElementById('swimlanes-panel');
     const terminal = document.getElementById('terminal-panel');
@@ -563,10 +567,14 @@ function renderScopeTriageBanner(scopeTriage) {
                 <span class="scope-mode-badge ${modeCls}">Stage 0.5 • ${scopeTriage.scope_mode}</span>
                 <strong style="margin-left:8px;color:#e2e8f0;">Primary Target: <code>${scopeTriage.primary_target_file}</code></strong>
             </div>
-            <div style="font-family:var(--font-mono);font-size:0.73rem;color:#93c5fd;">
-                ${srcLabel} • Mounted: <strong>${scopeTriage.estimated_mount_size_kb} KB</strong>
+            <div style="display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:0.73rem;color:#93c5fd;">
+                <span>${srcLabel} • Mounted: <strong>${scopeTriage.estimated_mount_size_kb} KB</strong></span>
+                <button id="run-live-dast-bola-btn" type="button" class="utility-btn" style="padding:3px 10px;font-size:0.72rem;background:rgba(56,189,248,0.16);border:1px solid rgba(56,189,248,0.45);color:#7dd3fc;">
+                    🔐 Run Multi-Persona BOLA DAST
+                </button>
             </div>
         </div>
+        <div id="live-dast-bola-panel" class="hidden" style="margin-top:8px;padding:10px;border-radius:8px;background:rgba(15,23,42,0.85);border:1px solid rgba(56,189,248,0.35);"></div>
         <details class="detail-drawer">
             <summary class="detail-drawer-summary">
                 <span>&#128194; Stage 0.5 스코프 선정 사유 및 마운트/제외 파일 목록 (${(scopeTriage.mounted_files || []).length}개 마운트, ${(scopeTriage.skipped_heavy_paths || []).length}개 대용량 경로 제외)</span>
@@ -577,7 +585,75 @@ function renderScopeTriageBanner(scopeTriage) {
             </div>
         </details>
     `;
+    const bolaBtn = el.querySelector('#run-live-dast-bola-btn');
+    if (bolaBtn) {
+        bolaBtn.addEventListener('click', () => runLiveDastBolaMatrix());
+    }
     el.classList.remove('hidden');
+}
+
+async function runLiveDastBolaMatrix() {
+    const panel = document.getElementById('live-dast-bola-panel');
+    if (!panel) return;
+    panel.classList.remove('hidden');
+    panel.innerHTML = `<div style="font-size:0.78rem;color:#7dd3fc;">⏳ Minting 3 Auth Personas & executing Cross-Tenant BOLA Differential Replay...</div>`;
+    try {
+        const res = await fetch('/api/verify/live-dast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                repo_name: state.lastRunData?.repo_name || 'acme-pay/refund-daemon-service',
+                patch_id: 'patch_3802_live_dast',
+                session_patch_attempt: 2,
+            }),
+        });
+        const data = await res.json();
+        const personasHtml = (data.personas_minted || []).map((p) => `
+            <span class="cegis-gate-chip pass" style="margin-right:6px;">
+                👤 <strong>${escapeHtml(p.persona_id)}</strong> (${escapeHtml(p.role)} · tenant=<code>${escapeHtml(p.tenant_id)}</code>)
+            </span>
+        `).join('');
+        const rowsHtml = (data.authz_matrix || []).map((r) => {
+            const isVuln = r.verdict === 'PROVEN_BOLA_BYPASS';
+            return `
+                <tr style="border-bottom:1px solid rgba(148,163,184,0.15);">
+                    <td style="padding:5px 8px;font-family:var(--font-mono);color:#e2e8f0;">${escapeHtml(r.endpoint)}</td>
+                    <td style="padding:5px 8px;font-family:var(--font-mono);color:#93c5fd;">${escapeHtml(r.target_resource_id)}</td>
+                    <td style="padding:5px 8px;text-align:center;"><code>${r.owner_baseline_status}</code></td>
+                    <td style="padding:5px 8px;text-align:center;color:${isVuln ? '#fb7185' : '#34d399'};font-weight:700;"><code>${r.cross_tenant_attacker_status}</code></td>
+                    <td style="padding:5px 8px;text-align:center;"><code>${r.anonymous_status}</code></td>
+                    <td style="padding:5px 8px;text-align:center;">${r.bola_vulnerable_2x ? '🔥 2/2 YES' : '0/2 NO'}</td>
+                    <td style="padding:5px 8px;">
+                        <span class="cegis-gate-chip ${isVuln ? 'fail' : 'pass'}">${escapeHtml(r.verdict)}</span>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        panel.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <strong style="color:#38bdf8;font-size:0.82rem;">🔐 Multi-Persona Cross-Tenant AuthZ / BOLA Matrix (${escapeHtml(data.network_isolation_mode || 'dast-isolated-net')})</strong>
+                <span style="font-size:0.73rem;color:#94a3b8;">Personas Minted: ${(data.personas_minted || []).length} · Endpoints Probed: ${(data.authz_matrix || []).length}</span>
+            </div>
+            <div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px;">${personasHtml}</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
+                <thead>
+                    <tr style="text-align:left;color:#94a3b8;border-bottom:1px solid rgba(148,163,184,0.25);">
+                        <th style="padding:4px 8px;">Endpoint</th>
+                        <th style="padding:4px 8px;">Target Resource</th>
+                        <th style="padding:4px 8px;text-align:center;">Owner (A)</th>
+                        <th style="padding:4px 8px;text-align:center;">Attacker (B)</th>
+                        <th style="padding:4px 8px;text-align:center;">Anon</th>
+                        <th style="padding:4px 8px;text-align:center;">2x Repro</th>
+                        <th style="padding:4px 8px;">Verdict</th>
+                    </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        `;
+        appendTerminalLog(`[Multi-Persona BOLA DAST] Minted ${(data.personas_minted || []).length} personas; probed ${(data.authz_matrix || []).length} cross-tenant endpoints.`, 'log-warn');
+    } catch (err) {
+        panel.innerHTML = `<div style="color:#fb7185;font-size:0.78rem;">✖ BOLA DAST Error: ${escapeHtml(err.message)}</div>`;
+    }
 }
 
 function renderAttemptTimelineHtml(steps, maxAttempts = 5, breachedOnAttempt = null, compact = false) {
@@ -725,6 +801,75 @@ function renderSwarmAttackers(swarmOutputs, testResultMap) {
     applyTrackAFilter();
 }
 
+function renderCegisSelfHealingBanner(cegisReport) {
+    const bannerEl = document.getElementById('cegis-patch-banner');
+    if (!bannerEl) return;
+    if (!cegisReport || !Array.isArray(cegisReport.attempt_history) || cegisReport.attempt_history.length === 0) {
+        bannerEl.classList.add('hidden');
+        bannerEl.innerHTML = '';
+        return;
+    }
+
+    const maxAtt = cegisReport.max_patch_attempts || 5;
+    const steps = cegisReport.attempt_history;
+    const pillsHtml = [];
+    for (let i = 1; i <= maxAtt; i++) {
+        const s = steps.find((item) => item.attempt_num === i);
+        if (s) {
+            const isVerified = s.status === 'VERIFIED';
+            const cls = isVerified ? 'defended' : 'breached';
+            const label = isVerified
+                ? `#${i} ${s.patch_id} • VERIFIED (4/4 Gates)`
+                : `#${i} ${s.patch_id} • FAILED at Gate 3 (TOCTOU Counterexample)`;
+            pillsHtml.push(`<span class="attempt-pill ${cls}" title="${escapeHtml(s.candidate_diff_summary)}">${label}</span>`);
+        } else {
+            pillsHtml.push(`<span class="attempt-pill unused" title="Attempt ${i}: Not needed (verified early)">#${i} —</span>`);
+        }
+    }
+
+    const stepRowsHtml = steps.map((s) => {
+        const isVerified = s.status === 'VERIFIED';
+        const g1 = s.gate_1_ast_syntax ? '✅ Gate 1 (AST/Type)' : '❌ Gate 1 (AST/Type)';
+        const g2 = s.gate_2_semgrep_clean ? '✅ Gate 2 (Semgrep 0 Warn)' : '❌ Gate 2 (Semgrep)';
+        const g3 = s.gate_3_dast_regression_blocked ? '✅ Gate 3 (Pinned DAST 0 Repro)' : '❌ Gate 3 (Pinned DAST Counterexample)';
+        const g4 = s.gate_4_mutant_kill_preserved ? '✅ Gate 4 (Blind Mutants 87.5% Killed)' : '⏸️ Gate 4 (Skipped/Failed)';
+        return `
+            <div class="cegis-attempt-card ${isVerified ? 'verified' : 'failed'}">
+                <div class="cegis-attempt-top">
+                    <strong>Attempt ${s.attempt_num}/${maxAtt} • <code>${escapeHtml(s.patch_id)}</code></strong>
+                    <span class="cegis-status-chip ${isVerified ? 'verified' : 'failed'}">
+                        ${isVerified ? 'VERIFIED ACROSS ALL 4 GATES' : 'FAILED AT GATE 3: COUNTEREXAMPLE'}
+                    </span>
+                </div>
+                <div class="cegis-diff-summary">${escapeHtml(s.candidate_diff_summary)}</div>
+                <div class="cegis-gates-row">
+                    <span>${g1}</span>
+                    <span>${g2}</span>
+                    <span>${g3}</span>
+                    <span>${g4}</span>
+                </div>
+                ${s.counterexample_feedback ? `<pre class="cegis-counterexample-box">&#9888; ${escapeHtml(s.counterexample_feedback)}</pre>` : ''}
+            </div>
+        `;
+    }).join('');
+
+    bannerEl.innerHTML = `
+        <details class="cegis-details-drawer" open>
+            <summary class="cegis-summary-header">
+                <div class="cegis-summary-title">
+                    <span>&#128737;&#65039; <strong>Blue-Team CEGIS Self-Healing Loop</strong> (<code>patch_id: ${escapeHtml(cegisReport.final_patch_id)}</code> &middot; Verified on Attempt ${cegisReport.verified_on_attempt}/${maxAtt})</span>
+                </div>
+                <span class="cegis-verified-badge">4-GATE VERIFIED &middot; SPRINT 38 TASK-3802</span>
+            </summary>
+            <div class="cegis-drawer-body">
+                <div class="attempt-pills" style="margin-bottom:8px;">${pillsHtml.join('')}</div>
+                <div class="cegis-attempts-grid">${stepRowsHtml}</div>
+            </div>
+        </details>
+    `;
+    bannerEl.classList.remove('hidden');
+}
+
 function renderOneCardSummary(data) {
     const dict = t();
     const card = document.getElementById('one-card-summary');
@@ -741,6 +886,8 @@ function renderOneCardSummary(data) {
 
     stampEl.className = 'decision-stamp hidden';
     stampEl.textContent = '';
+
+    renderCegisSelfHealingBanner(data.self_healing_patch || null);
 
     const displayTitle = dict.scenarios[prId] && !data.pr_title.startsWith('[PATCHED]')
         ? dict.scenarios[prId]
@@ -825,7 +972,7 @@ function renderOneCardSummary(data) {
                         </summary>
                         <div class="detail-drawer-body">
                             ${fullTimeline}
-                            <pre class="bug-trace">${escapeHtml(f.failure_trace || 'AssertionError: Invariant violated in Track (a) run 1/2 and run 2/2')}</pre>
+                            <pre class="bug-trace">${escapeHtml(f.error_trace || f.failure_trace || 'AssertionError: Invariant violated in Track (a) run 1/2 and run 2/2')}</pre>
                         </div>
                     </details>
                 </div>
@@ -1050,7 +1197,7 @@ async function runVerificationFlow() {
 }
 
 // ============================================================================
-// OPTION A FEATURE 1: APPLY RECOMMENDED PATCH & RE-VERIFY IN SANDBOX
+// OPTION A FEATURE 1: APPLY RECOMMENDED PATCH & RE-VERIFY IN SANDBOX (CEGIS LOOP)
 // ============================================================================
 async function applyRecommendedPatchAndReverify() {
     if (!state.lastRunData || state.isRunning) return;
@@ -1058,9 +1205,9 @@ async function applyRecommendedPatchAndReverify() {
     const prId = state.lastRunData.pr_id;
     const isPhase2 = document.getElementById('phase-toggle').checked;
 
-    appendTerminalLog(`[Argon Patch Engine] Applying recommended security & state invariant patch to ${prId}...`, 'log-info');
+    appendTerminalLog(`[Blue-Team CEGIS Patch Agent] Starting Counterexample-Guided Inductive Synthesis (max_patch_attempts=5) on ${prId}...`, 'log-info');
     try {
-        const res = await fetch('/api/verify/apply-patch', {
+        const res = await fetch('/api/prs/apply-patch', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1071,6 +1218,22 @@ async function applyRecommendedPatchAndReverify() {
         if (res.ok) {
             const patchedData = await res.json();
             state.lastRunData = patchedData;
+
+            if (patchedData.self_healing_patch && Array.isArray(patchedData.self_healing_patch.attempt_history)) {
+                for (const att of patchedData.self_healing_patch.attempt_history) {
+                    if (att.status === 'FAILED_COUNTEREXAMPLE') {
+                        appendTerminalLog(
+                            `  [CEGIS Attempt ${att.attempt_num}/${patchedData.self_healing_patch.max_patch_attempts} • ${att.patch_id}] ❌ FAILED at Gate 3 -> ${att.counterexample_feedback}`,
+                            'log-fail'
+                        );
+                    } else {
+                        appendTerminalLog(
+                            `  [CEGIS Attempt ${att.attempt_num}/${patchedData.self_healing_patch.max_patch_attempts} • ${att.patch_id}] ✅ VERIFIED across All 4 Gates (AST + Semgrep + Pinned DAST + Mutant Kill)`,
+                            'log-pass'
+                        );
+                    }
+                }
+            }
 
             const testResultMap = {};
             (patchedData.sandbox_report.pr_test_results || []).forEach((r) => {
@@ -1094,6 +1257,66 @@ async function applyRecommendedPatchAndReverify() {
 }
 
 // ============================================================================
+// FEATURE 2: LIVING SECURITY REGRESSION SUITE & PR BUNDLE EXPORTER
+// ============================================================================
+async function openExportBundleModal() {
+    const prId = (state.lastRunData && state.lastRunData.pr_id)
+        || document.getElementById('scenario-selector')?.value
+        || 'pr-checkout-race';
+    const modal = document.getElementById('export-bundle-modal');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+
+    appendTerminalLog(`[PR Bundle Exporter] Generating Verified PR Bundle + Pinned Regression Suite for ${prId}...`, 'log-info');
+    try {
+        const res = await fetch('/api/prs/export-bundle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pr_id: prId }),
+        });
+        if (!res.ok) throw new Error('Failed to export PR bundle');
+        const bundle = await res.json();
+        state.lastExportedBundle = bundle;
+
+        const metaHeaderEl = document.getElementById('bundle-meta-header');
+        if (metaHeaderEl) {
+            metaHeaderEl.innerHTML = `
+                <span class="bundle-meta-pill verified">&#128737;&#65039; ${escapeHtml(bundle.verification_badge_summary)}</span>
+                <span class="bundle-meta-pill">&#127807; Branch: <code>${escapeHtml(bundle.branch_name)}</code></span>
+                <span class="bundle-meta-pill">&#128221; Commit: <code>${escapeHtml(bundle.commit_Title)}</code></span>
+                <span class="bundle-meta-pill">&#128204; Evidence Tier: <code>${escapeHtml(bundle.regression_test_file.evidence_tier)}</code> (${(bundle.regression_test_file.source_test_ids || []).length} Pinned Vectors)</span>
+            `;
+        }
+        const pathEl = document.getElementById('bundle-pytest-path');
+        if (pathEl) {
+            pathEl.textContent = bundle.regression_test_file.file_path || '';
+        }
+        const patchIdEl = document.getElementById('bundle-patch-id');
+        if (patchIdEl) {
+            patchIdEl.textContent = bundle.patch_id || '';
+        }
+        const pytestPre = document.getElementById('bundle-pytest-code');
+        if (pytestPre) {
+            pytestPre.textContent = bundle.regression_test_file.pytest_content || '';
+        }
+        const diffPre = document.getElementById('bundle-patch-diff');
+        if (diffPre) {
+            diffPre.textContent = bundle.production_patch_diff || '';
+        }
+        const ciPre = document.getElementById('bundle-ci-yaml');
+        if (ciPre) {
+            ciPre.textContent = bundle.ci_workflow_snippet || '';
+        }
+        appendTerminalLog(
+            `  [PR Bundle Ready] ${bundle.regression_test_file.file_path} (${bundle.regression_test_file.evidence_tier}) + Patch ${bundle.patch_id}`,
+            'log-pass'
+        );
+    } catch (err) {
+        console.error('Error exporting PR bundle:', err);
+    }
+}
+
+// ============================================================================
 // OPTION A FEATURE 2: COPY AI FIX PROMPT & EXPORT JSON REPORT
 // ============================================================================
 function copyAiFixPrompt() {
@@ -1103,7 +1326,7 @@ function copyAiFixPrompt() {
     const lines = [
         `Fix the following ${failures.length} reproducible (2/2 Antigravity Sandbox runs) invariant violations in ${d.repo_name} (${d.pr_title}):`,
         '',
-        ...failures.map((f, idx) => `${idx + 1}. Test: ${f.test_id}\n   Trace: ${f.failure_trace || 'Reproduced 2/2 times'}`),
+        ...failures.map((f, idx) => `${idx + 1}. Test: ${f.test_id}\n   Trace: ${f.error_trace || f.failure_trace || 'Reproduced 2/2 times'}`),
         '',
         `Blind Verifier Score: ${d.deterministic_score.detection_score_label}`,
         `Residual Risk / Blind Spot to Address: ${d.one_card_summary.blind_spot_explanation}`,
@@ -1608,13 +1831,37 @@ document.addEventListener('DOMContentLoaded', () => {
         submitCustomPrFromModal();
     });
 
-    // Human Merge Gate buttons
+    // Human Merge Gate buttons & PR Bundle Exporter
     document.getElementById('reject-btn').addEventListener('click', () => {
         submitHumanDecision('REJECT_MERGE');
     });
     document.getElementById('approve-btn').addEventListener('click', () => {
         submitHumanDecision('APPROVE_MERGE');
     });
+    const exportBundleBtn = document.getElementById('export-bundle-btn');
+    if (exportBundleBtn) {
+        exportBundleBtn.addEventListener('click', () => openExportBundleModal());
+    }
+    const closeBundleModalBtn = document.getElementById('close-export-bundle-modal-btn');
+    if (closeBundleModalBtn) {
+        closeBundleModalBtn.addEventListener('click', () => {
+            document.getElementById('export-bundle-modal')?.classList.add('hidden');
+        });
+    }
+    const wireCopyBtn = (btnId, preId) => {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        btn.addEventListener('click', () => {
+            const text = document.getElementById(preId)?.textContent || '';
+            navigator.clipboard.writeText(text);
+            const orig = btn.textContent;
+            btn.textContent = '✅ Copied!';
+            setTimeout(() => { btn.textContent = orig; }, 1800);
+        });
+    };
+    wireCopyBtn('copy-bundle-pytest-btn', 'bundle-pytest-code');
+    wireCopyBtn('copy-bundle-diff-btn', 'bundle-patch-diff');
+    wireCopyBtn('copy-bundle-ci-btn', 'bundle-ci-yaml');
 
     // Option 1 UI: Collapsible Panels, Filter Dropdowns, and Diagram Node Jump
     const toggleOneCardBodyBtn = document.getElementById('toggle-one-card-body-btn');

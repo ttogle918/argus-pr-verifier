@@ -327,6 +327,9 @@
 
             <p id="hero-takeaway" class="hero-takeaway"></p>
 
+            <!-- Feature 1: Blue-Team CEGIS Self-Healing Patch Loop Timeline Card -->
+            <div id="cegis-patch-banner" class="cegis-patch-banner hidden"></div>
+
             <!-- 3 Deterministic Python-Calculated KPI Boxes (Always Visible in One-Card) -->
             <div class="metrics">
                 <div class="metric-box" id="metric-bugs"></div>
@@ -358,6 +361,7 @@
                     <input id="reviewer-notes-input" type="text" class="reviewer-notes-input" placeholder="리뷰어 코멘트 입력 (선택 사항 — 예: M8 시계 오차 경계 조건 및 음수 환불 패치 후 재요청)">
                 </div>
                 <div class="action-buttons">
+                    <button id="export-bundle-btn" class="utility-btn bundle-export-btn" type="button" title="Export Verified PR Diff + Pinned PROVEN Security Regression Test Bundle">&#128230; <span id="ui-export-bundle-text">Export PR + Pinned Regression Test</span></button>
                     <button id="reject-btn" class="danger-btn" type="button">&#10060; <span id="ui-reject-btn-text">Reject Merge &amp; Request Fixes</span></button>
                     <button id="approve-btn" class="success-btn" type="button">&#9989; <span id="ui-approve-btn-text">Approve &amp; Merge PR</span></button>
                 </div>
@@ -599,6 +603,43 @@
         </div>
     </div>
 
-    <script src="app.js?v=20261016c"></script>
+    <!-- Feature 2: Export Verified PR + Pinned Security Regression Test Modal -->
+    <div id="export-bundle-modal" class="modal-backdrop hidden">
+        <div class="modal-card bundle-modal-card">
+            <div class="modal-header">
+                <h3>&#128230; Living Security Regression Suite &amp; Verified PR Bundle</h3>
+                <button id="close-export-bundle-modal-btn" class="modal-close-btn" type="button">&times;</button>
+            </div>
+            <div class="modal-body" id="export-bundle-modal-body">
+                <div id="bundle-meta-header" class="bundle-meta-header"></div>
+
+                <div class="bundle-section">
+                    <div class="bundle-section-top">
+                        <span class="bundle-section-title">&#129514; Pinned Security Regression Test (<code id="bundle-pytest-path">tests/security/test_argus_regression.py</code>) &bull; <span class="proven-pill">TIER: PROVEN (2/2 Repro Inverted)</span></span>
+                        <button id="copy-bundle-pytest-btn" class="utility-btn" type="button">&#128203; Copy pytest File</button>
+                    </div>
+                    <pre id="bundle-pytest-code" class="patch-pre bundle-code-pre"></pre>
+                </div>
+
+                <div class="bundle-section">
+                    <div class="bundle-section-top">
+                        <span class="bundle-section-title">&#128737; Verified Production Patch Diff (<code id="bundle-patch-id">patch_3802_att2</code>)</span>
+                        <button id="copy-bundle-diff-btn" class="utility-btn" type="button">&#128203; Copy Patch Diff</button>
+                    </div>
+                    <pre id="bundle-patch-diff" class="patch-pre bundle-code-pre"></pre>
+                </div>
+
+                <div class="bundle-section">
+                    <div class="bundle-section-top">
+                        <span class="bundle-section-title">&#9881; GitHub Actions CI/CD Security Regression Gate (<code>.github/workflows/argus-security-regression.yml</code>)</span>
+                        <button id="copy-bundle-ci-btn" class="utility-btn" type="button">&#128203; Copy CI Workflow</button>
+                    </div>
+                    <pre id="bundle-ci-yaml" class="patch-pre bundle-code-pre"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=20261016d"></script>
 </body>
 </html>
