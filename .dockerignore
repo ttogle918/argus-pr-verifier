@@ -12,3 +12,10 @@ crucible-pr-verifier
 .env.*
 .vscode
 .idea
+*.gif
+*.webm
+*.webp
+docs/screenshots
+scripts
+ko_violations.txt
+presentation - *.html
