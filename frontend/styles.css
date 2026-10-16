@@ -1255,3 +1255,185 @@ select:focus {
     margin-top: 12px;
 }
 
+/* Stage 0.5 Smart Scope Triage Selector & Banner */
+.scope-select {
+    flex: 0 0 auto;
+    background: #10192d;
+    color: #7dd3fc;
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.scope-banner {
+    background: linear-gradient(90deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.9) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-left: 4px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 0.78rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.scope-banner-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.scope-mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 5px;
+    background: rgba(56, 189, 248, 0.18);
+    color: #7dd3fc;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.scope-mode-badge.mode-sparse {
+    background: rgba(168, 85, 247, 0.2);
+    color: #d8b4fe;
+    border-color: rgba(168, 85, 247, 0.45);
+}
+
+.scope-mode-badge.mode-daemon {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.5);
+}
+
+.scope-meta-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+}
+
+.scope-chip {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: #0b111e;
+    border: 1px solid #263452;
+    color: #cbd5e1;
+}
+
+.scope-chip.skipped {
+    color: #94a3b8;
+    border-style: dashed;
+}
+
+/* Multi-Round Red-Team Attempt Timeline (1..5) */
+.attempt-timeline {
+    margin-top: 6px;
+    margin-bottom: 4px;
+    padding: 7px 9px;
+    background: #080d18;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.attempt-timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.69rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.attempt-pills-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+
+.attempt-pill {
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #334155;
+    background: #111827;
+    color: #94a3b8;
+}
+
+.attempt-pill.blocked {
+    border-color: rgba(245, 158, 11, 0.45);
+    background: rgba(245, 158, 11, 0.12);
+    color: #fcd34d;
+}
+
+.attempt-pill.breached {
+    border-color: var(--crimson);
+    background: rgba(244, 63, 94, 0.24);
+    color: #fecdd3;
+    box-shadow: 0 0 8px rgba(244, 63, 94, 0.35);
+}
+
+.attempt-pill.defended {
+    border-color: var(--emerald);
+    background: rgba(16, 185, 129, 0.18);
+    color: #6ee7b7;
+}
+
+.attempt-steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.attempt-step-row {
+    font-size: 0.7rem;
+    line-height: 1.35;
+    padding: 4px 6px;
+    border-radius: 4px;
+    background: rgba(15, 23, 42, 0.75);
+    border-left: 2px solid #475569;
+    color: #cbd5e1;
+}
+
+.attempt-step-row.blocked {
+    border-left-color: var(--amber);
+}
+
+.attempt-step-row.breached {
+    border-left-color: var(--crimson);
+    background: rgba(244, 63, 94, 0.1);
+}
+
+.attempt-step-row.defended {
+    border-left-color: var(--emerald);
+    background: rgba(16, 185, 129, 0.08);
+}
+
+.attempt-step-code {
+    font-family: var(--font-mono);
+    font-size: 0.67rem;
+    color: #7dd3fc;
+    display: block;
+    margin-top: 2px;
+}
+
+

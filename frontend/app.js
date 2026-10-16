@@ -25,13 +25,14 @@ const I18N = {
         viewDiffBtn: 'PR Diff 보기',
         launchBtn: '블라인드 검증 스웜 실행',
         stepGuardrail: '0. Flash-Lite 인젝션 가드레일',
+        stepScope: '0.5. 스마트 스코프 트리아지',
         stepBlind: '1. 블라인드 이원화 (Argon)',
-        stepSwarm: '2. 4x Flash 공격 스웜',
+        stepSwarm: '2. 4x Flash (5회 적응형 레드팀)',
         stepSandboxA: '3a. 샌드박스 PR (2회 재현)',
         stepSandboxB: '3b. 샌드박스 8개 변이본',
         stepOneCard: '4. 결정론적 점수 & 원카드',
         trackATag: 'TRACK A • 공격자 스웜 (ATTACKER SWARM)',
-        trackATitle: '불변조건(Invariant) 추출 & 병렬 파괴 테스트 생성',
+        trackATitle: '불변조건(Invariant) 추출 & 5회 적응형 레드팀 파괴 테스트',
         trackAEmpty: '상단의 <strong>블라인드 검증 스웜 실행</strong> 버튼을 눌러 PR 불변조건을 추출하고 병렬 공격 에이전트를 투입하세요.',
         wallTitle: 'BLIND INFORMATION WALL',
         wallSub: '컨텍스트 완전 격리 (무공유)',
@@ -53,7 +54,7 @@ const I18N = {
         copyPromptText: 'AI 수정 프롬프트 복사',
         copiedPromptText: '프롬프트 복사 완료!',
         exportJsonText: 'JSON 리포트 저장',
-        colLeftTitle: '🚨 확인된 PR 파괴 테스트 (샌드박스 2/2회 재현 완료)',
+        colLeftTitle: '🚨 확인된 PR 파괴 테스트 (5회 적응형 레드팀 + 샌드박스 2/2회 재현)',
         colRightTitle: '🧪 잔여 리스크 분석 & Argon 권장 보안 패치',
         metric1Label: '1. 확인된 실제 PR 결함 (Track a)',
         metric1Unit: '건의 파괴적 결함',
@@ -63,25 +64,25 @@ const I18N = {
         metric3Label: '3. 잔여 리스크 & 미탐지 사각지대',
         metric3Uncaught: (n) => `(${n}건 미탐지)`,
         metric3SubPrefix: '생존 변이(사각지대): ',
-        noReproBugs: '원본 PR 코드에서 2/2회 재현된 파괴적 결함이 없습니다 (모든 불변조건 통과!).',
+        noReproBugs: '원본 PR 코드에서 2/2회 재현된 파괴적 결함이 없습니다 (5/5회 레드팀 방어 및 모든 불변조건 통과!).',
         whyEscapedLabel: '생존 변이(사각지대) 미탐지 원인:',
         recommendedPatchLabel: 'Argon 권장 보안 및 상태 머신 패치:',
         mergeGatePrompt: (scoreLabel) => `<strong>최종 휴먼 머지 게이트:</strong> 2/2회 재현된 PR 결함과 결정론적 블라인드 탐지율(<span>${scoreLabel}</span>), 잔여 리스크를 검토한 뒤 승인 또는 거절하세요.`,
-        reviewerNotesPlaceholder: '리뷰어 코멘트 입력 (선택 — 예: 음수 환불 검증 및 M8 시계 오차 패치 후 재요청)',
+        reviewerNotesPlaceholder: '리뷰어 코멘트 입력 (선택 — 예: 따옴표 밖 백슬래시 이스케이프 및 세미콜론 차단 패치 후 재요청)',
         rejectBtn: '병합 거절 및 수정 요청 (Reject Merge)',
         approveBtn: '병합 최종 승인 (Approve Merge)',
         stampRejected: (pr) => `✖ 휴먼 리뷰어 병합 거절 — ${pr.toUpperCase()} 머지 차단됨`,
         stampApproved: (pr) => `✔ 휴먼 리뷰어 병합 승인 — ${pr.toUpperCase()} 머지 허가됨`,
         scenarios: {
+            'pr-cisco-sandbox-bypass': 'PR #3: Make sandbox pipeline splitting quote-aware (cisco-foundation-ai/vulnerability-localization-benchmark)',
+            'pr-cisco-scoring-divzero': 'PR #6: Add evaluation metric aggregation & scoring CLI (cisco-foundation-ai/vulnerability-localization-benchmark)',
             'pr-checkout-race': 'PR #412: AI 즉시 환불 및 부분 지갑 정산 파이프라인 (acme-pay/ledger-core)',
-            'pr-cisco-sandbox-bypass': 'PR #3: [Cisco 벤치마크] 평가 하네스 & Docker 샌드박스 러너 (cisco-foundation-ai/vuln-bench)',
-            'pr-cisco-scoring-divzero': 'PR #6: [Cisco 벤치마크] Top-K 취약점 로컬라이제이션 스코어러 (cisco-foundation-ai/vuln-bench)',
             'pr-ratelimiter-offbyone': 'PR #809: 등급별 API 키 Redis 슬라이딩 윈도우 토큰 버킷 (cloud-gate/quota-engine)',
             'pr-prompt-injection-attack': 'PR #666: [적대적 공격] 인증 미들웨어 주석 내 숨겨진 프롬프트 인젝션',
         },
         localizedContent: {
             'pr-checkout-race': {
-                takeaway: '치명적 결함 2건이 샌드박스에서 2/2회 재현되었습니다(음수 환불을 통한 지갑 잔액 부풀리기, PENDING_SETTLEMENT 상태의 이중 차감 경합). 검증기 자체는 블라인드 인공 버그 8개 중 7개(87.5%)를 포획했습니다.',
+                takeaway: '치명적 결함 2건이 샌드박스에서 2/2회 재현되었습니다(Attempt 3/5 음수 환불을 통한 지갑 잔액 부풀리기, Attempt 2/5 PENDING_SETTLEMENT 상태의 이중 차감 경합). 검증기 자체는 블라인드 인공 버그 8개 중 7개(87.5%)를 포획했습니다.',
                 blindSpot: '생존 변이 M8(분산 샤드 페일오버 시 now_ms == token_expiry_ms 밀리초 경계 우회)은 스웜 테스트가 정수 초 단위 타임스탬프만 주입해 미탐지되었습니다. 단조 시계(monotonic clock) 기반 `<` 비교 패치가 필요합니다.',
                 invariants: {
                     'INV-1': '환불 금액은 반드시 양수(> 0)여야 하며 원결제 금액을 초과할 수 없음',
@@ -103,15 +104,31 @@ const I18N = {
                 },
             },
             'pr-cisco-sandbox-bypass': {
-                takeaway: 'Cisco 취약점 로컬라이제이션 벤치마크 PR #3에서 5회 적응형 레드팀 루프(Attempt 3/5 및 2/5)를 통해 쉘 명령어 인젝션(RCE)과 심볼릭 링크 호스트 파일 탈출 결함 2건이 2/2회 재현되었습니다. 블라인드 검증기는 8개 중 7개(87.5%)를 포획했습니다.',
-                blindSpot: '생존 변이 M8(JSONL 파서 Unicode BOM 접두사 crash)은 UTF-8 BOM 헤더 퍼징 벡터가 누락되어 생존했습니다. utf-8-sig 디코딩 패치가 권장됩니다.',
+                takeaway: 'cisco-foundation-ai/vulnerability-localization-benchmark PR #3(sandbox.py)에서 최대 5회 적응형 레드팀 루프를 통해 3건의 실제 샌드박스 우회 결함이 2/2회 재현되었습니다: ① 따옴표 밖 \\" 이스케이프 파서 불일치 RCE(Attempt 3/5 돌파), ② ; 및 \\n 명령어 체이닝 누락(Attempt 2/5 돌파), ③ find -exec python3 GTFOBins 우회(Attempt 2/5 돌파). 블라인드 검증기는 8개 중 7개(87.5%)를 포획했습니다.',
+                blindSpot: '생존 변이 M8(Bash ANSI-C $\'\\x7c\' 16진수 파이프 인코딩)은 표준 ASCII 따옴표 위주로 테스트되어 생존했습니다. shlex 기반 토큰화 및 shell=False 실행 전환이 권장됩니다.',
+                invariants: {
+                    'INV-CS-1': '따옴표 인식 파이프라인 분할기(_split_pipeline)와 bash -c의 따옴표/이스케이프 해석이 100% 일치해야 함',
+                    'INV-CS-2': '세미콜론(;) 및 개행(\\n) 명령어 구분자를 통한 비허가 바이너리 체이닝을 차단해야 함',
+                    'INV-CS-3': '버전 명시 인터프리터(python3) 및 허용 유틸리티(find -exec) GTFOBins 실행을 차단해야 함',
+                    'INV-CS-4': '정상적인 따옴표 내부 정규식 파이프(grep -E \'foo|bar\')는 차단 없이 통과해야 함',
+                },
+                mutants: {
+                    'M1': 'DENIED_PATTERNS에서 출력 리다이렉션(>) 차단 정규식 제거',
+                    'M2': 'DENIED_PATTERNS에서 $(...) 서브쉘 명령어 치환 차단 제거',
+                    'M3': '공백만 있는 명령어(whitespace-only) strip() 검사 누락으로 IndexError 유발',
+                    'M4': '따옴표 내부 백슬래시 이스케이프 인덱스 증가 오류(i += 1)',
+                    'M5': '절대 경로 명령어(/bin/ls) os.path.basename 정규화 누락',
+                    'M6': '_split_pipeline에서 작은따옴표(\') 추적 누락',
+                    'M7': 'sed -i 인플레이스 파일 변조 차단 정규식 제거',
+                    'M8': 'Bash ANSI-C $\'\\x7c\' 16진수 이스케이프 파이프 우회 변이',
+                },
             },
             'pr-cisco-scoring-divzero': {
-                takeaway: 'Cisco 벤치마크 스코어러 PR #6에서 5회 레드팀 루프를 통해 0개 예측 시 ZeroDivisionError 및 음수 라인 오프셋 IoU 역전 결함 2건이 2/2회 재현되었습니다. 블라인드 검증기는 8개 중 7개(87.5%)를 포획했습니다.',
-                blindSpot: '생존 변이 M8(Windows 백슬래시 경로 정규화 불일치)은 POSIX 경로 위주로만 테스트되어 생존했습니다. PurePosixPath 정규화 패치가 권장됩니다.',
+                takeaway: 'Cisco 벤치마크 PR #6(SPARSE_PACKAGE_TREE 모드: scoring.py, cli.py, models.py 마운트)에서 5회 적응형 레드팀 루프를 통해 3건의 우회/크래시 결함이 2/2회 재현되었습니다. 블라인드 검증기는 8개 중 7개(87.5%)를 포획했습니다.',
+                blindSpot: '생존 변이 M8은 추가 경계 조건 퍼징 벡터 보강이 권장됩니다.',
             },
             'pr-ratelimiter-offbyone': {
-                takeaway: '슬라이딩 윈도우 경계에서 버스트 쿼터가 2배로 누수되는 결함 1건이 2/2회 재현되었습니다. 블라인드 검증기는 8개 중 6개(75.0%)의 인공 버그를 포획했습니다.',
+                takeaway: '슬라이딩 윈도우 경계에서 버스트 쿼터가 2배로 누수되는 결함 1건이 Attempt 3/5에서 돌파되어 2/2회 재현되었습니다. 블라인드 검증기는 8개 중 6개(75.0%)의 인공 버그를 포획했습니다.',
                 blindSpot: '생존 변이 M7·M8(레디스 파이프라인 부분 실패 및 음수 가중치 토큰 호출)에 대한 추가 방어 테스트가 권장됩니다.',
             },
         },
@@ -126,13 +143,14 @@ const I18N = {
         viewDiffBtn: 'View PR Diff',
         launchBtn: 'Launch Blind Verification Swarm',
         stepGuardrail: '0. Flash-Lite Guardrail',
+        stepScope: '0.5. Smart Scope Triage',
         stepBlind: '1. Blind Dual-Track (Argon)',
-        stepSwarm: '2. 4x Flash Attacker Swarm',
+        stepSwarm: '2. 4x Flash (5-Turn Red-Team)',
         stepSandboxA: '3a. Sandbox PR (2x Repro)',
         stepSandboxB: '3b. Sandbox 8 Mutants',
         stepOneCard: '4. Deterministic Score & One-Card',
         trackATag: 'TRACK A • ATTACKER SWARM',
-        trackATitle: 'Invariant Extraction & Parallel Breaking Tests',
+        trackATitle: 'Invariant Extraction & 5-Turn Adaptive Red-Team Tests',
         trackAEmpty: 'Click <strong>Launch Blind Verification Swarm</strong> to extract formal PR invariants and dispatch attackers.',
         wallTitle: 'BLIND INFORMATION WALL',
         wallSub: 'Zero Shared Context',
@@ -154,7 +172,7 @@ const I18N = {
         copyPromptText: 'Copy AI Fix Prompt',
         copiedPromptText: 'Copied Fix Prompt!',
         exportJsonText: 'Export JSON Report',
-        colLeftTitle: '🚨 Confirmed PR Breaking Tests (Reproduced 2/2 Times in Sandbox)',
+        colLeftTitle: '🚨 Confirmed PR Breaking Tests (5-Turn Adaptive Red-Team + 2/2 Sandbox Repro)',
         colRightTitle: '🧪 Residual Risk & Recommended Security Patch (Argon Synthesis)',
         metric1Label: '1. Confirmed PR Defects (Track a)',
         metric1Unit: 'Breaking Failure(s)',
@@ -164,19 +182,19 @@ const I18N = {
         metric3Label: '3. Residual Risk & Blind Spots',
         metric3Uncaught: (n) => `(${n} Uncaught)`,
         metric3SubPrefix: 'Surviving Mutant: ',
-        noReproBugs: 'No reproducible failures on original PR code (All invariants held 2/2 times!).',
+        noReproBugs: 'No reproducible failures on original PR code (Defended all 5/5 red-team turns & passed 2/2 runs!).',
         whyEscapedLabel: 'Why Surviving Mutant(s) Escaped:',
         recommendedPatchLabel: 'Recommended Security & State Patch:',
         mergeGatePrompt: (scoreLabel) => `<strong>Human Merge Gate:</strong> Review the confirmed 2/2 breaking tests, the deterministic blind detection score (<span>${scoreLabel}</span>), and surviving mutant blind spots before deciding.`,
-        reviewerNotesPlaceholder: 'Optional reviewer notes (e.g., Patch negative refund guard & M8 clock-skew boundary before merge)',
+        reviewerNotesPlaceholder: 'Optional reviewer notes (e.g., Patch unquoted backslash escape & semicolon chaining in sandbox.py)',
         rejectBtn: 'Reject Merge & Request Fixes',
         approveBtn: 'Approve & Merge PR',
         stampRejected: (pr) => `✖ MERGE REJECTED BY HUMAN REVIEWER — BLOCKING ${pr.toUpperCase()}`,
         stampApproved: (pr) => `✔ MERGE APPROVED BY HUMAN REVIEWER — ${pr.toUpperCase()}`,
         scenarios: {
+            'pr-cisco-sandbox-bypass': 'PR #3: Make sandbox pipeline splitting quote-aware (cisco-foundation-ai/vulnerability-localization-benchmark)',
+            'pr-cisco-scoring-divzero': 'PR #6: Add evaluation metric aggregation & scoring CLI (cisco-foundation-ai/vulnerability-localization-benchmark)',
             'pr-checkout-race': 'PR #412: AI Instant Refund & Partial Wallet Settlement (acme-pay/ledger-core)',
-            'pr-cisco-sandbox-bypass': 'PR #3: [Cisco Benchmark] Evaluation Harness & Docker Sandbox Runner (cisco-foundation-ai/vuln-bench)',
-            'pr-cisco-scoring-divzero': 'PR #6: [Cisco Benchmark] Top-K Vulnerability Localization Scorer (cisco-foundation-ai/vuln-bench)',
             'pr-ratelimiter-offbyone': 'PR #809: Redis Sliding-Window Token Bucket (cloud-gate/quota-engine)',
             'pr-prompt-injection-attack': 'PR #666: [ADVERSARIAL] Hidden Prompt Injection in Auth Middleware',
         },
@@ -219,6 +237,8 @@ function applyLanguageUI() {
     document.getElementById('ui-launch-btn-text').textContent = dict.launchBtn;
 
     document.getElementById('step-label-guardrail').textContent = dict.stepGuardrail;
+    const stepScopeEl = document.getElementById('step-label-scope');
+    if (stepScopeEl) stepScopeEl.textContent = dict.stepScope;
     document.getElementById('step-label-blind').textContent = dict.stepBlind;
     document.getElementById('step-label-swarm').textContent = dict.stepSwarm;
     document.getElementById('step-label-sandbox-a').textContent = dict.stepSandboxA;
@@ -254,6 +274,9 @@ function applyLanguageUI() {
 
     // If a run has already completed, re-render the dynamic cards in the selected language
     if (state.lastRunData && state.lastRunData.guardrail && state.lastRunData.guardrail.is_safe) {
+        if (state.lastRunData.scope_triage) {
+            renderScopeTriageBanner(state.lastRunData.scope_triage);
+        }
         renderInvariants(state.lastRunData.invariant_plan, state.lastRunData.pr_id);
         renderSealedMutants(state.lastRunData.deterministic_score.mutant_evaluations || [], state.lastRunData.pr_id);
         (state.lastRunData.deterministic_score.mutant_evaluations || []).forEach((m) => {
@@ -386,6 +409,87 @@ function renderInvariants(invariantPlan, prId = state.currentPrId) {
     `;
 }
 
+function renderScopeTriageBanner(scopeTriage) {
+    const el = document.getElementById('scope-triage-banner');
+    if (!el) return;
+    if (!scopeTriage) {
+        el.classList.add('hidden');
+        return;
+    }
+    const modeCls = scopeTriage.scope_mode === 'SINGLE_FILE_UNIT'
+        ? 'single'
+        : scopeTriage.scope_mode === 'SPARSE_PACKAGE_TREE'
+            ? 'sparse'
+            : 'daemon';
+    const srcLabel = scopeTriage.selection_source === 'user_override'
+        ? (state.lang === 'ko' ? '사용자 수동 지정 (user_override)' : 'User Override (user_override)')
+        : (state.lang === 'ko' ? '에이전트 자동 감지 (agent_auto)' : 'Agent Auto-Detect (agent_auto)');
+    const mountedChips = (scopeTriage.mounted_files || [])
+        .map((f) => `<span class="scope-chip mounted">&#128196; ${f}</span>`)
+        .join('');
+    const skippedChips = (scopeTriage.skipped_heavy_paths || [])
+        .map((p) => `<span class="scope-chip skipped">&#9940; Skipped: ${p}</span>`)
+        .join('');
+
+    el.innerHTML = `
+        <div class="scope-banner-top">
+            <div>
+                <span class="scope-mode-badge ${modeCls}">Stage 0.5 • ${scopeTriage.scope_mode}</span>
+                <strong style="margin-left:8px;color:#e2e8f0;">Primary Target: <code>${scopeTriage.primary_target_file}</code></strong>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:0.73rem;color:#93c5fd;">
+                ${srcLabel} • Mounted: <strong>${scopeTriage.estimated_mount_size_kb} KB</strong>
+            </div>
+        </div>
+        <div style="color:#cbd5e1;font-size:0.78rem;">${scopeTriage.rationale}</div>
+        <div class="scope-files-row">${mountedChips}${skippedChips}</div>
+    `;
+    el.classList.remove('hidden');
+}
+
+function renderAttemptTimelineHtml(steps, maxAttempts = 5, breachedOnAttempt = null) {
+    if (!steps || steps.length === 0) return '';
+    const pills = [];
+    for (let i = 1; i <= maxAttempts; i++) {
+        const stepObj = steps.find((s) => s.attempt_num === i);
+        if (stepObj) {
+            const cls = stepObj.status === 'BREACHED'
+                ? 'breached'
+                : stepObj.status === 'BLOCKED'
+                    ? 'blocked'
+                    : 'defended';
+            const icon = stepObj.status === 'BREACHED' ? '&#128293; BREACHED' : stepObj.status;
+            pills.push(`<span class="attempt-pill ${cls}" title="Attempt ${i}: ${stepObj.attack_hypothesis}">#${i} ${icon}</span>`);
+        } else {
+            pills.push(`<span class="attempt-pill unused" title="Attempt ${i}: Not needed (early stop after breach/defense)">#${i} —</span>`);
+        }
+    }
+    const rowsHtml = steps.map((s) => {
+        const color = s.status === 'BREACHED' ? '#fda4af' : s.status === 'BLOCKED' ? '#fcd34d' : '#6ee7b7';
+        return `
+            <div class="attempt-step-row">
+                <span style="color:${color};font-weight:700;">[Attempt ${s.attempt_num}/${maxAttempts} • ${s.status}]</span>
+                <span style="color:#e2e8f0;">${s.attack_hypothesis}</span>
+                <code style="color:#38bdf8;">${s.payload_snippet}</code>
+                <div style="color:#94a3b8;padding-left:8px;">&#8627; ${s.sandbox_observation}</div>
+            </div>
+        `;
+    }).join('');
+    const headerBadge = breachedOnAttempt
+        ? `&#128293; Breached on Attempt ${breachedOnAttempt}/${maxAttempts}`
+        : `Defended (${steps.length}/${maxAttempts} attempts used)`;
+    return `
+        <div class="attempt-timeline">
+            <div class="attempt-timeline-header">
+                <span>Adaptive Red-Team Loop (Max ${maxAttempts})</span>
+                <span style="color:${breachedOnAttempt ? '#fb7185' : '#34d399'};font-weight:700;">${headerBadge}</span>
+            </div>
+            <div class="attempt-pills">${pills.join('')}</div>
+            <div class="attempt-step-list">${rowsHtml}</div>
+        </div>
+    `;
+}
+
 function renderSwarmAttackers(swarmOutputs, testResultMap) {
     const grid = document.getElementById('swarm-content');
     grid.innerHTML = '';
@@ -394,12 +498,20 @@ function renderSwarmAttackers(swarmOutputs, testResultMap) {
         card.className = 'attacker-card active';
         const testsHtml = (att.tests || []).map((tItem) => {
             const res = testResultMap[tItem.test_id];
+            const steps = (res && res.attempt_history && res.attempt_history.length > 0)
+                ? res.attempt_history
+                : (tItem.attempt_history || []);
+            const maxAtt = (res && res.max_attempts) || tItem.max_attempts || 5;
+            const breachedAtt = (res && res.breached_on_attempt) || tItem.breached_on_attempt || null;
+
             let statusCls = '';
             let badge = 'PENDING';
             if (res) {
                 if (!res.passed_on_original && res.reproduced_twice) {
                     statusCls = 'fail-2x';
-                    badge = 'FAIL 2/2 (REAL PR BUG)';
+                    badge = breachedAtt
+                        ? `BREACHED @ ATTEMPT ${breachedAtt}/${maxAtt} (2/2 REPRO)`
+                        : 'FAIL 2/2 (REAL PR BUG)';
                 } else if (!res.passed_on_original && !res.reproduced_twice) {
                     statusCls = 'flaky-1x';
                     badge = '1/2 FLAKY (FILTERED)';
@@ -408,13 +520,16 @@ function renderSwarmAttackers(swarmOutputs, testResultMap) {
                     badge = 'PASS 2/2 (BASELINE)';
                 }
             }
-            return `<li class="${statusCls}">• ${tItem.test_id} [${badge}]</li>`;
+            const timelineBlock = (res && steps.length > 0 && (!res.passed_on_original || steps.length > 1))
+                ? renderAttemptTimelineHtml(steps, maxAtt, breachedAtt)
+                : '';
+            return `<li class="${statusCls}">• <strong>${tItem.test_id}</strong> [${badge}]${timelineBlock}</li>`;
         }).join('');
 
         card.innerHTML = `
             <div class="attacker-top">
                 <span class="attacker-name">${att.attacker_name}</span>
-                <span class="attacker-badge">${(att.tests || []).length} tests</span>
+                <span class="attacker-badge">${(att.tests || []).length} tests • max 5 attempts</span>
             </div>
             <ul class="attacker-tests">${testsHtml}</ul>
         `;
@@ -500,17 +615,18 @@ function renderOneCardSummary(data) {
     } else {
         bugsContainer.innerHTML = score.confirmed_pr_failures.map((f) => {
             const tInfo = testMap[f.test_id] || {};
-            const attemptsHtml = (f.attempts_trace && f.attempts_trace.length > 0)
-                ? `<div style="margin:6px 0;padding:6px 8px;background:rgba(15,23,42,0.75);border-left:2px solid #f43f5e;border-radius:4px;font-family:var(--font-mono);font-size:0.73rem;">
-                    <div style="color:#fda4af;font-weight:700;margin-bottom:3px;">Iterative Red-Team Loop (Breached on Attempt ${f.breached_on_attempt || f.attempts_used}/${f.max_attempts || 5}):</div>
-                    ${f.attempts_trace.map((step) => `<div style="color:${step.outcome === 'BREACHED' ? '#fb7185' : '#94a3b8'};">• [Attempt ${step.attempt_num}/${f.max_attempts || 5}: ${step.outcome}] ${step.strategy_Adjustment}</div>`).join('')}
-                   </div>`
-                : '';
+            const steps = (f.attempt_history && f.attempt_history.length > 0)
+                ? f.attempt_history
+                : (tInfo.attempt_history || []);
+            const maxAtt = f.max_attempts || tInfo.max_attempts || 5;
+            const breachedAtt = f.breached_on_attempt || tInfo.breached_on_attempt || f.attempts_used || null;
+            const attemptsHtml = renderAttemptTimelineHtml(steps, maxAtt, breachedAtt);
+
             return `
                 <div class="bug-card">
                     <div class="bug-card-header">
                         <span>${f.test_id} (${tInfo.target_invariant_id || 'INV'})</span>
-                        <span style="font-family:var(--font-mono);font-size:0.72rem;background:rgba(244,63,94,0.2);padding:2px 7px;border-radius:4px;">2/2 REPRODUCED ${f.breached_on_attempt ? `• ATTEMPT ${f.breached_on_attempt}/${f.max_attempts || 5}` : ''}</span>
+                        <span style="font-family:var(--font-mono);font-size:0.72rem;background:rgba(244,63,94,0.2);padding:2px 7px;border-radius:4px;">2/2 REPRODUCED ${breachedAtt ? `• BREACHED @ ATTEMPT ${breachedAtt}/${maxAtt}` : ''}</span>
                     </div>
                     <div style="color:#cbd5e1;">${tInfo.description || 'Deterministic invariant violation reproduced twice in isolated sandbox.'}</div>
                     ${attemptsHtml}
@@ -542,15 +658,19 @@ async function runVerificationFlow() {
     launchBtn.disabled = true;
 
     const prId = document.getElementById('scenario-selector').value;
+    const scopeEl = document.getElementById('scope-selector');
+    const scopeOverride = scopeEl ? scopeEl.value : 'auto';
     const isPhase2 = document.getElementById('phase-toggle').checked;
     const isReplay = document.getElementById('mode-toggle').checked;
 
     const banner = document.getElementById('guardrail-banner');
+    const scopeBanner = document.getElementById('scope-triage-banner');
     const oneCard = document.getElementById('one-card-summary');
     const sandboxBadge = document.getElementById('sandbox-status-badge');
     const term = document.getElementById('terminal-output');
 
     banner.className = 'banner hidden';
+    if (scopeBanner) scopeBanner.classList.add('hidden');
     oneCard.classList.add('hidden');
     term.innerHTML = '';
     resetAllSteps();
@@ -564,6 +684,7 @@ async function runVerificationFlow() {
                 pr_id: prId,
                 phase_mode: isPhase2 ? 'phase2_full' : 'phase1_mvp',
                 execution_mode: isReplay ? 'replay' : 'live_api',
+                scope_override: scopeOverride,
             }),
         });
         if (res.ok) {
@@ -585,7 +706,7 @@ async function runVerificationFlow() {
     // STAGE 0: Flash-Lite Prompt-Injection Guardrail
     setStepState('guardrail', 'active');
     appendTerminalLog(`[Stage 0] gemini-3.5-flash-lite scanning untrusted PR diff & comments for prompt injection...`, 'log-info');
-    await sleep(320);
+    await sleep(280);
 
     if (!data.guardrail.is_safe) {
         setStepState('guardrail', 'blocked');
@@ -610,19 +731,30 @@ async function runVerificationFlow() {
         return;
     }
 
-    const triageInfo = data.scope_triage
-        ? ` • <strong>[Stage 0.5 Scope: ${data.scope_triage.selected_mode}]</strong> (${data.scope_triage.fetched_files_count} files, saved ~${data.scope_triage.saved_clone_mb}MB)`
-        : '';
-    if (data.scope_triage) {
-        appendTerminalLog(`[Stage 0.5 Smart Scope Triage] Selected ${data.scope_triage.selected_mode}: ${data.scope_triage.rationale} (Saved ~${data.scope_triage.saved_clone_mb}MB)`, 'log-pass');
-    }
-
     setStepState('guardrail', 'done');
     banner.className = 'banner safe';
     banner.innerHTML = `
-        <span>&#9989; <strong>[STAGE 0 GUARDRAIL PASSED — gemini-3.5-flash-lite]</strong> ${data.guardrail.sanitized_summary}${triageInfo}</span>
+        <span>&#9989; <strong>[STAGE 0 GUARDRAIL PASSED — gemini-3.5-flash-lite]</strong> ${data.guardrail.sanitized_summary}</span>
         <span style="font-family:var(--font-mono);font-size:0.75rem;">${data.guardrail.latency_ms}ms</span>
     `;
+
+    // STAGE 0.5: Smart Scope Triage & Selective Loader
+    setStepState('scope_triage', 'active');
+    if (data.scope_triage) {
+        renderScopeTriageBanner(data.scope_triage);
+        appendTerminalLog(
+            `[Stage 0.5 Smart Scope Triage] Mode=${data.scope_triage.scope_mode} (${data.scope_triage.selection_source}) | Target=${data.scope_triage.primary_target_file} (${data.scope_triage.estimated_mount_size_kb} KB mounted)`,
+            'log-pass'
+        );
+        if ((data.scope_triage.skipped_heavy_paths || []).length > 0) {
+            appendTerminalLog(
+                `  [Selective Loader] Skipped heavy repo paths: ${data.scope_triage.skipped_heavy_paths.join(', ')}`,
+                'log-info'
+            );
+        }
+    }
+    await sleep(260);
+    setStepState('scope_triage', 'done');
 
     // STAGE 1: Blind Dual-Track (Argon Planner vs. Isolated Argon Bug Planter)
     setStepState('blind_plan', 'active');
@@ -630,39 +762,52 @@ async function runVerificationFlow() {
     appendTerminalLog(`[Stage 1B] Isolated gemini-4-argon (store=False) planting ${data.deterministic_score.planted_bugs_total} blind mutations behind Information Wall...`, 'log-info');
     renderInvariants(data.invariant_plan, data.pr_id);
     renderSealedMutants(data.deterministic_score.mutant_evaluations || [], data.pr_id);
-    await sleep(420);
+    await sleep(380);
     setStepState('blind_plan', 'done');
 
     // STAGE 2: Parallel 4x Flash Attacker Swarm
     setStepState('swarm', 'active');
-    appendTerminalLog(`[Stage 2] Spawning ${(data.swarm_outputs || []).length} parallel gemini-3.8-flash attacker agents...`, 'log-info');
+    appendTerminalLog(`[Stage 2] Spawning ${(data.swarm_outputs || []).length} parallel gemini-3.8-flash attacker agents (Adaptive Red-Team Loop max_attempts=5)...`, 'log-info');
     renderSwarmAttackers(data.swarm_outputs || [], {});
-    await sleep(420);
+    await sleep(380);
     setStepState('swarm', 'done');
 
     // STAGE 3a: Antigravity Sandbox Track (a) — PR Original Code (5-Attempt Red-Team Loop + 2x Repro)
     setStepState('sandbox_a', 'active');
     sandboxBadge.className = 'sandbox-badge running';
     sandboxBadge.textContent = 'RUNNING TRACK (A)';
-    appendTerminalLog(`[Sandbox] Launching agent="${data.sandbox_report.sandbox_agent_id}" -> python /workspace/harness/run_dual_track_verification.py (Max 5 Red-Team Attempts/Target)`, 'log-info');
-    await sleep(260);
+    appendTerminalLog(`[Sandbox] Launching agent="${data.sandbox_report.sandbox_agent_id}" -> python /workspace/harness/run_dual_track_verification.py (Max 5 Red-Team Attempts/Vector)`, 'log-info');
+    await sleep(240);
 
     const testResultMap = {};
     for (const r of (data.sandbox_report.pr_test_results || [])) {
         testResultMap[r.test_id] = r;
-        if (r.attempts_trace && r.attempts_trace.length > 0) {
-            for (const step of r.attempts_trace) {
-                appendTerminalLog(`    [Red-Team Attempt ${step.attempt_num}/${r.max_attempts || 5} • ${r.test_id}] ${step.outcome}: ${step.strategy_Adjustment}`, step.outcome === 'BREACHED' ? 'log-fail' : 'log-info');
+        if (r.attempt_history && r.attempt_history.length > 0 && (!r.passed_on_original || r.attempt_history.length > 1)) {
+            for (const step of r.attempt_history) {
+                const logCls = step.status === 'BREACHED' ? 'log-fail' : 'log-info';
+                appendTerminalLog(
+                    `    [Attempt ${step.attempt_num}/${r.max_attempts || 5} • ${r.test_id}] [${step.status}] ${step.attack_hypothesis} -> ${step.sandbox_observation}`,
+                    logCls
+                );
             }
         }
         if (!r.passed_on_original && r.reproduced_twice) {
-            appendTerminalLog(`  [Track a • PR_orig] ${r.test_id}: Breached on Attempt ${r.breached_on_attempt || r.attempts_used}/${r.max_attempts || 5} -> Run 1=FAIL, Run 2=FAIL (2/2 REPRODUCED!)`, 'log-fail');
+            appendTerminalLog(
+                `  [Track a • PR_orig] ${r.test_id}: 🔥 BREACHED on Attempt ${r.breached_on_attempt || r.attempts_used}/${r.max_attempts || 5} -> Run 1=FAIL, Run 2=FAIL (2/2 REPRODUCED!)`,
+                'log-fail'
+            );
         } else if (!r.passed_on_original && !r.reproduced_twice) {
-            appendTerminalLog(`  [Track a • PR_orig] ${r.test_id}: Run 1=FAIL, Run 2=PASS -> 1/2 FLAKY ALARM (FILTERED OUT)`, 'log-flaky');
+            appendTerminalLog(
+                `  [Track a • PR_orig] ${r.test_id}: Run 1=FAIL, Run 2=PASS -> 1/2 FLAKY ALARM (FILTERED OUT)`,
+                'log-flaky'
+            );
         } else {
-            appendTerminalLog(`  [Track a • PR_orig] ${r.test_id}: Held across ${r.attempts_used || 1} attempt(s) & 2/2 runs -> Valid Baseline Invariant Test`, 'log-pass');
+            appendTerminalLog(
+                `  [Track a • PR_orig] ${r.test_id}: Held across ${r.attempts_used || 1}/${r.max_attempts || 5} attempt(s) & 2/2 runs -> Valid Baseline Invariant Test`,
+                'log-pass'
+            );
         }
-        await sleep(95);
+        await sleep(90);
     }
     renderSwarmAttackers(data.swarm_outputs || [], testResultMap);
     setStepState('sandbox_a', 'done');
@@ -848,21 +993,26 @@ function registerImportedPrInDropdown(prObj) {
 
 async function fetchLiveGithubPr() {
     const urlInput = document.getElementById('github-url-input').value.trim();
+    const scopeEl = document.getElementById('scope-selector');
+    const scopeOverride = scopeEl ? scopeEl.value : 'auto';
     const statusEl = document.getElementById('import-modal-status');
     if (!urlInput) return;
 
     statusEl.style.color = '#38bdf8';
-    statusEl.textContent = `GitHub REST API에서 '${urlInput}' PR 메타데이터 및 Diff 패치를 가져오는 중...`;
+    statusEl.textContent = `GitHub REST API에서 '${urlInput}' PR 메타데이터, 전체 소스 파일 및 Stage 0.5 Scope Triage를 분석하는 중...`;
 
     try {
-        const res = await fetch(`/api/github/pr?url=${encodeURIComponent(urlInput)}`);
+        const res = await fetch(`/api/github/pr?url=${encodeURIComponent(urlInput)}&scope_override=${encodeURIComponent(scopeOverride)}`);
         const data = await res.json();
         if (!res.ok) {
             throw new Error(data.detail || 'GitHub API 요청 실패');
         }
         registerImportedPrInDropdown(data.pr);
+        if (data.pr && data.pr.scope_triage) {
+            renderScopeTriageBanner(data.pr.scope_triage);
+        }
         statusEl.style.color = '#34d399';
-        statusEl.textContent = `✔ 불러오기 완료: ${data.pr.title}`;
+        statusEl.textContent = `✔ 불러오기 완료: ${data.pr.title} [${data.pr.scope_triage ? data.pr.scope_triage.scope_mode : 'AUTO'}]`;
         setTimeout(() => {
             document.getElementById('import-modal').classList.add('hidden');
             runVerificationFlow();

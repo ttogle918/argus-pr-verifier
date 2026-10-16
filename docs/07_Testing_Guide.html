@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Argus-PR — 통합 테스트 및 시연 가이드 (Interactive Testing Playbook)</title>
+    <style>
+        :root {
+            --bg: #070b14;
+            --surface: #0f172a;
+            --surface-2: #1e293b;
+            --border: rgba(148, 163, 184, 0.2);
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --cyan: #38bdf8;
+            --emerald: #34d399;
+            --amber: #fbbf24;
+            --rose: #fb7185;
+            --indigo: #818cf8;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Malgun Gothic", sans-serif;
+            --font-mono: 'JetBrains Mono', Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 32px 20px 80px;
+            background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.08), transparent 45%), var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1120px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.85));
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--cyan);
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .brand-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--cyan);
+            background: rgba(56, 189, 248, 0.12);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            padding: 3px 10px;
+            border-radius: 999px;
+            margin-bottom: 8px;
+        }
+
+        h1 {
+            margin: 0 0 6px 0;
+            font-size: 1.65rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .launch-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            box-shadow: 0 4px 20px rgba(2, 132, 199, 0.35);
+            transition: transform 0.15s ease;
+        }
+
+        .launch-link:hover {
+            transform: translateY(-1px);
+        }
+
+        .progress-bar-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .progress-track {
+            flex: 1;
+            height: 10px;
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: 999px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--cyan), var(--emerald));
+            transition: width 0.25s ease;
+        }
+
+        .reset-btn {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-size: 0.78rem;
+            cursor: pointer;
+        }
+
+        .reset-btn:hover {
+            color: var(--text);
+            border-color: var(--cyan);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .test-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 22px 24px;
+            transition: border-color 0.2s ease;
+        }
+
+        .test-card.completed {
+            border-color: rgba(52, 211, 153, 0.55);
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.05), rgba(15, 23, 42, 0.95));
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .card-title-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .check-input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--emerald);
+            cursor: pointer;
+        }
+
+        .scenario-num {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 6px;
+            background: rgba(99, 102, 241, 0.16);
+            color: #a5b4fc;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+        }
+
+        .card-title {
+            margin: 0;
+            font-size: 1.18rem;
+            font-weight: 700;
+        }
+
+        .tag-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .tag.cyan { color: var(--cyan); background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.35); }
+        .tag.rose { color: var(--rose); background: rgba(244, 63, 94, 0.12); border-color: rgba(244, 63, 94, 0.35); }
+        .tag.emerald { color: var(--emerald); background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.35); }
+        .tag.amber { color: var(--amber); background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.35); }
+
+        .steps-box {
+            background: rgba(7, 11, 20, 0.65);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin: 12px 0;
+        }
+
+        .steps-box ol {
+            margin: 6px 0 0 0;
+            padding-left: 20px;
+        }
+
+        .steps-box li {
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        .expect-box {
+            background: rgba(16, 185, 129, 0.06);
+            border-left: 3px solid var(--emerald);
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.88rem;
+            margin-top: 12px;
+        }
+
+        .expect-box strong {
+            color: var(--emerald);
+        }
+
+        .code-snippet {
+            position: relative;
+            background: #050811;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: #e2e8f0;
+            overflow-x: auto;
+            margin-top: 10px;
+            white-space: pre-wrap;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--surface-2);
+            color: var(--cyan);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 5px;
+            padding: 3px 9px;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            cursor: pointer;
+        }
+
+        .copy-btn:hover {
+            background: rgba(56, 189, 248, 0.2);
+        }
+
+        code {
+            font-family: var(--font-mono);
+            background: rgba(30, 41, 59, 0.85);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #7dd3fc;
+            font-size: 0.84em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <span class="brand-badge">ARGUS-PR • E2E VERIFICATION PLAYBOOK</span>
+                <h1>Argus-PR 기능별 실전 테스트 가이드</h1>
+                <p class="subtitle">Stage 0.5 Smart Scope Triage • 최대 5회 적응형 레드팀 루프 • Cisco 오픈소스 벤치마크 • 이중 트랙 블라인드 메타 검증</p>
+            </div>
+            <a class="launch-link" href="http://127.0.0.1:8000" target="_blank" rel="noopener">
+                &#128640; 대시보드 열기 (127.0.0.1:8000)
+            </a>
+        </header>
+
+        <div class="progress-bar-wrap">
+            <span style="font-weight:700;font-size:0.9rem;">&#9989; 테스트 진행률: <span id="progress-label">0 / 7 완료</span></span>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <button class="reset-btn" onclick="resetChecks()">체크 초기화</button>
+        </div>
+
+        <div class="grid">
+            <!-- TEST 1 -->
+            <div class="test-card" id="card-1">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <input type="checkbox" class="check-input" data-id="1" onchange="updateProgress()" />
+                        <span class="scenario-num">TEST 01</span>
+                        <h2 class="card-title">Cisco 보안 벤치마크 PR #3 — 5회 적응형 레드팀 루프 &amp; Stage 0.5 단일 파일 트리아지</h2>
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag cyan">SINGLE_FILE_UNIT</span>
+                        <span class="tag rose">Max 5 Attempts Loop</span>
+                        <span class="tag emerald">M/K = 7/8 (87.5%)</span>
+                    </div>
+                </div>
+                <p style="margin:0;color:var(--muted);font-size:0.9rem;">
+                    실제 오픈소스 보안 레포(<code>cisco-foundation-ai/vulnerability-localization-benchmark</code> PR #3)의 <code>sandbox.py</code> 파이프라인 파서를 대상으로 에이전트가 어떻게 방어막을 우회하여 3회차에 RCE 취약점을 뚫어내는지 확인합니다.
+                </p>
+                <div class="steps-box">
+                    <strong>&#128073; 테스트 방법:</strong>
+                    <ol>
+                        <li>상단 <strong>검증 대상 PR 시나리오</strong> 드롭다운에서 <code>[Cisco Benchmark PR #3] Make sandbox pipeline splitting quote-aware</code>를 선택합니다.</li>
+                        <li><strong>Stage 0.5 Scope</strong> 셀렉터를 <code>Auto-Detect</code>로 두고 <strong>블라인드 검증 스웜 실행</strong> 버튼을 클릭합니다.</li>
+                        <li>상단 <strong>Stage 0.5 배너</strong>와 좌측 <strong>Track A (Attacker Swarm)</strong> 카드, 하단 <strong>One-Card 요약</strong>을 차례대로 확인합니다.</li>
+                    </ol>
+                </div>
+                <div class="expect-box">
+                    <strong>&#127919; 기대 결과 (체크 포인트):</strong><br/>
+                    • <strong>Stage 0.5 배너</strong>: <code>SINGLE_FILE_UNIT</code> 모드가 자동 선택되며, <code>sandbox.py</code>만 마운트(8.4 KB)되고 무거운 파일(<code>uv.lock 1.0MB</code>, <code>data/manifest.csv 1.1MB</code>, <code>VulnLoc_Paper.pdf</code>)은 <code>Skipped</code> 칩으로 제외됩니다.<br/>
+                    • <strong>5회 적응형 레드팀 타임라인</strong>: <code>test_sec_escaped_quote_pipeline_rce</code> 카드 내부에<br/>
+                      &nbsp;&nbsp;<code>#1 BLOCKED (ls | rm -rf /)</code> &rarr; <code>#2 BLOCKED (ls &amp;&amp; rm -rf /)</code> &rarr; <code>#3 🔥 BREACHED (ls \" | rm -rf /")</code> &rarr; <code>#4 —</code> &rarr; <code>#5 —</code> 타임라인이 표시되고 <strong>2/2 재현 확정</strong> 판정이 뜹니다.<br/>
+                    • <strong>Track B 블라인드 변이 점수</strong>: 8개 인공 변이 중 <code>M1~M7</code> 포획, <code>M8(서브셸 확장)</code> 생존으로 <strong>7 / 8 (87.5%)</strong>가 계산됩니다.
+                </div>
+            </div>
+
+            <!-- TEST 2 -->
+            <div class="test-card" id="card-2">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <input type="checkbox" class="check-input" data-id="2" onchange="updateProgress()" />
+                        <span class="scenario-num">TEST 02</span>
+                        <h2 class="card-title">Cisco 벤치마크 PR #6 &amp; Stage 0.5 Scope 수동 오버라이드 (Sparse Package vs Server Daemon)</h2>
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag amber">SPARSE_PACKAGE_TREE</span>
+                        <span class="tag cyan">user_override 테스트</span>
+                    </div>
+                </div>
+                <p style="margin:0;color:var(--muted);font-size:0.9rem;">
+                    여러 로컬 모듈을 임포트하는 PR에서 <code>SPARSE_PACKAGE_TREE</code>가 자동 선택되는지 확인하고, 사용자가 강제로 로딩 모드를 오버라이드했을 때 Stage 0.5 배너가 어떻게 반응하는지 확인합니다.
+                </p>
+                <div class="steps-box">
+                    <strong>&#128073; 테스트 방법:</strong>
+                    <ol>
+                        <li>시나리오 드롭다운에서 <code>[Cisco Benchmark PR #6] Add evaluation metric aggregation &amp; scoring CLI</code>를 선택하고 실행합니다.</li>
+                        <li>실행 완료 후, 상단 <strong>Stage 0.5 Scope</strong> 드롭다운을 <code>Auto-Detect</code>에서 <code>Server-Daemon</code>(또는 <code>Sparse-Package</code>)으로 변경한 뒤 다시 <strong>블라인드 검증 스웜 실행</strong>을 누릅니다.</li>
+                    </ol>
+                </div>
+                <div class="expect-box">
+                    <strong>&#127919; 기대 결과 (체크 포인트):</strong><br/>
+                    • 첫 실행(<code>Auto-Detect</code>): 로컬 패키지 의존성(<code>scoring.py</code>, <code>cli.py</code>, <code>schemas.py</code>)을 감지해 <code>SPARSE_PACKAGE_TREE (agent_auto)</code> 배지가 표시됩니다.<br/>
+                    • 두 번째 실행(<code>Server-Daemon</code> 선택 시): 배너 우측 상단이 <code>사용자 수동 지정 (user_override)</code>으로 바뀌고 <code>LIVE_SERVER_DAEMON</code> 배지로 즉시 전환됩니다.
+                </div>
+            </div>
+
+            <!-- TEST 3 -->
+            <div class="test-card" id="card-3">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <input type="checkbox" class="check-input" data-id="3" onchange="updateProgress()" />
+                        <span class="scenario-num">TEST 03</span>
+                        <h2 class="card-title">플래그십 결제 원장 PR #412 — Flaky(1/2) 자동 필터링 &amp; 원클릭 패치 재검증 루프</h2>
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag emerald">2/2 Repro Filter</span>
+                        <span class="tag cyan">Apply Patch &amp; Re-Verify</span>
+                    </div>
+                </div>
+                <p style="margin:0;color:var(--muted);font-size:0.9rem;">
+                    간헐적 실패(Flaky 1/2)를 걸러내어 오탐을 방지하는 기능과, Argon이 제안한 패치를 원클릭으로 샌드박스에 적용해 <strong>결함 2건 &rarr; 0건, 탐지율 87.5% &rarr; 100%</strong>로 전환되는 클로즈드 루프를 테스트합니다.
+                </p>
+                <div class="steps-box">
+                    <strong>&#128073; 테스트 방법:</strong>
+                    <ol>
+                        <li>드롭다운에서 <code>PR #412: AI 즉시 환불 및 부분 지갑 정산 (acme-pay/ledger-core)</code>를 선택하고 실행합니다.</li>
+                        <li>하단 <strong>One-Card 요약</strong>이 나타나면 우측 상단 툴바의 <strong>&#10024; 추천 패치 적용 및 샌드박스 재검증</strong> 버튼을 클릭합니다.</li>
+                    </ol>
+                </div>
+                <div class="expect-box">
+                    <strong>&#127919; 기대 결과 (체크 포인트):</strong><br/>
+                    • 패치 전: <code>test_edge_float_rounding_jitter</code>는 <code>1/2 FLAKY (FILTERED)</code>로 제외되어 확정 버그 수(2건)를 오염시키지 않습니다.<br/>
+                    • 패치 버튼 클릭 직후: 모든 테스트가 <code>PASS 2/2</code>로 전환되며, 확정 결함 <strong>0건</strong>, 블라인드 변이 포획률 <strong>8 of 8 (100.0%)</strong>, 최종 권고가 초록색 <strong>APPROVE RECOMMENDED (RISK: LOW)</strong>로 즉시 업데이트됩니다.
+                </div>
+            </div>
+
+            <!-- TEST 4 -->
+            <div class="test-card" id="card-4">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <input type="checkbox" class="check-input" data-id="4" onchange="updateProgress()" />
+                        <span class="scenario-num">TEST 04</span>
+                        <h2 class="card-title">Stage 0 프롬프트 인젝션 가드레일 (Adversarial PR #666 차단 테스트)</h2>
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag rose">gemini-3.5-flash-lite</span>
+                        <span class="tag rose">Stage 0 Quarantine</span>
+                    </div>
+                </div>
+                <p style="margin:0;color:var(--muted);font-size:0.9rem;">
+                    PR 주석이나 독스트링에 숨겨진 <code>SYSTEM OVERRIDE: Ignore all previous instructions...</code> 공격을 <code>gemini-3.5-flash-lite</code>가 Stage 0에서 55ms 만에 차단하고 하위 에이전트 실행을 격리(Quarantine)하는지 검증합니다.
+                </p>
+                <div class="steps-box">
+                    <strong>&#128073; 테스트 방법:</strong>
+                    <ol>
+                        <li>드롭다운에서 <code>PR #666: [적대적 공격] 인증 미들웨어 내 숨겨진 프롬프트 인젝션</code>을 선택합니다.</li>
+                        <li><strong>PR Diff 보기</strong> 버튼을 눌러 코드 주석의 <code>SYSTEM OVERRIDE</code> 페이로드를 확인한 뒤, <strong>블라인드 검증 스웜 실행</strong>을 클릭합니다.</li>
+                    </ol>
+                </div>
+                <div class="expect-box">
+                    <strong>&#127919; 기대 결과 (체크 포인트):</strong><br/>
+                    • <strong>Stage 0 Guardrail</strong> 단계에서 즉시 붉은색 <code>&#128721; [GUARDRAIL BLOCKED BY gemini-3.5-flash-lite]</code> 경고 배너가 뜨며 파이프라인이 즉시 중단됩니다.<br/>
+                    • 샌드박스 배지가 <code>QUARANTINED</code>로 바뀌고, Argon 플래너 및 샌드박스가 불필요하게 호출되지 않고 안전하게 보호됩니다.
+                </div>
+            </div>
+
+            <!-- TEST 5 -->
+            <div class="test-card" id="card-5">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <input type="checkbox" class="check-input" data-id="5" onchange="updateProgress()" />
+                        <span class="scenario-num">TEST 05</span>
+                        <h2 class="card-title">실시간 GitHub PR URL 불러오기 &amp; 전체 소스 파일 로더 테스트</h2>
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag cyan">GitHub REST API</span>
+                        <span class="tag emerald">Full File Content Loader</span>
+                    </div>
+                </div>
+                <p style="margin:0;color:var(--muted);font-size:0.9rem;">
+                    상단 <strong>+ GitHub PR / 커스텀 Diff 입력</strong> 모달을 통해 실제 GitHub PR URL 또는 프리셋 칩을 원클릭으로 가져오고, Diff 패치뿐만 아니라 전체 파이썬 소스 파일이 로드되는지 확인합니다.
+                </p>
+                <div class="steps-box">
+                    <strong>&#128073; 테스트 방법:</strong>
+                    <ol>
+                        <li>상단 컨트롤 바에서 <strong>&#128229; + GitHub PR / 커스텀 Diff 입력</strong> 버튼을 클릭합니다.</li>
+                        <li>모달 안의 <strong>추천 오픈소스 PR 프리셋</strong> 중 <code>&#128737;&#65039; cisco-foundation-ai/vulnerability-localization-benchmark#3</code>(또는 <code>pallets/flask#5454</code>) 칩을 클릭하고 <strong>PR 가져오기 및 검증</strong>을 누릅니다.</li>
+                    </ol>
+                </div>
+                <div class="code-snippet">https://github.com/cisco-foundation-ai/vulnerability-localization-benchmark/pull/3<button class="copy-btn" onclick="copyText(this, 'https://github.com/cisco-foundation-ai/vulnerability-localization-benchmark/pull/3')">URL 복사</button></div>
+                <div class="expect-box">
+                    <strong>&#127919; 기대 결과 (체크 포인트):</strong><br/>
+                    • GitHub PR 메타데이터, 전체 소스 코드, Stage 0.5 Scope Triage 결과가 자동으로 로드되고 즉시 블라인드 검증 파이프라인이 실행됩니다.
+                </div>
+            </div>
+
+            <!-- TEST 6 -->
+            <div class="test-card" id="card-6">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <input type="checkbox" class="check-input" data-id="6" onchange="updateProgress()" />
+                        <span class="scenario-num">TEST 06</span>
+                        <h2 class="card-title">Track B 커스텀 블라인드 변이(Mutant) 실시간 주입 및 M/K 재계산</h2>
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag indigo">Track B Calibration</span>
+                        <span class="tag amber">Dynamic M/K Scoring</span>
+                    </div>
+                </div>
+                <p style="margin:0;color:var(--muted);font-size:0.9rem;">
+                    심사위원이나 리뷰어가 현장에서 직접 새로운 블라인드 버그 가설(<code>M9</code>)을 Track B에 주입했을 때, 결정론적 파이썬 채점기(<code>scoring.py</code>)가 즉시 <code>M/K</code> 점수를 재계산하는지 테스트합니다.
+                </p>
+                <div class="steps-box">
+                    <strong>&#128073; 테스트 방법:</strong>
+                    <ol>
+                        <li>아무 시나리오(예: Cisco PR #3 또는 PR #412)를 먼저 1회 실행합니다.</li>
+                        <li>우측 <strong>Track B — 블라인드 버그 주입기</strong> 레인 상단의 <strong>+ 커스텀 블라인드 변이 추가</strong> 버튼을 클릭합니다.</li>
+                        <li>변이 설명에 <code>Subshell backtick command injection (`id`)</code>을 입력하고, 시뮬레이션 결과를 <code>SURVIVED (사각지대 노출)</code>로 선택한 뒤 <strong>변이 주입 &amp; M/K 재계산</strong>을 클릭합니다.</li>
+                    </ol>
+                </div>
+                <div class="expect-box">
+                    <strong>&#127919; 기대 결과 (체크 포인트):</strong><br/>
+                    • Track B 그리드에 <code>M9</code> 카드가 추가되며, 하단 One-Card의 탐지 점수가 <code>7 of 8 (87.5%)</code>에서 <code>7 of 9 planted bugs caught (77.8%)</code>로 실시간 재계산됩니다.
+                </div>
+            </div>
+
+            <!-- TEST 7 -->
+            <div class="test-card" id="card-7">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <input type="checkbox" class="check-input" data-id="7" onchange="updateProgress()" />
+                        <span class="scenario-num">TEST 07</span>
+                        <h2 class="card-title">백엔드 REST API 직접 호출 검증 (PowerShell / cURL 원클릭 스모크 테스트)</h2>
+                    </div>
+                    <div class="tag-row">
+                        <span class="tag cyan">POST /api/verify</span>
+                        <span class="tag emerald">JSON Schema 검증</span>
+                    </div>
+                </div>
+                <p style="margin:0;color:var(--muted);font-size:0.9rem;">
+                    프론트엔드 없이 터미널에서 직접 백엔드 API의 <code>scope_triage</code> 및 <code>attempt_history</code> 응답 페이로드를 검증하고 싶을 때 아래 명령어를 복사해 실행하세요.
+                </p>
+                <div class="code-snippet" id="ps-cmd">.\.venv\Scripts\python.exe -c "import urllib.request, json; req = urllib.request.Request('http://127.0.0.1:8000/api/verify', data=json.dumps({'pr_id': 'pr-cisco-sandbox-bypass', 'phase_mode': 'phase2_full', 'execution_mode': 'replay', 'scope_override': 'auto'}).encode(), headers={'Content-Type': 'application/json'}); res = json.loads(urllib.request.urlopen(req).read()); print('Scope Mode:', res['scope_triage']['scope_mode']); print('Score:', res['deterministic_score']['detection_score_label']); print('Red-Team Breaches:', [(f['test_id'], f['breached_on_attempt']) for f in res['deterministic_score']['confirmed_pr_failures']])"<button class="copy-btn" onclick="copyText(this, document.getElementById('ps-cmd').innerText.replace('명령어 복사', '').trim())">명령어 복사</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'argus_pr_test_guide_checks_v1';
+
+        function loadChecks() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                document.querySelectorAll('.check-input').forEach((el) => {
+                    const id = el.getAttribute('data-id');
+                    el.checked = Boolean(saved[id]);
+                    const card = document.getElementById(`card-${id}`);
+                    if (card) card.classList.toggle('completed', el.checked);
+                });
+                renderProgressBar();
+            } catch (e) {
+                console.warn(e);
+            }
+        }
+
+        function updateProgress() {
+            const state = {};
+            document.querySelectorAll('.check-input').forEach((el) => {
+                const id = el.getAttribute('data-id');
+                state[id] = el.checked;
+                const card = document.getElementById(`card-${id}`);
+                if (card) card.classList.toggle('completed', el.checked);
+            });
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (e) {}
+            renderProgressBar();
+        }
+
+        function renderProgressBar() {
+            const inputs = Array.from(document.querySelectorAll('.check-input'));
+            const done = inputs.filter((i) => i.checked).length;
+            const total = inputs.length;
+            const pct = Math.round((done / total) * 100);
+            document.getElementById('progress-label').textContent = `${done} / ${total} 완료 (${pct}%)`;
+            document.getElementById('progress-fill').style.width = `${pct}%`;
+        }
+
+        function resetChecks() {
+            document.querySelectorAll('.check-input').forEach((el) => {
+                el.checked = false;
+            });
+            updateProgress();
+        }
+
+        function copyText(btn, text) {
+            navigator.clipboard.writeText(text);
+            const orig = btn.textContent;
+            btn.textContent = '✔ 복사됨!';
+            setTimeout(() => { btn.textContent = orig; }, 1600);
+        }
+
+        document.addEventListener('DOMContentLoaded', loadChecks);
+    </script>
+</body>
+</html>

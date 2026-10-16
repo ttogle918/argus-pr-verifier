@@ -44,7 +44,8 @@
             <label for="scenario-selector" class="control-label" id="ui-target-pr-label">Target Pull Request</label>
             <div class="selector-row">
                 <select id="scenario-selector">
-                    <option value="pr-cisco-sandbox-bypass">PR #3: [Cisco Benchmark] Evaluation Harness &amp; Docker Sandbox Runner (cisco-foundation-ai/vuln-bench)</option>
+                    <option value="pr-cisco-sandbox-bypass">PR #3: Make sandbox pipeline splitting quote-aware (cisco-foundation-ai/vulnerability-localization-benchmark)</option>
+                    <option value="pr-cisco-scoring-divzero">PR #6: Add evaluation metric aggregation &amp; scoring CLI (cisco-foundation-ai/vulnerability-localization-benchmark)</option>
                     <option value="pr-checkout-race">PR #412: AI Instant Refund &amp; Partial Wallet Settlement (acme-pay/ledger-core)</option>
                     <option value="pr-ratelimiter-offbyone">PR #809: Redis Sliding-Window Token Bucket (cloud-gate/quota-engine)</option>
                     <option value="pr-prompt-injection-attack">PR #666: [ADVERSARIAL] Hidden Prompt Injection in Auth Middleware</option>
@@ -56,6 +57,12 @@
         </div>
 
         <div class="toggles">
+            <select id="scope-selector" class="scope-select" title="Stage 0.5 Smart Scope Triage Override (Auto vs Single-File vs Sparse-Package vs Live Server Daemon)">
+                <option value="auto">Scope: Auto (Smart Triage)</option>
+                <option value="single_file">Scope: Single-File Unit</option>
+                <option value="sparse_package">Scope: Sparse Package Tree</option>
+                <option value="server_daemon">Scope: Live Server Daemon</option>
+            </select>
             <label class="toggle-chip" title="Toggle between Phase 1 MVP (3 attackers, 1x run) and Phase 2 Full (4 attackers, 2x repro, Guardrail)">
                 <input type="checkbox" id="phase-toggle" checked>
                 <span id="ui-phase-toggle-text">Phase 2 Full (4 Attackers + 2x Repro)</span>
@@ -85,9 +92,11 @@
     <section class="pipeline-stepper" id="pipeline-stepper">
         <div class="step-pill" data-step="guardrail" id="step-label-guardrail">0. Flash-Lite Guardrail</div>
         <div class="step-arrow">&rarr;</div>
+        <div class="step-pill" data-step="scope_triage" id="step-label-scope">0.5. Smart Scope Triage</div>
+        <div class="step-arrow">&rarr;</div>
         <div class="step-pill" data-step="blind_plan" id="step-label-blind">1. Blind Dual-Track (Argon)</div>
         <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="swarm" id="step-label-swarm">2. 4x Flash Attacker Swarm</div>
+        <div class="step-pill" data-step="swarm" id="step-label-swarm">2. 4x Flash (5-Turn Red-Team)</div>
         <div class="step-arrow">&rarr;</div>
         <div class="step-pill" data-step="sandbox_a" id="step-label-sandbox-a">3a. Sandbox PR (2x Repro)</div>
         <div class="step-arrow">&rarr;</div>
@@ -99,6 +108,8 @@
     <main class="dashboard">
         <!-- Stage 0: Prompt-Injection Guardrail Banner -->
         <div id="guardrail-banner" class="banner hidden"></div>
+        <!-- Stage 0.5: Smart Scope Triage & Selective Mount Banner -->
+        <div id="scope-triage-banner" class="scope-banner hidden"></div>
 
         <!-- Stage 1 & 2: Dual-Track Blind Verification Swimlanes ("Lane View") -->
         <div class="swimlanes">
@@ -274,6 +285,8 @@
                 </div>
                 <div class="quick-presets">
                     <span class="preset-hint">원클릭 테스트 예시:</span>
+                    <button type="button" class="preset-chip" data-gh="cisco-foundation-ai/vulnerability-localization-benchmark#3">cisco-foundation-ai/vulnerability-localization-benchmark#3</button>
+                    <button type="button" class="preset-chip" data-gh="cisco-foundation-ai/vulnerability-localization-benchmark#6">cisco-foundation-ai/vulnerability-localization-benchmark#6</button>
                     <button type="button" class="preset-chip" data-gh="pallets/flask#5402">pallets/flask#5402</button>
                     <button type="button" class="preset-chip" data-gh="psf/requests#6655">psf/requests#6655</button>
                     <button type="button" class="preset-chip" data-gh="encode/httpx#3120">encode/httpx#3120</button>

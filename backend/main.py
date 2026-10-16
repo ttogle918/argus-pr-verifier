@@ -42,6 +42,15 @@ from backend.sample_prs import (
     list_sample_prs_metadata,
 )
 from backend.scoring import compute_deterministic_scores
+from backend.workspace_slicer import (
+    SAMPLE_IDE_WORKSPACE_FILES,
+    WorkspaceSliceResult,
+    slice_workspace_by_imports,
+)
+from backend.live_dast_runner import (
+    LiveServerDastReport,
+    run_live_server_dast_verification,
+)
 
 # Safe imports with fallback
 try:
@@ -605,6 +614,96 @@ async def list_runs_history():
     """Lists recent verification runs persisted in SQLite."""
     return db.list_verification_runs()
 
+
+# ==============================================================================
+# IDE WORKSPACE IMPORT SLICER & LIVE SERVER DAST ENDPOINTS
+# ==============================================================================
+
+class WorkspaceSliceRequest(BaseModel):
+    entry_file: str = Field(
+        default="src/pages/RefundCheckoutPage.tsx",
+        description="Target page, component, or backend route file to slice via static import graph.",
+    )
+    max_depth: int = Field(default=3, ge=1, le=8, description="Maximum import traversal depth.")
+    repo_name: str = Field(default="acme-pay/fullstack-workspace", description="Workspace repository name.")
+    workspace_files: Optional[Dict[str, str]] = Field(
+        default=None,
+        description="Optional virtual workspace file map {path: content}. Uses built-in fullstack workspace if omitted.",
+    )
+    register_as_pr: bool = Field(
+        default=True,
+        description="If True, registers the sliced bundle as a playable PR benchmark in SAMPLE_PRS.",
+    )
+
+
+class LiveDastVerifyRequest(BaseModel):
+    repo_name: str = Field(default="acme-pay/refund-daemon-service", description="Target microservice repository.")
+    patch_id: str = Field(
+        default="patch_3802_live_dast",
+        description="Patch record ID for patch_verify_node DB synchronization (Sprint 38 TASK-3802).",
+    )
+    session_patch_attempt: int = Field(
+        default=2,
+        ge=1,
+        le=5,
+        description="Current patch verification attempt within the 5-per-session cap.",
+    )
+
+
+@app.post("/api/workspace/slice", response_model=WorkspaceSliceResult)
+async def slice_workspace_endpoint(req: WorkspaceSliceRequest):
+    """
+    Traces local imports from `entry_file` (JS/TS/JSX/TSX or Python) up to `max_depth`
+    without booting a heavy frontend dev server. Prunes unrelated pages, node_modules,
+    and lockfiles, returning a compact `SPARSE_PACKAGE_TREE` or `LIVE_SERVER_DAEMON` slice.
+    """
+    files_map = req.workspace_files or SAMPLE_IDE_WORKSPACE_FILES
+    try:
+        slice_result = slice_workspace_by_imports(
+            workspace_files=files_map,
+            entry_file=req.entry_file,
+            max_depth=req.max_depth,
+            repo_name=req.repo_name,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    if req.register_as_pr:
+        slug = pathlib.PurePosixPath(slice_result.entry_file).stem.lower().replace("_", "-")
+        pr_id = f"pr-slice-{slug}"
+        custom_entry = _build_custom_pr_entry(
+            pr_id=pr_id,
+            title=f"Workspace Import Slice: {slice_result.entry_file} ({slice_result.sliced_file_count} files)",
+            repo_name=req.repo_name,
+            author="ide-workspace-slicer",
+            description=slice_result.scope_triage.rationale,
+            diff_text=slice_result.bundled_code_context,
+            code_text=slice_result.bundled_code_context,
+            changed_files=slice_result.mounted_files,
+            scope_override="auto",
+        )
+        custom_entry["scope_triage"] = slice_result.scope_triage
+        SAMPLE_PRS[pr_id] = custom_entry
+        db.save_custom_pr(custom_entry)
+
+    return slice_result
+
+
+@app.post("/api/verify/live-dast", response_model=LiveServerDastReport)
+async def verify_live_server_dast_endpoint(req: LiveDastVerifyRequest):
+    """
+    Executes Live Server DAST (`LIVE_SERVER_DAEMON`) inside pure `dast-isolated-net`
+    (with nginx decoupled to `zap-scan-net` per SEC-AUD-12):
+    - Boots target backend daemon & polls `GET /health`
+    - Fires adaptive 5-attempt HTTP DAST exploit probes with 2x reproducibility (`PROVEN` tier)
+    - Exports pinned `pytest + httpx` regression tests wired to `patch_id` (max 5/session cap)
+    - Runs differential HTTP execution against 8 Blind Server Mutants (`M1..M8`)
+    """
+    return run_live_server_dast_verification(
+        repo_name=req.repo_name,
+        patch_id=req.patch_id,
+        session_patch_attempt=req.session_patch_attempt,
+    )
 
 
 # ==============================================================================
