@@ -1307,34 +1307,42 @@ async def _stream_verification_events(req: VerifyRequest):
     await asyncio.sleep(0.15)
 
     # --------------------------------------------------------------------------
-    # STAGE 2: INVARIANTS & ATTACK PLAN + SEALED MUTANTS (PARALLEL)
+    # STAGE 1 & 2: BLIND DUAL-TRACK (Track 1A + Track 1B) & PIPELINED SWARM
     # --------------------------------------------------------------------------
     if is_live and gemini_swarm:
-        inv_plan, blind_mutants = await gemini_swarm.run_dual_track_argon_parallel(
-            pr_data,
-            include_regression=include_regression,
-            live_api=True,
+        task_1a = asyncio.create_task(
+            asyncio.to_thread(
+                gemini_swarm.extract_invariants_and_plan,
+                pr_data,
+                include_regression,
+                True,
+            )
         )
+        task_1b = asyncio.create_task(
+            asyncio.to_thread(
+                gemini_swarm.plant_blind_bugs,
+                pr_data,
+                True,
+            )
+        )
+        inv_plan = await task_1a
     else:
         inv_plan = pr_data.get("invariant_plan")
         blind_mutants = pr_data.get("blind_mutants")
+        task_1b = None
 
     yield _format_sse({
-        "stage": "invariants_extracted",
+        "stage": "track_1a_complete",
         "model": "gemini-4-argon",
-        "pr_summary": inv_plan.pr_summary,
+        "pr_id": pr_id,
+        "repo_name": pr_data.get("repo_name", ""),
+        "invariant_plan": inv_plan.model_dump(),
         "invariants_count": len(inv_plan.invariants),
-        "invariants": [inv.model_dump() for inv in inv_plan.invariants],
-        "attack_plans": [ap.model_dump() for ap in inv_plan.attack_plans],
-        "sealed_mutants_count": len(blind_mutants.mutants),
-        "sealed_status": "SEALED (Concealed from Attacker Swarm)",
-        "message": f"Extracted {len(inv_plan.invariants)} formal invariants. Sealed {len(blind_mutants.mutants)} blind planted bugs behind information wall.",
+        "message": f"Track 1A complete: Extracted {len(inv_plan.invariants)} formal invariants.",
     })
-    await asyncio.sleep(0.15)
+    await asyncio.sleep(0.1)
 
-    # --------------------------------------------------------------------------
-    # STAGE 3: PARALLEL ATTACKER SWARM (gemini-3.8-flash, Max 5-Attempt Loop)
-    # --------------------------------------------------------------------------
+    # Immediately launch Stage 2 (4x Parallel Flash Attacker Swarm) as soon as Track 1A is ready!
     yield _format_sse({
         "stage": "swarm_attacking_start",
         "model": "gemini-3.8-flash",
@@ -1342,44 +1350,76 @@ async def _stream_verification_events(req: VerifyRequest):
         "max_attempts": req.max_redteam_attempts,
         "message": f"Dispatching {len(inv_plan.attack_plans)} parallel Gemini 3.8 Flash attackers (Adaptive Observe-Mutate-Attack Loop, max_attempts={req.max_redteam_attempts})...",
     })
-    await asyncio.sleep(0.15)
+    await asyncio.sleep(0.1)
 
-    if is_live and gemini_swarm:
-        swarm_outputs = await gemini_swarm.run_parallel_attacker_swarm(
-            pr_data, inv_plan, include_regression=include_regression, live_api=True
+    def _make_invariants_extracted_sse(bm_set):
+        initial_sealed = [
+            {
+                "mutant_id": m.mutant_id,
+                "category": m.category,
+                "title": m.title,
+                "description": m.description,
+                "diff_snippet": m.diff_snippet,
+                "severity": m.severity,
+                "caught": False,
+                "caught_by_test_ids": [],
+            }
+            for m in bm_set.mutants
+        ]
+        return _format_sse({
+            "stage": "invariants_extracted",
+            "model": "gemini-4-argon",
+            "pr_id": pr_id,
+            "pr_summary": inv_plan.pr_summary,
+            "invariant_plan": inv_plan.model_dump(),
+            "invariants_count": len(inv_plan.invariants),
+            "invariants": [inv.model_dump() for inv in inv_plan.invariants],
+            "attack_plans": [ap.model_dump() for ap in inv_plan.attack_plans],
+            "sealed_mutants_count": len(bm_set.mutants),
+            "sealed_mutants": initial_sealed,
+            "sealed_status": "SEALED (Concealed from Attacker Swarm)",
+            "message": f"Extracted {len(inv_plan.invariants)} formal invariants. Sealed {len(bm_set.mutants)} blind planted bugs behind information wall.",
+        })
+
+    def _make_swarm_attacking_sse(s_outputs):
+        tot_tests = sum(len(s.tests) for s in s_outputs)
+        return _format_sse({
+            "stage": "swarm_attacking",
+            "model": "gemini-3.8-flash",
+            "total_tests_generated": tot_tests,
+            "swarm_outputs": [s.model_dump() for s in s_outputs],
+            "message": f"Attacker Swarm completed: Generated {tot_tests} multi-turn red-team and invariant tests (up to {req.max_redteam_attempts} attempts per vector).",
+        })
+
+    if is_live and gemini_swarm and task_1b is not None:
+        task_swarm = asyncio.create_task(
+            gemini_swarm.run_parallel_attacker_swarm(
+                pr_data, inv_plan, include_regression=include_regression, live_api=True
+            )
         )
+        pending = {task_1b, task_swarm}
+        while pending:
+            done_set, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
+            for completed_task in done_set:
+                if completed_task is task_1b:
+                    blind_mutants = await task_1b
+                    yield _make_invariants_extracted_sse(blind_mutants)
+                    await asyncio.sleep(0.1)
+                elif completed_task is task_swarm:
+                    swarm_outputs = await task_swarm
+                    yield _make_swarm_attacking_sse(swarm_outputs)
+                    await asyncio.sleep(0.1)
     else:
+        yield _make_invariants_extracted_sse(blind_mutants)
+        await asyncio.sleep(0.15)
         swarm_outputs = pr_data.get("swarm_outputs")
         if phase_mode == "phase1_mvp":
             swarm_outputs = [s for s in swarm_outputs if s.attacker_id != "regression"]
-
-    if is_live and sandbox_runner:
-        sandbox_report = await asyncio.to_thread(
-            sandbox_runner.run_sandbox, pr_data, blind_mutants, swarm_outputs, True
-        )
-    else:
-        sandbox_report = pr_data.get("sandbox_report")
-
-    # Pre-compute deterministic scores so attempt_history is synced onto both swarm_outputs and pr_test_results
-    score_report = compute_deterministic_scores(
-        swarm_outputs=swarm_outputs,
-        blind_mutants=blind_mutants,
-        sandbox_report=sandbox_report,
-        require_two_repros=(phase_mode == "phase2_full"),
-    )
-
-    total_tests = sum(len(s.tests) for s in swarm_outputs)
-    yield _format_sse({
-        "stage": "swarm_attacking",
-        "model": "gemini-3.8-flash",
-        "total_tests_generated": total_tests,
-        "swarm_outputs": [s.model_dump() for s in swarm_outputs],
-        "message": f"Attacker Swarm completed: Generated {total_tests} multi-turn red-team and invariant tests (up to {req.max_redteam_attempts} attempts per vector).",
-    })
-    await asyncio.sleep(0.15)
+        yield _make_swarm_attacking_sse(swarm_outputs)
+        await asyncio.sleep(0.15)
 
     # --------------------------------------------------------------------------
-    # STAGES 4 & 5: SANDBOX DUAL-TRACK EXECUTION (antigravity-preview-09-2026)
+    # STAGES 3a & 3b: SANDBOX DUAL-TRACK EXECUTION (antigravity-preview-09-2026)
     # --------------------------------------------------------------------------
     yield _format_sse({
         "stage": "sandbox_start",
@@ -1389,6 +1429,21 @@ async def _stream_verification_events(req: VerifyRequest):
     })
     await asyncio.sleep(0.1)
 
+    if is_live and sandbox_runner:
+        sandbox_report = await asyncio.to_thread(
+            sandbox_runner.run_sandbox, pr_data, blind_mutants, swarm_outputs, True
+        )
+    else:
+        sandbox_report = pr_data.get("sandbox_report")
+
+    # Compute deterministic scores so attempt_history is synced onto both swarm_outputs and pr_test_results
+    score_report = compute_deterministic_scores(
+        swarm_outputs=swarm_outputs,
+        blind_mutants=blind_mutants,
+        sandbox_report=sandbox_report,
+        require_two_repros=(phase_mode == "phase2_full"),
+    )
+
     # Stream Track (a) logs and results
     stdout_logs = sandbox_report.sandbox_stdout_logs or []
     track_a_logs = [line for line in stdout_logs if "TRACK (b)" not in line]
@@ -1397,9 +1452,11 @@ async def _stream_verification_events(req: VerifyRequest):
     yield _format_sse({
         "stage": "sandbox_track_a",
         "agent": "antigravity-preview-09-2026",
+        "sandbox_agent_id": sandbox_report.sandbox_agent,
         "track": "Track (a): Adaptive Red-Team Loop (Max 5 Attempts) & 2x Repro Filter",
         "terminal_logs": track_a_logs,
         "pr_test_results": [r.model_dump() for r in sandbox_report.pr_test_results],
+        "swarm_outputs": [s.model_dump() for s in swarm_outputs],
         "confirmed_failures_count": sum(1 for r in sandbox_report.pr_test_results if r.reproduced_twice),
         "flaky_filtered_count": sum(1 for r in sandbox_report.pr_test_results if (not r.run_1_passed and r.run_2_passed)),
         "message": "Track (a) complete: Adaptive 5-attempt red-team payloads executed against PR code with 2x reproducibility check.",
@@ -1409,11 +1466,14 @@ async def _stream_verification_events(req: VerifyRequest):
     # Stream Track (b) logs and mutant matrix
     yield _format_sse({
         "stage": "sandbox_track_b",
+        "pr_id": pr_id,
         "agent": "antigravity-preview-09-2026",
         "track": "Track (b): 8 Blind Mutants Differential Execution",
         "terminal_logs": track_b_logs,
         "mutant_matrix": sandbox_report.mutant_matrix,
         "mutant_ids": [m.mutant_id for m in blind_mutants.mutants],
+        "planted_bugs_total": score_report.planted_bugs_total,
+        "mutant_evaluations": [m.model_dump() for m in score_report.mutant_evaluations],
         "message": "Track (b) complete: 8 Blind Mutants evaluated under strict Pass(PR_orig) ∧ Fail(Mutant) rule.",
     })
     await asyncio.sleep(0.2)

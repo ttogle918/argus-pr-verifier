@@ -1036,9 +1036,250 @@ async function runVerificationFlow() {
     term.innerHTML = '';
     resetAllSteps();
 
-    let data = null;
+    // Immediately show Stage 0 active on launch so user gets instant feedback
+    setStepState('guardrail', 'active');
+    appendTerminalLog(
+        `[Stage 0] gemini-3.5-flash-lite scanning untrusted PR diff & comments for prompt injection (${isReplay ? 'Recorded Replay' : 'Live Gemini API'})...`,
+        'log-info'
+    );
+
+    let currentSwarmOutputs = [];
+    let oneCardRendered = false;
+
+    async function handleSseStageEvent(evt) {
+        if (!evt || !evt.stage) return;
+
+        if (evt.stage === 'guardrail_start') {
+            setStepState('guardrail', 'active');
+            return;
+        }
+
+        if (evt.stage === 'guardrail') {
+            const g = evt.guardrail;
+            if (!g.is_safe) {
+                setStepState('guardrail', 'blocked');
+                banner.className = 'banner blocked';
+                banner.innerHTML = `
+                    <div>
+                        <strong>&#128721; [GUARDRAIL BLOCKED BY gemini-3.5-flash-lite]</strong>
+                        ${g.sanitized_summary}
+                        <div style="font-family:var(--font-mono);font-size:0.75rem;margin-top:4px;">
+                            Threats: ${(g.detected_threats || []).join(' | ')}
+                        </div>
+                    </div>
+                    <span style="font-family:var(--font-mono);font-size:0.76rem;">${g.latency_ms}ms</span>
+                `;
+                document.getElementById('invariants-box').innerHTML = `<div class="empty-state" style="color:#fda4af;">Execution halted at Stage 0: Malicious prompt-injection attempt quarantined before reaching Gemini 4 Argon.</div>`;
+                document.getElementById('swarm-content').innerHTML = '';
+                document.getElementById('planter-content').innerHTML = `<div class="empty-state" style="color:#fda4af;">Track B aborted safely.</div>`;
+                appendTerminalLog(`[QUARANTINED] Prompt injection payload blocked in ${g.latency_ms}ms. Downstream Argon/Sandbox execution prevented.`, 'log-fail');
+                sandboxBadge.textContent = 'QUARANTINED';
+                return;
+            }
+
+            if (isReplay) await sleep(180);
+            setStepState('guardrail', 'done');
+            banner.className = 'banner safe';
+            banner.innerHTML = `
+                <span>&#9989; <strong>[STAGE 0 GUARDRAIL PASSED — gemini-3.5-flash-lite]</strong> ${g.sanitized_summary}</span>
+                <span style="font-family:var(--font-mono);font-size:0.75rem;">${g.latency_ms}ms</span>
+            `;
+            setStepState('scope_triage', 'active');
+            return;
+        }
+
+        if (evt.stage === 'blocked') {
+            if (evt.final_response) {
+                state.lastRunData = evt.final_response;
+            }
+            return;
+        }
+
+        if (evt.stage === 'scope_triage') {
+            const st = evt.scope_triage;
+            if (st) {
+                renderScopeTriageBanner(st);
+                appendTerminalLog(
+                    `[Stage 0.5 Smart Scope Triage] Mode=${st.scope_mode} (${st.selection_source}) | Target=${st.primary_target_file} (${st.estimated_mount_size_kb} KB mounted)`,
+                    'log-pass'
+                );
+                if ((st.skipped_heavy_paths || []).length > 0) {
+                    appendTerminalLog(
+                        `  [Selective Loader] Skipped heavy repo paths: ${st.skipped_heavy_paths.join(', ')}`,
+                        'log-info'
+                    );
+                }
+            }
+            if (isReplay) await sleep(180);
+            setStepState('scope_triage', 'done');
+            return;
+        }
+
+        if (evt.stage === 'blind_dual_track_start') {
+            setStepState('blind_plan', 'active');
+            appendTerminalLog(`[Stage 1A] gemini-4-argon (store=False) extracting formal invariants & attack plan...`, 'log-info');
+            appendTerminalLog(`[Stage 1B] Isolated gemini-4-argon (store=False) planting 8 blind mutations behind Information Wall...`, 'log-info');
+            return;
+        }
+
+        if (evt.stage === 'track_1a_complete') {
+            if (evt.invariant_plan) {
+                renderInvariants(evt.invariant_plan, evt.pr_id || prId);
+            }
+            appendTerminalLog(
+                `[Stage 1A Complete] Extracted ${evt.invariants_count || 0} formal invariants from ${evt.repo_name || prId}.`,
+                'log-pass'
+            );
+            return;
+        }
+
+        if (evt.stage === 'swarm_attacking_start') {
+            setStepState('swarm', 'active');
+            appendTerminalLog(
+                `[Stage 2] Spawning ${(evt.active_attackers || []).length} parallel gemini-3.8-flash attacker agents (Adaptive Red-Team Loop max_attempts=${evt.max_attempts || 5})...`,
+                'log-info'
+            );
+            return;
+        }
+
+        if (evt.stage === 'invariants_extracted') {
+            if (evt.invariant_plan) {
+                renderInvariants(evt.invariant_plan, evt.pr_id || prId);
+            }
+            if (evt.sealed_mutants) {
+                renderSealedMutants(evt.sealed_mutants, evt.pr_id || prId);
+            }
+            appendTerminalLog(
+                `[Stage 1B Complete] Sealed ${evt.sealed_mutants_count || 8} blind mutations behind Information Wall (store=False).`,
+                'log-pass'
+            );
+            if (isReplay) await sleep(220);
+            setStepState('blind_plan', 'done');
+            return;
+        }
+
+        if (evt.stage === 'swarm_attacking') {
+            currentSwarmOutputs = evt.swarm_outputs || [];
+            renderSwarmAttackers(currentSwarmOutputs, {});
+            appendTerminalLog(
+                `[Stage 2 Complete] Parallel gemini-3.8-flash Swarm generated ${evt.total_tests_generated || 0} red-team & invariant tests.`,
+                'log-pass'
+            );
+            if (isReplay) await sleep(220);
+            setStepState('swarm', 'done');
+            return;
+        }
+
+        if (evt.stage === 'sandbox_start') {
+            setStepState('sandbox_a', 'active');
+            sandboxBadge.className = 'sandbox-badge running';
+            sandboxBadge.textContent = 'RUNNING TRACK (A)';
+            appendTerminalLog(
+                `[Sandbox] Launching agent="${evt.agent || 'antigravity-preview-09-2026'}" -> python /workspace/harness/run_dual_track_verification.py [${evt.scope_mode || 'SMART_CLOSURE'}]`,
+                'log-info'
+            );
+            return;
+        }
+
+        if (evt.stage === 'sandbox_track_a') {
+            setStepState('sandbox_a', 'active');
+            if (evt.swarm_outputs) {
+                currentSwarmOutputs = evt.swarm_outputs;
+            }
+            const testResultMap = {};
+            for (const r of (evt.pr_test_results || [])) {
+                testResultMap[r.test_id] = r;
+                if (r.attempt_history && r.attempt_history.length > 0 && (!r.passed_on_original || r.attempt_history.length > 1)) {
+                    for (const step of r.attempt_history) {
+                        const logCls = step.status === 'BREACHED' ? 'log-fail' : 'log-info';
+                        appendTerminalLog(
+                            `    [Attempt ${step.attempt_num}/${r.max_attempts || 5} • ${r.test_id}] [${step.status}] ${step.attack_hypothesis} -> ${step.sandbox_observation}`,
+                            logCls
+                        );
+                    }
+                }
+                if (!r.passed_on_original && r.reproduced_twice) {
+                    appendTerminalLog(
+                        `  [Track a • PR_orig] ${r.test_id}: 🔥 BREACHED on Attempt ${r.breached_on_attempt || r.attempts_used}/${r.max_attempts || 5} -> Run 1=FAIL, Run 2=FAIL (2/2 REPRODUCED!)`,
+                        'log-fail'
+                    );
+                } else if (!r.passed_on_original && !r.reproduced_twice) {
+                    appendTerminalLog(
+                        `  [Track a • PR_orig] ${r.test_id}: Run 1=FAIL, Run 2=PASS -> 1/2 FLAKY ALARM (FILTERED OUT)`,
+                        'log-flaky'
+                    );
+                } else {
+                    appendTerminalLog(
+                        `  [Track a • PR_orig] ${r.test_id}: Held across ${r.attempts_used || 1}/${r.max_attempts || 5} attempt(s) & 2/2 runs -> Valid Baseline Invariant Test`,
+                        'log-pass'
+                    );
+                }
+                await sleep(isReplay ? 75 : 40);
+            }
+            renderSwarmAttackers(currentSwarmOutputs, testResultMap);
+            setStepState('sandbox_a', 'done');
+            setStepState('sandbox_b', 'active');
+            sandboxBadge.textContent = 'RUNNING TRACK (B): M1..M8';
+            appendTerminalLog(
+                `[Sandbox Track b] Executing valid baseline tests against Blind Mutants (Caught ⟺ Pass(PR_orig) ∧ Fail(Mutant))...`,
+                'log-info'
+            );
+            return;
+        }
+
+        if (evt.stage === 'sandbox_track_b') {
+            setStepState('sandbox_b', 'active');
+            const evals = evt.mutant_evaluations || [];
+            for (const m of evals) {
+                revealMutantOutcome(m, evt.pr_id || prId);
+                if (m.caught) {
+                    appendTerminalLog(`  [Track b • ${m.mutant_id}] CAUGHT (${m.title}) by ${(m.caught_by_test_ids || []).join(', ')}`, 'log-pass');
+                } else {
+                    appendTerminalLog(`  [Track b • ${m.mutant_id}] SURVIVED (${m.title}) — All baseline tests passed on mutant!`, 'log-flaky');
+                }
+                await sleep(isReplay ? 95 : 50);
+            }
+            sandboxBadge.className = 'sandbox-badge done';
+            sandboxBadge.textContent = 'COMPLETED';
+            setStepState('sandbox_b', 'done');
+            return;
+        }
+
+        if (evt.stage === 'deterministic_scoring') {
+            setStepState('one_card', 'active');
+            if (evt.deterministic_score) {
+                appendTerminalLog(
+                    `[Scoring.py] Deterministic M/K Result: ${evt.deterministic_score.detection_score_label} | Confirmed 2/2 PR Bugs: ${evt.deterministic_score.confirmed_pr_failures_count}`,
+                    'log-info'
+                );
+            }
+            return;
+        }
+
+        if (evt.stage === 'one_card_start') {
+            setStepState('one_card', 'active');
+            appendTerminalLog(
+                `[Stage 4] gemini-4-argon synthesizing One-Card Executive Summary from deterministic score report...`,
+                'log-info'
+            );
+            return;
+        }
+
+        if (evt.stage === 'one_card_synthesis' || evt.stage === 'done') {
+            if (evt.final_response && !oneCardRendered) {
+                oneCardRendered = true;
+                state.lastRunData = evt.final_response;
+                if (evt.final_response.guardrail && evt.final_response.guardrail.is_safe) {
+                    renderOneCardSummary(evt.final_response);
+                    setStepState('one_card', 'done');
+                }
+            }
+            return;
+        }
+    }
+
     try {
-        const res = await fetch('/api/verify', {
+        const res = await fetch('/api/verify/stream', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1048,159 +1289,44 @@ async function runVerificationFlow() {
                 scope_override: scopeOverride,
             }),
         });
-        if (res.ok) {
-            data = await res.json();
+
+        if (!res.ok || !res.body) {
+            throw new Error(`HTTP ${res.status}`);
         }
-    } catch (err) {
-        console.error('Error calling /api/verify:', err);
-    }
 
-    if (!data) {
-        appendTerminalLog('[ERROR] Could not reach /api/verify backend endpoint.', 'log-fail');
-        state.isRunning = false;
-        launchBtn.disabled = false;
-        return;
-    }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
 
-    state.lastRunData = data;
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
 
-    // STAGE 0: Flash-Lite Prompt-Injection Guardrail
-    setStepState('guardrail', 'active');
-    appendTerminalLog(`[Stage 0] gemini-3.5-flash-lite scanning untrusted PR diff & comments for prompt injection...`, 'log-info');
-    await sleep(280);
+            let boundaryIdx;
+            while ((boundaryIdx = buffer.indexOf('\n\n')) !== -1) {
+                const rawFrame = buffer.slice(0, boundaryIdx).trim();
+                buffer = buffer.slice(boundaryIdx + 2);
+                if (!rawFrame) continue;
 
-    if (!data.guardrail.is_safe) {
-        setStepState('guardrail', 'blocked');
-        banner.className = 'banner blocked';
-        banner.innerHTML = `
-            <div>
-                <strong>&#128721; [GUARDRAIL BLOCKED BY gemini-3.5-flash-lite]</strong>
-                ${data.guardrail.sanitized_summary}
-                <div style="font-family:var(--font-mono);font-size:0.75rem;margin-top:4px;">
-                    Threats: ${(data.guardrail.detected_threats || []).join(' | ')}
-                </div>
-            </div>
-            <span style="font-family:var(--font-mono);font-size:0.76rem;">${data.guardrail.latency_ms}ms</span>
-        `;
-        document.getElementById('invariants-box').innerHTML = `<div class="empty-state" style="color:#fda4af;">Execution halted at Stage 0: Malicious prompt-injection attempt quarantined before reaching Gemini 4 Argon.</div>`;
-        document.getElementById('swarm-content').innerHTML = '';
-        document.getElementById('planter-content').innerHTML = `<div class="empty-state" style="color:#fda4af;">Track B aborted safely.</div>`;
-        appendTerminalLog(`[QUARANTINED] Prompt injection payload blocked in ${data.guardrail.latency_ms}ms. Downstream Argon/Sandbox execution prevented.`, 'log-fail');
-        sandboxBadge.textContent = 'QUARANTINED';
-        state.isRunning = false;
-        launchBtn.disabled = false;
-        return;
-    }
+                const dataLines = rawFrame
+                    .split('\n')
+                    .filter((line) => line.startsWith('data:'))
+                    .map((line) => line.slice(5).trim());
+                if (dataLines.length === 0) continue;
 
-    setStepState('guardrail', 'done');
-    banner.className = 'banner safe';
-    banner.innerHTML = `
-        <span>&#9989; <strong>[STAGE 0 GUARDRAIL PASSED — gemini-3.5-flash-lite]</strong> ${data.guardrail.sanitized_summary}</span>
-        <span style="font-family:var(--font-mono);font-size:0.75rem;">${data.guardrail.latency_ms}ms</span>
-    `;
-
-    // STAGE 0.5: Smart Scope Triage & Selective Loader
-    setStepState('scope_triage', 'active');
-    if (data.scope_triage) {
-        renderScopeTriageBanner(data.scope_triage);
-        appendTerminalLog(
-            `[Stage 0.5 Smart Scope Triage] Mode=${data.scope_triage.scope_mode} (${data.scope_triage.selection_source}) | Target=${data.scope_triage.primary_target_file} (${data.scope_triage.estimated_mount_size_kb} KB mounted)`,
-            'log-pass'
-        );
-        if ((data.scope_triage.skipped_heavy_paths || []).length > 0) {
-            appendTerminalLog(
-                `  [Selective Loader] Skipped heavy repo paths: ${data.scope_triage.skipped_heavy_paths.join(', ')}`,
-                'log-info'
-            );
-        }
-    }
-    await sleep(260);
-    setStepState('scope_triage', 'done');
-
-    // STAGE 1: Blind Dual-Track (Argon Planner vs. Isolated Argon Bug Planter)
-    setStepState('blind_plan', 'active');
-    appendTerminalLog(`[Stage 1A] gemini-4-argon (store=False) extracting formal invariants from ${data.repo_name}...`, 'log-info');
-    appendTerminalLog(`[Stage 1B] Isolated gemini-4-argon (store=False) planting ${data.deterministic_score.planted_bugs_total} blind mutations behind Information Wall...`, 'log-info');
-    renderInvariants(data.invariant_plan, data.pr_id);
-    renderSealedMutants(data.deterministic_score.mutant_evaluations || [], data.pr_id);
-    await sleep(380);
-    setStepState('blind_plan', 'done');
-
-    // STAGE 2: Parallel 4x Flash Attacker Swarm
-    setStepState('swarm', 'active');
-    appendTerminalLog(`[Stage 2] Spawning ${(data.swarm_outputs || []).length} parallel gemini-3.8-flash attacker agents (Adaptive Red-Team Loop max_attempts=5)...`, 'log-info');
-    renderSwarmAttackers(data.swarm_outputs || [], {});
-    await sleep(380);
-    setStepState('swarm', 'done');
-
-    // STAGE 3a: Antigravity Sandbox Track (a) — PR Original Code (5-Attempt Red-Team Loop + 2x Repro)
-    setStepState('sandbox_a', 'active');
-    sandboxBadge.className = 'sandbox-badge running';
-    sandboxBadge.textContent = 'RUNNING TRACK (A)';
-    appendTerminalLog(`[Sandbox] Launching agent="${data.sandbox_report.sandbox_agent_id}" -> python /workspace/harness/run_dual_track_verification.py (Max 5 Red-Team Attempts/Vector)`, 'log-info');
-    await sleep(240);
-
-    const testResultMap = {};
-    for (const r of (data.sandbox_report.pr_test_results || [])) {
-        testResultMap[r.test_id] = r;
-        if (r.attempt_history && r.attempt_history.length > 0 && (!r.passed_on_original || r.attempt_history.length > 1)) {
-            for (const step of r.attempt_history) {
-                const logCls = step.status === 'BREACHED' ? 'log-fail' : 'log-info';
-                appendTerminalLog(
-                    `    [Attempt ${step.attempt_num}/${r.max_attempts || 5} • ${r.test_id}] [${step.status}] ${step.attack_hypothesis} -> ${step.sandbox_observation}`,
-                    logCls
-                );
+                try {
+                    const evt = JSON.parse(dataLines.join('\n'));
+                    await handleSseStageEvent(evt);
+                } catch (parseErr) {
+                    console.warn('SSE frame parse warning:', parseErr);
+                }
             }
         }
-        if (!r.passed_on_original && r.reproduced_twice) {
-            appendTerminalLog(
-                `  [Track a • PR_orig] ${r.test_id}: 🔥 BREACHED on Attempt ${r.breached_on_attempt || r.attempts_used}/${r.max_attempts || 5} -> Run 1=FAIL, Run 2=FAIL (2/2 REPRODUCED!)`,
-                'log-fail'
-            );
-        } else if (!r.passed_on_original && !r.reproduced_twice) {
-            appendTerminalLog(
-                `  [Track a • PR_orig] ${r.test_id}: Run 1=FAIL, Run 2=PASS -> 1/2 FLAKY ALARM (FILTERED OUT)`,
-                'log-flaky'
-            );
-        } else {
-            appendTerminalLog(
-                `  [Track a • PR_orig] ${r.test_id}: Held across ${r.attempts_used || 1}/${r.max_attempts || 5} attempt(s) & 2/2 runs -> Valid Baseline Invariant Test`,
-                'log-pass'
-            );
-        }
-        await sleep(90);
+    } catch (err) {
+        console.error('Error streaming /api/verify/stream:', err);
+        appendTerminalLog(`[ERROR] Stream interrupted (${err.message}).`, 'log-fail');
     }
-    renderSwarmAttackers(data.swarm_outputs || [], testResultMap);
-    setStepState('sandbox_a', 'done');
-
-    // STAGE 3b: Antigravity Sandbox Track (b) — Blind Mutants
-    setStepState('sandbox_b', 'active');
-    sandboxBadge.textContent = `RUNNING TRACK (B): M1..M${data.deterministic_score.planted_bugs_total}`;
-    appendTerminalLog(`[Sandbox Track b] Executing valid baseline tests against ${data.deterministic_score.planted_bugs_total} Blind Mutants (Caught ⟺ Pass(PR_orig) ∧ Fail(Mutant))...`, 'log-info');
-    await sleep(240);
-
-    for (const m of (data.deterministic_score.mutant_evaluations || [])) {
-        revealMutantOutcome(m, data.pr_id);
-        if (m.caught) {
-            appendTerminalLog(`  [Track b • ${m.mutant_id}] CAUGHT (${m.title}) by ${m.caught_by_test_ids.join(', ')}`, 'log-pass');
-        } else {
-            appendTerminalLog(`  [Track b • ${m.mutant_id}] SURVIVED (${m.title}) — All baseline tests passed on mutant!`, 'log-flaky');
-        }
-        await sleep(110);
-    }
-    sandboxBadge.className = 'sandbox-badge done';
-    sandboxBadge.textContent = 'COMPLETED';
-    setStepState('sandbox_b', 'done');
-
-    // STAGE 4: Deterministic Python Score + One-Card Executive Summary
-    setStepState('one_card', 'active');
-    appendTerminalLog(
-        `[Scoring.py] Deterministic M/K Result: ${data.deterministic_score.detection_score_label} | Confirmed 2/2 PR Bugs: ${data.deterministic_score.confirmed_pr_failures_count}`,
-        'log-info'
-    );
-    await sleep(220);
-    renderOneCardSummary(data);
-    setStepState('one_card', 'done');
 
     state.isRunning = false;
     launchBtn.disabled = false;
