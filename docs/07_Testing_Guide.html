@@ -407,6 +407,76 @@
             <button class="reset-btn" onclick="resetChecks()">체크 초기화</button>
         </div>
 
+        <!-- LIVE RECORDED DEMO VIDEO & 🔴 1 ~ 🔴 7 BUTTON SEQUENCE GUIDE -->
+        <section class="walkthrough-banner" style="border-color:rgba(239,68,68,0.45);">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+                <div>
+                    <span class="brand-badge" style="margin-bottom:4px;color:#fca5a5;border-color:rgba(239,68,68,0.5);background:rgba(239,68,68,0.14);">RECORDED DEMO WALKTHROUGH • RED NUMBERED BUTTONS (🔴 1 &rarr; 🔴 7)</span>
+                    <h2 style="margin:0;font-size:1.22rem;">&#127916; UI 내 <code>&#128308; 1</code> ~ <code>&#128308; 7</code> 버튼 순서대로 실행한 전체 데모 영상 &amp; 단계별 캡처</h2>
+                </div>
+                <span style="font-size:0.8rem;color:var(--muted);">영상/이미지를 클릭하면 원본 크기로 확대됩니다</span>
+            </div>
+
+            <div class="inline-shot" style="margin-top:0;margin-bottom:16px;border-color:rgba(239,68,68,0.45);">
+                <img src="screenshots/argus_pr_demo_walkthrough_1_to_7.webp" alt="Argus-PR Full Demo Walkthrough Steps 1 to 7" onclick="openLightbox(this.src)" />
+                <div class="inline-shot-caption">
+                    <span>&#127909; <strong>자동 재생 데모 녹화본 (Animated WebP / GIF):</strong> <code>&#128308; 1 PR Diff 보기</code> &rarr; <code>&#128308; 2 블라인드 검증 스웜 실행</code> &rarr; <code>&#128308; 3 BOLA DAST</code> &rarr; <code>&#128308; 4 커스텀 버그 심기</code> &rarr; <code>&#128308; 5 CEGIS 패치 재검증</code> &rarr; <code>&#128308; 6 PR 번들 익스포트</code> &rarr; <code>&#128308; 7 최종 병합 승인</code></span>
+                    <code>docs/screenshots/argus_pr_demo_walkthrough_1_to_7.webp</code>
+                </div>
+            </div>
+
+            <div class="walkthrough-grid">
+                <div class="shot-card">
+                    <img src="screenshots/demo_step_1_2_top_controls.png" alt="Step 1 and 2 Top Controls" onclick="openLightbox(this.src)" />
+                    <div class="shot-meta">
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 1 &amp; &#128308; 2 • DIFF &amp; LAUNCH SWARM</span>
+                        <div style="font-weight:700;margin-bottom:4px;">PR Diff 확인 및 블라인드 검증 스웜 실행</div>
+                        <div style="color:var(--muted);"><code>&#128308; 1 PR Diff 보기</code>로 변경 코드를 확인하고 <code>&#128308; 2 &#9889; 블라인드 검증 스웜 실행</code>을 눌러 Stage 0 ~ Stage 5 파이프라인 가동</div>
+                    </div>
+                </div>
+                <div class="shot-card">
+                    <img src="screenshots/demo_step_3_bola_matrix.png" alt="Step 3 Multi-Persona BOLA DAST" onclick="openLightbox(this.src)" />
+                    <div class="shot-meta">
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 3 • MULTI-PERSONA BOLA DAST</span>
+                        <div style="font-weight:700;margin-bottom:4px;">교차 테넌트 BOLA/IDOR 매트릭스 실행</div>
+                        <div style="color:var(--muted);">Stage 0.5 배너의 <code>&#128308; 3 &#128272; Run Multi-Persona BOLA DAST</code> 클릭 &rarr; 3개 페르소나 합성 및 <code>PROVEN_BOLA_BYPASS</code> 확인</div>
+                    </div>
+                </div>
+                <div class="shot-card">
+                    <img src="screenshots/demo_step_4_blind_mutants.png" alt="Step 4 Blind Mutants & Custom Injection" onclick="openLightbox(this.src)" />
+                    <div class="shot-meta">
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 4 • BLIND MUTANTS (TRACK B)</span>
+                        <div style="font-weight:700;margin-bottom:4px;">8개 블라인드 변이 사살(7/8) &amp; 커스텀 버그 심기</div>
+                        <div style="color:var(--muted);">Track B 우측 상단 <code>&#128308; 4 + 커스텀 버그 심기</code> 클릭 &rarr; <code>M9</code> 실시간 추가 및 결정론적 M/K 포획률 재산출</div>
+                    </div>
+                </div>
+                <div class="shot-card">
+                    <img src="screenshots/demo_step_5_cegis_self_healing.png" alt="Step 5 CEGIS Self-Healing Loop" onclick="openLightbox(this.src)" />
+                    <div class="shot-meta">
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 5 • CEGIS SELF-HEALING PATCH</span>
+                        <div style="font-weight:700;margin-bottom:4px;">반례 유도 자가 치유 패치 루프 (Attempt 1 &rarr; 2)</div>
+                        <div style="color:var(--muted);">One-Card 상단 <code>&#128308; 5 &#128295; 권장 패치 적용 후 재검증</code> 클릭 &rarr; Attempt #1 TOCTOU 반례 실패 후 Attempt #2 <code>4/4 Gates VERIFIED</code></div>
+                    </div>
+                </div>
+                <div class="shot-card">
+                    <img src="screenshots/demo_step_6_export_bundle_modal.png" alt="Step 6 Export PR Bundle Modal" onclick="openLightbox(this.src)" />
+                    <div class="shot-meta">
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 6 • EXPORT PR + REGRESSION TEST</span>
+                        <div style="font-weight:700;margin-bottom:4px;">검증된 패치 Diff + 고정 pytest 번들 익스포터</div>
+                        <div style="color:var(--muted);">One-Card 하단 <code>&#128308; 6 &#128230; Export PR + Pinned Regression Test</code> 클릭 &rarr; <code>pytest</code> 방어 회귀 코드 및 GitHub Actions YAML 확인</div>
+                    </div>
+                </div>
+                <div class="shot-card">
+                    <img src="screenshots/demo_step_7_approved_stamp.png" alt="Step 7 Final Human Approval Stamp" onclick="openLightbox(this.src)" />
+                    <div class="shot-meta">
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 7 • HUMAN MERGE GATE</span>
+                        <div style="font-weight:700;margin-bottom:4px;">최종 인간 리뷰어 병합 승인/거절 스탬프</div>
+                        <div style="color:var(--muted);">One-Card 우측 하단 <code>&#128308; 7 &#9989; Approve &amp; Merge PR</code> 클릭 &rarr; 상단 초록색 병합 허가 스탬프 기록</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- LIVE UI SCREENSHOT WALKTHROUGH GALLERY -->
         <section class="walkthrough-banner">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
