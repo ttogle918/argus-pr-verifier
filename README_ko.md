@@ -199,7 +199,7 @@ UI 화면의 모든 핵심 버튼 앞에 **`🔴 1`부터 `🔴 7`까지 빨간�
 <summary><b>📸 클릭하여 단계별 실행 화면 캡처 보기 (<code>🔴 1</code> ~ <code>🔴 7</code> + 보너스 <code>PR #666</code>)</b></summary>
 
 #### `🔴 1` & `🔴 2`: PR Diff 확인 및 블라인드 검증 스웜 실행 완료
-![Step 2 - 블라인드 검증 스웜 완료](./docs/screenshots/demo_step_2_swarm_done.png)
+![Step 2 - 블라인드 검증 스웜 완료](./docs/screenshots/demo_step_2_launch.png)
 
 #### `🔴 3`: 멀티 페르소나 교차 테넌트 BOLA DAST 매트릭스
 ![Step 3 - 멀티 페르소나 BOLA DAST 매트릭스](./docs/screenshots/demo_step_3_bola_dast.png)

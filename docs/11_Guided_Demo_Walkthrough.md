@@ -37,7 +37,7 @@ Every primary action button in the Argus-PR UI is prefixed with a red step indic
 
 ### Step 2 (`🔴 2`): Launch Blind Verification Swarm (`#launch-btn`)
 Runs the 4 parallel `gemini-3.8-flash` red-team attackers (up to 5 adaptive rounds: `Observe → Mutate → Attack`) alongside the sealed 8-mutant blind calibration track (`M1..M8`):
-![Step 2 - Blind Verification Swarm Complete](./screenshots/demo_step_2_swarm_done.png)
+![Step 2 - Blind Verification Swarm Complete](./screenshots/demo_step_2_launch.png)
 
 ---
 

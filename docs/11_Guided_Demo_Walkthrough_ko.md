@@ -37,7 +37,7 @@
 
 ### Step 2 (`🔴 2`): 블라인드 검증 스웜 실행 (`#launch-btn`)
 좌측 레인(Track A)에서 4개의 `gemini-3.8-flash` 에이전트가 5회 적응형 공격 루프(`Observe → Mutate → Attack`)로 `sandbox.py`의 따옴표 이스케이프 취약점을 2/2회 연속 뚫어내고, 우측 레인(Track B)에서 봉인된 인공 버그 8개 중 7개(`87.5%`)를 사살합니다:
-![Step 2 - 블라인드 검증 스웜 완료](./screenshots/demo_step_2_swarm_done.png)
+![Step 2 - 블라인드 검증 스웜 완료](./screenshots/demo_step_2_launch.png)
 
 ---
 

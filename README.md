@@ -199,7 +199,7 @@ All primary action buttons in the UI are labeled with red numbered badges (`🔴
 <summary><b>📸 Click to expand Step-by-Step Screenshots (<code>🔴 1</code> ~ <code>🔴 7</code> + Bonus <code>PR #666</code>)</b></summary>
 
 #### `🔴 1` & `🔴 2`: View PR Diff & Launch Blind Verification Swarm
-![Step 2 - Blind Verification Swarm Complete](./docs/screenshots/demo_step_2_swarm_done.png)
+![Step 2 - Blind Verification Swarm Complete](./docs/screenshots/demo_step_2_launch.png)
 
 #### `🔴 3`: Multi-Persona Cross-Tenant BOLA DAST Matrix
 ![Step 3 - Multi-Persona BOLA DAST Matrix](./docs/screenshots/demo_step_3_bola_dast.png)
