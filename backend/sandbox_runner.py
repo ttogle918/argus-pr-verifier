@@ -46,13 +46,17 @@ def build_dual_track_harness_script(
                     "test_id": t.test_id,
                     "attacker_id": t.attacker_id,
                     "target_invariant_id": t.target_invariant_id,
+                    "max_attempts": t.max_attempts,
+                    "attempts_used": t.attempts_used,
+                    "breached_on_attempt": t.breached_on_attempt,
+                    "attempt_history": [step.model_dump() for step in t.attempt_history],
                 }
             )
     mutant_ids = [m.mutant_id for m in blind_mutants.mutants]
 
     return f'''#!/usr/bin/env python3
 """
-Argus-PR Dual-Track Verification Harness
+Argus-PR Dual-Track Verification Harness (Adaptive 5-Attempt Red-Team Loop + 8 Blind Mutants)
 Executed inside Antigravity Managed Linux Sandbox (antigravity-preview-09-2026)
 """
 import importlib.util
@@ -86,18 +90,27 @@ def run_single_test(test_func, target_mod):
 
 
 def main():
-    print("[ANTIGRAVITY SANDBOX] Booting Dual-Track Verification Harness...")
+    print("[ANTIGRAVITY SANDBOX] Booting Dual-Track Verification Harness (Max 5-Attempt Red-Team Loop)...")
     test_mod = load_module_from_path("test_swarm", HARNESS_DIR / "test_swarm.py")
 
     pr_test_results = []
     passed_on_orig = set()
 
-    print("=== TRACK (a): EXECUTING SWARM TESTS AGAINST ORIGINAL PR CODE (2x REPRO CHECK) ===")
+    print("=== TRACK (a): ADAPTIVE MULTI-TURN RED-TEAM LOOP (MAX 5 ATTEMPTS) & 2x REPRO CHECK ===")
     for meta in TEST_META:
         tid = meta["test_id"]
         fn = getattr(test_mod, tid, None)
         if fn is None:
             continue
+
+        max_att = meta.get("max_attempts", 5)
+        history = meta.get("attempt_history") or []
+        for step in history:
+            att_num = step.get("attempt_num", 1)
+            st = step.get("status", "BLOCKED")
+            obs = step.get("sandbox_observation", "")
+            tag = "🔥 BREACHED!" if st == "BREACHED" else st
+            print(f"    -> Attempt {{att_num}}/{{max_att}} [{{tag}}]: {{obs}}")
 
         # Run 1 on fresh module load
         orig_mod_1 = load_module_from_path("pr_orig_r1", HARNESS_DIR / "pr_orig.py")
@@ -113,7 +126,8 @@ def main():
             passed_on_orig.add(tid)
             print(f"  [PASS 2/2] {{tid}} ({{meta['attacker_id']}}) -> Eligible for Track (b) Mutant Kill")
         elif reproduced_twice:
-            print(f"  [FAIL 2/2 REPRODUCED] {{tid}} ({{meta['attacker_id']}}) -> {{r2_err}}")
+            breach_round = meta.get("breached_on_attempt") or meta.get("attempts_used") or 1
+            print(f"  [FAIL 2/2 REPRODUCED · BREACHED ON ATTEMPT {{breach_round}}/{{max_att}}] {{tid}} ({{meta['attacker_id']}}) -> {{r2_err}}")
         else:
             print(f"  [FLAKY 1/2 FILTERED] {{tid}} ({{meta['attacker_id']}}) -> Ignored")
 
@@ -127,6 +141,10 @@ def main():
             "passed_on_original": baseline_pass,
             "error_trace": r2_err or r1_err,
             "duration_ms": d1 + d2,
+            "max_attempts": max_att,
+            "attempts_used": meta.get("attempts_used", max(1, len(history))),
+            "breached_on_attempt": meta.get("breached_on_attempt") if reproduced_twice else None,
+            "attempt_history": history,
         }})
 
     print("=== TRACK (b): EXECUTING SWARM TESTS AGAINST 8 BLIND MUTANTS (M1..M8) ===")

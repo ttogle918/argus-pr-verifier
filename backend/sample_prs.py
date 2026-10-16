@@ -30,7 +30,9 @@ from backend.models import (
     MutantKillEvaluation,
     OneCardExecutiveSummary,
     PlantedBugMutant,
+    RedTeamAttemptStep,
     SandboxExecutionReport,
+    ScopeTriageResult,
     SingleTestRunResult,
 )
 from backend.scoring import compute_deterministic_scores
@@ -480,7 +482,7 @@ _PR1_SWARM_OUTPUTS = [
 
 # Track (a) PR Test Results on PR_orig
 _PR1_TEST_RUN_RESULTS = [
-    # 1. Real Bug 1: Negative refund wallet inflation (FAILED 2/2)
+    # 1. Real Bug 1: Negative refund wallet inflation (FAILED 2/2 after 3 adaptive red-team turns)
     SingleTestRunResult(
         test_id="test_sec_negative_refund_wallet_inflation",
         attacker_id="security",
@@ -491,8 +493,34 @@ _PR1_TEST_RUN_RESULTS = [
         passed_on_original=False,
         error_trace="AssertionError: Balance inflated to 150.0 via negative refund! settle_refund(-50.0) bypassed remaining_refundable check and credited wallet.",
         duration_ms=45,
+        max_attempts=5,
+        attempts_used=3,
+        breached_on_attempt=3,
+        attempt_history=[
+            RedTeamAttemptStep(
+                attempt_num=1,
+                attack_hypothesis="Probe direct over-refund above original charge (refund_amount=250.0 > 100.0)",
+                payload_snippet="ledger_core.settle_refund('ch_123', 250.0, 'ik_over_1')",
+                sandbox_observation="BLOCKED: ValueError('Refund 250.0 exceeds maximum refundable 100.0')",
+                status="BLOCKED",
+            ),
+            RedTeamAttemptStep(
+                attempt_num=2,
+                attack_hypothesis="Probe cumulative two-step partial refund exceeding ceiling (60.0 + 60.0)",
+                payload_snippet="ledger_core.settle_refund('ch_123', 60.0, 'ik_p1'); ledger_core.settle_refund('ch_123', 60.0, 'ik_p2')",
+                sandbox_observation="BLOCKED: ValueError('Refund 60.0 exceeds maximum refundable 40.0')",
+                status="BLOCKED",
+            ),
+            RedTeamAttemptStep(
+                attempt_num=3,
+                attack_hypothesis="Invert sign to negative refund (-50.0) to bypass upper-bound '>' check and credit wallet",
+                payload_snippet="ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')",
+                sandbox_observation="BREACHED: -50.0 <= 100.0 bypassed guard! User wallet inflated from 100.0 -> 150.0 (2/2 Repro Confirmed)",
+                status="BREACHED",
+            ),
+        ],
     ),
-    # 2. Real Bug 2: Double settlement idempotency race (FAILED 2/2)
+    # 2. Real Bug 2: Double settlement idempotency race (FAILED 2/2 after 2 adaptive red-team turns)
     SingleTestRunResult(
         test_id="test_state_double_settlement_idempotency_race",
         attacker_id="state",
@@ -503,6 +531,25 @@ _PR1_TEST_RUN_RESULTS = [
         passed_on_original=False,
         error_trace="AssertionError: Double deduction occurred during PENDING state! Retry with same idempotency_key executed second ledger deduction before SETTLED status.",
         duration_ms=52,
+        max_attempts=5,
+        attempts_used=2,
+        breached_on_attempt=2,
+        attempt_history=[
+            RedTeamAttemptStep(
+                attempt_num=1,
+                attack_hypothesis="Replay identical idempotency_key sequentially after status reaches SETTLED",
+                payload_snippet="settle_refund('ch_123', 50.0, 'ik_seq'); settle_refund('ch_123', 50.0, 'ik_seq')",
+                sandbox_observation="BLOCKED: Cached SETTLED receipt returned without second ledger deduction",
+                status="BLOCKED",
+            ),
+            RedTeamAttemptStep(
+                attempt_num=2,
+                attack_hypothesis="Inject concurrent retry while status is in-flight ('PENDING_SETTLEMENT') before commit",
+                payload_snippet="cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT'); settle_refund('ch_123', 50.0, 'ik_race')",
+                sandbox_observation="BREACHED: Guard only checks status == 'SETTLED'! Second ledger deduction executed during PENDING window (2/2 Repro Confirmed)",
+                status="BREACHED",
+            ),
+        ],
     ),
     # 3. Flaky Failure: Float rounding jitter (FAILED 1st run, PASSED 2nd run -> FILTERED OUT)
     SingleTestRunResult(
@@ -982,7 +1029,7 @@ _PR2_SWARM_OUTPUTS = [
 ]
 
 _PR2_TEST_RUN_RESULTS = [
-    # Confirmed PR Failure: Off-by-one boundary leak (FAILED 2/2)
+    # Confirmed PR Failure: Off-by-one boundary leak (FAILED 2/2 after 2 adaptive red-team turns)
     SingleTestRunResult(
         test_id="test_edge_burst_window_boundary_leak",
         attacker_id="edge_cases",
@@ -993,6 +1040,25 @@ _PR2_TEST_RUN_RESULTS = [
         passed_on_original=False,
         error_trace="AssertionError: 6th request accepted when limit=5! current_count <= limit allowed 6 items.",
         duration_ms=38,
+        max_attempts=5,
+        attempts_used=2,
+        breached_on_attempt=2,
+        attempt_history=[
+            RedTeamAttemptStep(
+                attempt_num=1,
+                attack_hypothesis="Send 10 burst requests against limit=5 to check general rate limiting",
+                payload_snippet="[limiter.allow_request('k1', limit=5, window_ms=1000) for _ in range(10)]",
+                sandbox_observation="BLOCKED: Requests 7..10 rejected by sliding window counter",
+                status="BLOCKED",
+            ),
+            RedTeamAttemptStep(
+                attempt_num=2,
+                attack_hypothesis="Probe exact N+1 boundary (6th request when current_count == limit == 5)",
+                payload_snippet="assert limiter.allow_request('k1', limit=5, window_ms=1000) is False  # on 6th call",
+                sandbox_observation="BREACHED: Off-by-one 'current_count <= limit' allowed 6th request! (2/2 Repro Confirmed)",
+                status="BREACHED",
+            ),
+        ],
     ),
     # 6 Baseline Passing Tests
     SingleTestRunResult(test_id="test_sec_cross_tenant_key_isolation", attacker_id="security", target_invariant_id="INV-RL-2", run_1_passed=True, run_2_passed=True, reproduced_twice=False, passed_on_original=True, duration_ms=25),
@@ -1024,6 +1090,7 @@ _PR2_SANDBOX_REPORT = SandboxExecutionReport(
     sandbox_stdout_logs=[
         "[antigravity-sandbox] Container env_remote_77182 ready.",
         "[antigravity-sandbox] Running Track (a) tests on PR original code...",
+        "[antigravity-sandbox] [Red-Team Loop] test_edge_burst_window_boundary_leak: Attempt 1/5 [BLOCKED] -> Attempt 2/5 [BREACHED!]",
         "[antigravity-sandbox] test_edge_burst_window_boundary_leak FAILED (run 1/2)",
         "[antigravity-sandbox] test_edge_burst_window_boundary_leak FAILED (run 2/2) [CONFIRMED REPRODUCIBLE]",
         "[antigravity-sandbox] Running Track (b) against 8 planted mutants: 6 caught, 2 survived (75.0%).",
@@ -1155,10 +1222,799 @@ _PR3_ONE_CARD_SUMMARY = OneCardExecutiveSummary(
 
 
 # ==============================================================================
+# SCENARIO 4: Open-Source Benchmark Target (pr-cisco-sandbox-bypass)
+# Repo: cisco-foundation-ai/vulnerability-localization-benchmark (PR #3)
+# ==============================================================================
+
+PR_CISCO_SANDBOX_DIFF = """\
+diff --git a/src/vulnerability_localization_benchmark/sandbox.py b/src/vulnerability_localization_benchmark/sandbox.py
+index 66fc6d2..ef0df44 100644
+--- a/src/vulnerability_localization_benchmark/sandbox.py
++++ b/src/vulnerability_localization_benchmark/sandbox.py
+@@ -42,10 +42,35 @@ DENIED_PATTERNS = [
+     r"\\b(bash|sh|zsh|python|perl|ruby)\\s",  # interpreter invocation
+ ]
+ 
++def _split_pipeline(cmd: str) -> list[str]:
++    \"\"\"Split *cmd* on unquoted ``|`` characters.\"\"\"
++    parts: list[str] = []
++    cur: list[str] = []
++    quote: str | None = None
++    i = 0
++    while i < len(cmd):
++        ch = cmd[i]
++        if quote is not None:
++            if ch == "\\\\" and quote == '"' and i + 1 < len(cmd):
++                cur.append(ch)
++                cur.append(cmd[i + 1])
++                i += 2
++                continue
++            if ch == quote:
++                quote = None
++            cur.append(ch)
++        else:
++            if ch in ('"', "'"):
++                quote = ch
++                cur.append(ch)
++            elif ch == "|":
++                parts.append("".join(cur))
++                cur = []
++            else:
++                cur.append(ch)
++        i += 1
++    parts.append("".join(cur))
++    return parts
++
+ def validate_command(cmd: str) -> tuple[bool, str]:
+     cmd_stripped = cmd.strip()
+     if not cmd_stripped:
+         return False, "Empty command"
+     for pattern in DENIED_PATTERNS:
+         if re.search(pattern, cmd_stripped):
+             return False, f"Denied pattern matched: {pattern}"
+-    for part in cmd_stripped.split("|"):
++    for part in _split_pipeline(cmd_stripped):
+         tokens = part.strip().split()
+"""
+
+PR_CISCO_SANDBOX_CODE = '''"""
+src/vulnerability_localization_benchmark/sandbox.py
+Read-only shell command sandbox validator from cisco-foundation-ai/vulnerability-localization-benchmark (PR #3).
+"""
+from __future__ import annotations
+import os
+import re
+
+ALLOWED_CMDS = {
+    "ls", "cat", "head", "tail", "less", "more",
+    "grep", "egrep", "fgrep", "rg", "ag",
+    "find", "locate", "which", "whereis", "file", "stat", "wc", "du",
+    "diff", "cmp", "md5sum", "sha256sum",
+    "tree", "realpath", "readlink", "basename", "dirname",
+    "awk", "sed", "sort", "uniq", "cut", "tr", "column", "nl", "fold",
+    "echo", "printf", "pwd", "env", "id", "whoami", "uname", "hostname",
+    "strings", "nm", "objdump", "readelf", "size",
+}
+
+DENIED_PATTERNS = [
+    r"[>]",                        # output redirection
+    r"\\brm\\b",                     # file deletion
+    r"\\bmv\\b",                     # file move
+    r"\\bcp\\b",                     # file copy
+    r"\\bchmod\\b",                  # permission change
+    r"\\bchown\\b",                  # ownership change
+    r"\\bmkdir\\b",                  # directory creation
+    r"\\brmdir\\b",                  # directory removal
+    r"\\btouch\\b",                  # file creation
+    r"\\bdd\\b",                     # raw disk write
+    r"\\btee\\b",                    # write to file
+    r"\\bsed\\b.*\\s-[a-zA-Z]*i",     # sed in-place
+    r"\\bawk\\b.*\\bsystem\\s*\\(",    # awk system() call
+    r"`",                          # backtick command substitution
+    r"\\$\\(",                       # $() command substitution
+    r"\\|\\|",                       # OR chaining
+    r"&&",                         # AND chaining
+    r"\\bsudo\\b",                   # privilege escalation
+    r"\\bsu\\b",                     # switch user
+    r"\\bcurl\\b",                   # network access
+    r"\\bwget\\b",                   # network access
+    r"\\bnc\\b",                     # netcat
+    r"\\bpython\\s+-[ce]",           # python inline execution
+    r"\\bperl\\s+-e",                # perl inline execution
+    r"\\bruby\\s+-e",                # ruby inline execution
+    r"\\b(bash|sh|zsh|python|perl|ruby)\\s",  # interpreter invocation
+]
+
+
+def _split_pipeline(cmd: str) -> list[str]:
+    """Split *cmd* on unquoted ``|`` characters, respecting single and double quotes."""
+    parts: list[str] = []
+    cur: list[str] = []
+    quote: str | None = None
+    i = 0
+    while i < len(cmd):
+        ch = cmd[i]
+        if quote is not None:
+            if ch == "\\\\" and quote == '"' and i + 1 < len(cmd):
+                cur.append(ch)
+                cur.append(cmd[i + 1])
+                i += 2
+                continue
+            if ch == quote:
+                quote = None
+            cur.append(ch)
+        else:
+            if ch in ('"', "'"):
+                quote = ch
+                cur.append(ch)
+            elif ch == "|":
+                parts.append("".join(cur))
+                cur = []
+            else:
+                cur.append(ch)
+        i += 1
+    parts.append("".join(cur))
+    return parts
+
+
+def validate_command(cmd: str) -> tuple[bool, str]:
+    """Validate that a shell command is safe (read-only) to execute."""
+    cmd_stripped = cmd.strip()
+    if not cmd_stripped:
+        return False, "Empty command"
+
+    for pattern in DENIED_PATTERNS:
+        if re.search(pattern, cmd_stripped):
+            return False, f"Denied pattern matched: {pattern}"
+
+    for part in _split_pipeline(cmd_stripped):
+        part_stripped = part.strip()
+        if not part_stripped:
+            continue
+        tokens = part_stripped.split()
+        base_cmd = os.path.basename(tokens[0])
+        if base_cmd in ("cd", "export"):
+            continue
+        if base_cmd not in ALLOWED_CMDS:
+            return False, f"Command '{base_cmd}' is not in the allowed read-only list"
+
+    return True, ""
+'''
+
+_PR4_GUARDRAIL = GuardrailResult(
+    is_safe=True,
+    risk_level="SAFE",
+    detected_threats=[],
+    sanitized_summary="Stage 0 Guardrail clean: Open-source PR #3 from cisco-foundation-ai/vulnerability-localization-benchmark contains no prompt-injection strings (62ms).",
+    latency_ms=62,
+)
+
+_PR4_INVARIANT_PLAN = InvariantExtractionPlan(
+    pr_summary="Replaces naive cmd.split('|') in sandbox.py with custom _split_pipeline(cmd) state machine so quoted grep/awk regex pipes are allowed while blocking shell command injection before bash -c execution.",
+    invariants=[
+        InvariantItem(
+            id="INV-CS-1",
+            category="security",
+            title="Parser-Shell Equivalence on Escaped Quotes",
+            formal_assertion="For any command c passed to bash -c, _split_pipeline(c) must never treat an unquoted backslash-escaped quote (\\\") as opening a quoted string that hides an unquoted pipe '|'.",
+            target_function="_split_pipeline / validate_command",
+        ),
+        InvariantItem(
+            id="INV-CS-2",
+            category="edge_cases",
+            title="Complete Command Separator Blocking (; and \\n)",
+            formal_assertion="validate_command(c) must reject semicolon (;) and newline (\\n) command chaining so arbitrary unallowed binaries cannot piggyback after an allowed command.",
+            target_function="validate_command",
+        ),
+        InvariantItem(
+            id="INV-CS-3",
+            category="state",
+            title="Versioned Interpreter & GTFOBins Execution Prevention",
+            formal_assertion="validate_command(c) must block versioned interpreters (python3, python3.11) and -exec flags on allowed utilities (find, awk).",
+            target_function="DENIED_PATTERNS / ALLOWED_CMDS",
+        ),
+        InvariantItem(
+            id="INV-CS-4",
+            category="regression",
+            title="Legitimate Quoted Alternation Preservation",
+            formal_assertion="Read-only commands with quoted pipe alternation (e.g. grep -E 'foo|bar' file.c) must continue to return (True, '').",
+            target_function="_split_pipeline",
+        ),
+    ],
+    attack_plans=[
+        AttackVectorPlan(
+            attacker_id="security",
+            attacker_name="Security & Shell-Parser Differential Attacker (Gemini 3.8 Flash)",
+            focus_invariants=["INV-CS-1"],
+            strategy="Iteratively probe _split_pipeline quote state transitions (up to 5 attempts): start with direct pipe injection, then && chaining, then inject backslash-escaped quote outside quotes (ls \\\" | id\") to desynchronize _split_pipeline from bash -c.",
+        ),
+        AttackVectorPlan(
+            attacker_id="edge_cases",
+            attacker_name="Boundary & Separator Fuzzing Attacker (Gemini 3.8 Flash)",
+            focus_invariants=["INV-CS-2"],
+            strategy="Probe command delimiters (||, &&, ;, \\n, unclosed quotes) to discover missing separators in DENIED_PATTERNS and _split_pipeline.",
+        ),
+        AttackVectorPlan(
+            attacker_id="state",
+            attacker_name="Allowlist & Interpreter Bypass Attacker (Gemini 3.8 Flash)",
+            focus_invariants=["INV-CS-3"],
+            strategy="Test interpreter regex boundaries (python vs python3) and GTFOBins flags on allowed binaries (find -exec).",
+        ),
+        AttackVectorPlan(
+            attacker_id="regression",
+            attacker_name="Contract & Quoted Regex Regression Attacker (Gemini 3.8 Flash)",
+            focus_invariants=["INV-CS-4"],
+            strategy="Verify grep -E 'foo|bar', escaped quotes inside double quotes, and standard denied commands (rm, curl, >) to ensure high mutant kill rate.",
+        ),
+    ],
+)
+
+_PR4_BLIND_MUTANTS = BlindMutantSet(
+    mutants=[
+        PlantedBugMutant(
+            mutant_id="M1",
+            category="security",
+            title="Removed output redirection '>' from DENIED_PATTERNS",
+            description="Deletes r'[>]' from DENIED_PATTERNS, allowing arbitrary file overwrite via echo payload > ~/.bashrc.",
+            diff_snippet="- r'[>]',\n+ # r'[>]' removed",
+            mutated_code=PR_CISCO_SANDBOX_CODE,
+            severity="CRITICAL",
+        ),
+        PlantedBugMutant(
+            mutant_id="M2",
+            category="security",
+            title="Removed '$(...)' command substitution check",
+            description="Removes r'\\$\\(' from DENIED_PATTERNS, permitting subshell execution inside echo $(id).",
+            diff_snippet="- r'\\$\\(',\n+ # removed command substitution check",
+            mutated_code=PR_CISCO_SANDBOX_CODE,
+            severity="CRITICAL",
+        ),
+        PlantedBugMutant(
+            mutant_id="M3",
+            category="edge_cases",
+            title="Whitespace-only command bypasses empty check",
+            description="Uses if not cmd: instead of if not cmd.strip(): causing IndexError on tokens[0] when whitespace is passed.",
+            diff_snippet="- cmd_stripped = cmd.strip()\n+ cmd_stripped = cmd",
+            mutated_code=PR_CISCO_SANDBOX_CODE,
+            severity="MEDIUM",
+        ),
+        PlantedBugMutant(
+            mutant_id="M4",
+            category="edge_cases",
+            title="Broken backslash escape advance (i += 1 instead of i += 2)",
+            description="Advances index by 1 instead of 2 on \\\" inside double quotes, prematurely closing quote state on the escaped quote.",
+            diff_snippet="- i += 2\n+ i += 1",
+            mutated_code=PR_CISCO_SANDBOX_CODE,
+            severity="HIGH",
+        ),
+        PlantedBugMutant(
+            mutant_id="M5",
+            category="state",
+            title="Replaced os.path.basename(tokens[0]) with raw tokens[0] check",
+            description="Fails to normalize '/bin/ls' or '/usr/bin/grep' via basename, breaking absolute path read-only commands.",
+            diff_snippet="- base_cmd = os.path.basename(tokens[0])\n+ base_cmd = tokens[0]",
+            mutated_code=PR_CISCO_SANDBOX_CODE,
+            severity="MEDIUM",
+        ),
+        PlantedBugMutant(
+            mutant_id="M6",
+            category="regression",
+            title="Dropped single-quote (') tracking in _split_pipeline",
+            description="Only checks if ch == '\"': when entering quote mode, breaking grep 'a|b' single-quoted regex pipes.",
+            diff_snippet="- if ch in ('\"', \"'\"):\n+ if ch == '\"':",
+            mutated_code=PR_CISCO_SANDBOX_CODE,
+            severity="HIGH",
+        ),
+        PlantedBugMutant(
+            mutant_id="M7",
+            category="regression",
+            title="Dropped sed -i in-place file mutation block",
+            description="Removes r'\\bsed\\b.*\\s-[a-zA-Z]*i' from DENIED_PATTERNS, allowing sed -i file modification.",
+            diff_snippet="- r'\\bsed\\b.*\\s-[a-zA-Z]*i',\n+ # removed sed -i check",
+            mutated_code=PR_CISCO_SANDBOX_CODE,
+            severity="HIGH",
+        ),
+        PlantedBugMutant(
+            mutant_id="M8",
+            category="security",
+            title="ANSI-C $'\\x7c' hex-escaped pipe encoding in bash",
+            description="Bash ANSI-C quoting $'\\x7c' decodes after variable expansion in certain subshell wrappers; subtle shell dialect edge case.",
+            diff_snippet="# M8: subtle bash ANSI-C $'\\x7c' dialect edge case",
+            mutated_code=PR_CISCO_SANDBOX_CODE,
+            severity="MEDIUM",
+        ),
+    ]
+)
+
+_PR4_TESTS = [
+    GeneratedTestCase(
+        test_id="test_sec_escaped_quote_pipeline_rce",
+        attacker_id="security",
+        target_invariant_id="INV-CS-1",
+        description="[5-Attempt Adaptive Red-Team] Desynchronizes _split_pipeline from bash -c using an unquoted backslash-escaped quote (ls \\\" | id\").",
+        pytest_code="""def test_sec_escaped_quote_pipeline_rce(sandbox_mod):
+    # Attempt 3 payload: unquoted \\" tricks _split_pipeline into entering quote mode,
+    # hiding '| unauthorized_binary' from ALLOWED_CMDS while bash -c executes the pipe!
+    ok, reason = sandbox_mod.validate_command('ls \\\\" | unauthorized_rce_binary "')
+    assert ok is False, "CRITICAL RCE BYPASS: _split_pipeline swallowed '| unauthorized_rce_binary' inside fake quote!"
+""",
+        max_attempts=5,
+        attempts_used=3,
+        breached_on_attempt=3,
+    ),
+    GeneratedTestCase(
+        test_id="test_edge_semicolon_newline_command_chaining",
+        attacker_id="edge_cases",
+        target_invariant_id="INV-CS-2",
+        description="[5-Attempt Adaptive Red-Team] Chains arbitrary unallowed command via semicolon (;) and newline (\\n) separators missing from DENIED_PATTERNS.",
+        pytest_code="""def test_edge_semicolon_newline_command_chaining(sandbox_mod):
+    ok_semi, _ = sandbox_mod.validate_command('ls ; unauthorized_binary')
+    ok_nl, _ = sandbox_mod.validate_command('ls\\nunauthorized_binary')
+    assert ok_semi is False and ok_nl is False, "CRITICAL BYPASS: ';' or '\\n' command chaining allowed arbitrary binary!"
+""",
+        max_attempts=5,
+        attempts_used=2,
+        breached_on_attempt=2,
+    ),
+    GeneratedTestCase(
+        test_id="test_state_python3_and_find_exec_gtfobins_bypass",
+        attacker_id="state",
+        target_invariant_id="INV-CS-3",
+        description="[5-Attempt Adaptive Red-Team] Bypasses r'\\bpython\\s' regex via 'python3' / 'find . -exec' GTFOBins execution.",
+        pytest_code="""def test_state_python3_and_find_exec_gtfobins_bypass(sandbox_mod):
+    ok_find, _ = sandbox_mod.validate_command('find . -exec python3 -c "import os" \\\\;')
+    assert ok_find is False, "CRITICAL BYPASS: 'find -exec python3' bypassed interpreter regex and ALLOWED_CMDS!"
+""",
+        max_attempts=5,
+        attempts_used=2,
+        breached_on_attempt=2,
+    ),
+    # 7 Baseline Passing Tests (Pass(PR_orig) = True, used to kill M1..M7)
+    GeneratedTestCase(
+        test_id="test_sec_output_redirection_blocked",
+        attacker_id="security",
+        target_invariant_id="INV-CS-1",
+        description="Verifies output redirection '>' is blocked by DENIED_PATTERNS.",
+        pytest_code="""def test_sec_output_redirection_blocked(sandbox_mod):
+    ok, _ = sandbox_mod.validate_command('echo pwn > /tmp/x')
+    assert ok is False
+""",
+    ),
+    GeneratedTestCase(
+        test_id="test_sec_command_substitution_blocked",
+        attacker_id="security",
+        target_invariant_id="INV-CS-1",
+        description="Verifies $(...) subshell command substitution is rejected.",
+        pytest_code="""def test_sec_command_substitution_blocked(sandbox_mod):
+    ok, _ = sandbox_mod.validate_command('echo $(whoami)')
+    assert ok is False
+""",
+    ),
+    GeneratedTestCase(
+        test_id="test_edge_whitespace_only_rejected",
+        attacker_id="edge_cases",
+        target_invariant_id="INV-CS-2",
+        description="Verifies whitespace-only command '   ' returns (False, 'Empty command') cleanly.",
+        pytest_code="""def test_edge_whitespace_only_rejected(sandbox_mod):
+    ok, reason = sandbox_mod.validate_command('   ')
+    assert ok is False and 'Empty' in reason
+""",
+    ),
+    GeneratedTestCase(
+        test_id="test_edge_escaped_quote_inside_double_quotes",
+        attacker_id="edge_cases",
+        target_invariant_id="INV-CS-4",
+        description="Verifies escaped quote inside double quotes with pipe (echo \"a\\\"|b\" | wc -c) is allowed.",
+        pytest_code="""def test_edge_escaped_quote_inside_double_quotes(sandbox_mod):
+    ok, _ = sandbox_mod.validate_command('echo "a\\\\"|b" | wc -c')
+    assert ok is True
+""",
+    ),
+    GeneratedTestCase(
+        test_id="test_state_absolute_binary_path_basename",
+        attacker_id="state",
+        target_invariant_id="INV-CS-3",
+        description="Verifies /bin/ls | /usr/bin/wc -l normalizes basename and passes.",
+        pytest_code="""def test_state_absolute_binary_path_basename(sandbox_mod):
+    ok, _ = sandbox_mod.validate_command('/bin/ls | /usr/bin/wc -l')
+    assert ok is True
+""",
+    ),
+    GeneratedTestCase(
+        test_id="test_reg_single_quoted_grep_alternation",
+        attacker_id="regression",
+        target_invariant_id="INV-CS-4",
+        description="Verifies single-quoted grep 'foo|bar' file.c is allowed.",
+        pytest_code="""def test_reg_single_quoted_grep_alternation(sandbox_mod):
+    ok, _ = sandbox_mod.validate_command("grep -E 'foo|bar|baz' src/main.c | head -n 20")
+    assert ok is True
+""",
+    ),
+    GeneratedTestCase(
+        test_id="test_reg_sed_inplace_blocked",
+        attacker_id="regression",
+        target_invariant_id="INV-CS-3",
+        description="Verifies sed -i in-place modification is rejected.",
+        pytest_code="""def test_reg_sed_inplace_blocked(sandbox_mod):
+    ok, _ = sandbox_mod.validate_command("sed -i 's/a/b/g' file.txt")
+    assert ok is False
+""",
+    ),
+]
+
+_PR4_SWARM_OUTPUTS = [
+    AttackerSwarmOutput(attacker_id="security", tests=[_PR4_TESTS[0], _PR4_TESTS[3], _PR4_TESTS[4]]),
+    AttackerSwarmOutput(attacker_id="edge_cases", tests=[_PR4_TESTS[1], _PR4_TESTS[5], _PR4_TESTS[6]]),
+    AttackerSwarmOutput(attacker_id="state", tests=[_PR4_TESTS[2], _PR4_TESTS[7]]),
+    AttackerSwarmOutput(attacker_id="regression", tests=[_PR4_TESTS[8], _PR4_TESTS[9]]),
+]
+
+_PR4_TEST_RUN_RESULTS = [
+    # 1. Real Bug 1: Escaped quote outside quotes hides pipeline RCE (Breached on Attempt 3/5, 2/2 Repro)
+    SingleTestRunResult(
+        test_id="test_sec_escaped_quote_pipeline_rce",
+        attacker_id="security",
+        target_invariant_id="INV-CS-1",
+        run_1_passed=False,
+        run_2_passed=False,
+        reproduced_twice=True,
+        passed_on_original=False,
+        error_trace=(
+            "AssertionError: CRITICAL RCE BYPASS: validate_command('ls \\\" | unauthorized_rce_binary \"') returned (True, '')! "
+            "_split_pipeline did not handle backslash escapes outside quotes, so '\\\"' opened a double-quoted string and swallowed '| unauthorized_rce_binary' as an argument to 'ls', while bash -c executes the pipe!"
+        ),
+        duration_ms=41,
+        max_attempts=5,
+        attempts_used=3,
+        breached_on_attempt=3,
+        attempt_history=[
+            RedTeamAttemptStep(
+                attempt_num=1,
+                attack_hypothesis="Attempt direct unquoted pipeline into restricted command (ls | rm -rf /)",
+                payload_snippet="validate_command('ls | rm -rf /')",
+                sandbox_observation="BLOCKED: Denied pattern matched: \\brm\\b",
+                status="BLOCKED",
+            ),
+            RedTeamAttemptStep(
+                attempt_num=2,
+                attack_hypothesis="Attempt logical AND chaining into unlisted binary (ls && unauthorized_rce_binary)",
+                payload_snippet="validate_command('ls && unauthorized_rce_binary')",
+                sandbox_observation="BLOCKED: Denied pattern matched: &&",
+                status="BLOCKED",
+            ),
+            RedTeamAttemptStep(
+                attempt_num=3,
+                attack_hypothesis="Exploit parser-shell differential: inject unquoted escaped quote (\\\") before '|' so _split_pipeline enters quote mode while bash -c treats \\\" as literal char and executes '|'",
+                payload_snippet="validate_command('ls \\\\\" | unauthorized_rce_binary \"')",
+                sandbox_observation="BREACHED: _split_pipeline returned ['ls \\\\\" | unauthorized_rce_binary \"'] (1 segment, base_cmd='ls' ALLOWED)! In bash -c, '| unauthorized_rce_binary' executes! (2/2 Repro Confirmed)",
+                status="BREACHED",
+            ),
+        ],
+    ),
+    # 2. Real Bug 2: Semicolon (;) and Newline (\n) command chaining bypass (Breached on Attempt 2/5, 2/2 Repro)
+    SingleTestRunResult(
+        test_id="test_edge_semicolon_newline_command_chaining",
+        attacker_id="edge_cases",
+        target_invariant_id="INV-CS-2",
+        run_1_passed=False,
+        run_2_passed=False,
+        reproduced_twice=True,
+        passed_on_original=False,
+        error_trace=(
+            "AssertionError: CRITICAL BYPASS: validate_command('ls ; unauthorized_binary') and validate_command('ls\\nunauthorized_binary') both returned (True, '')! "
+            "Neither ';' nor '\\n' is in DENIED_PATTERNS or split by _split_pipeline, so tokens[0] is 'ls' (ALLOWED) while bash -c runs the second command."
+        ),
+        duration_ms=36,
+        max_attempts=5,
+        attempts_used=2,
+        breached_on_attempt=2,
+        attempt_history=[
+            RedTeamAttemptStep(
+                attempt_num=1,
+                attack_hypothesis="Probe logical OR operator chaining (ls || id)",
+                payload_snippet="validate_command('ls || unauthorized_binary')",
+                sandbox_observation="BLOCKED: Denied pattern matched: \\|\\|",
+                status="BLOCKED",
+            ),
+            RedTeamAttemptStep(
+                attempt_num=2,
+                attack_hypothesis="Mutate separator to POSIX semicolon (;) and newline (\\n) missing from DENIED_PATTERNS",
+                payload_snippet="validate_command('ls ; unauthorized_binary'); validate_command('ls\\nunauthorized_binary')",
+                sandbox_observation="BREACHED: Both returned (True, '')! _split_pipeline only splits on '|', so tokens[0] is 'ls' while bash executes the chained command (2/2 Repro Confirmed)",
+                status="BREACHED",
+            ),
+        ],
+    ),
+    # 3. Real Bug 3: Versioned python3 & find -exec GTFOBins bypass (Breached on Attempt 2/5, 2/2 Repro)
+    SingleTestRunResult(
+        test_id="test_state_python3_and_find_exec_gtfobins_bypass",
+        attacker_id="state",
+        target_invariant_id="INV-CS-3",
+        run_1_passed=False,
+        run_2_passed=False,
+        reproduced_twice=True,
+        passed_on_original=False,
+        error_trace=(
+            "AssertionError: CRITICAL BYPASS: validate_command('find . -exec python3 -c \"import os\" \\\\;') returned (True, '')! "
+            "'find' is in ALLOWED_CMDS without blocking '-exec', and r'\\bpython\\s' fails to match 'python3'."
+        ),
+        duration_ms=39,
+        max_attempts=5,
+        attempts_used=2,
+        breached_on_attempt=2,
+        attempt_history=[
+            RedTeamAttemptStep(
+                attempt_num=1,
+                attack_hypothesis="Attempt inline interpreter execution via python -c",
+                payload_snippet="validate_command('python -c \"import os\"')",
+                sandbox_observation="BLOCKED: Denied pattern matched: \\bpython\\s+-[ce]",
+                status="BLOCKED",
+            ),
+            RedTeamAttemptStep(
+                attempt_num=2,
+                attack_hypothesis="Combine allowed 'find' binary (-exec) with versioned 'python3' to evade r'\\bpython\\s' word boundary",
+                payload_snippet="validate_command('find . -exec python3 -c \"import os\" \\\\;')",
+                sandbox_observation="BREACHED: Returned (True, '')! 'find' is in ALLOWED_CMDS and regex '\\bpython\\s' does not match 'python3' (2/2 Repro Confirmed)",
+                status="BREACHED",
+            ),
+        ],
+    ),
+    # 7 Baseline Passing Tests (2/2 PASS on PR_orig, used to kill M1..M7 in Track b)
+    SingleTestRunResult(test_id="test_sec_output_redirection_blocked", attacker_id="security", target_invariant_id="INV-CS-1", run_1_passed=True, run_2_passed=True, reproduced_twice=False, passed_on_original=True, duration_ms=22),
+    SingleTestRunResult(test_id="test_sec_command_substitution_blocked", attacker_id="security", target_invariant_id="INV-CS-1", run_1_passed=True, run_2_passed=True, reproduced_twice=False, passed_on_original=True, duration_ms=24),
+    SingleTestRunResult(test_id="test_edge_whitespace_only_rejected", attacker_id="edge_cases", target_invariant_id="INV-CS-2", run_1_passed=True, run_2_passed=True, reproduced_twice=False, passed_on_original=True, duration_ms=21),
+    SingleTestRunResult(test_id="test_edge_escaped_quote_inside_double_quotes", attacker_id="edge_cases", target_invariant_id="INV-CS-4", run_1_passed=True, run_2_passed=True, reproduced_twice=False, passed_on_original=True, duration_ms=25),
+    SingleTestRunResult(test_id="test_state_absolute_binary_path_basename", attacker_id="state", target_invariant_id="INV-CS-3", run_1_passed=True, run_2_passed=True, reproduced_twice=False, passed_on_original=True, duration_ms=23),
+    SingleTestRunResult(test_id="test_reg_single_quoted_grep_alternation", attacker_id="regression", target_invariant_id="INV-CS-4", run_1_passed=True, run_2_passed=True, reproduced_twice=False, passed_on_original=True, duration_ms=26),
+    SingleTestRunResult(test_id="test_reg_sed_inplace_blocked", attacker_id="regression", target_invariant_id="INV-CS-3", run_1_passed=True, run_2_passed=True, reproduced_twice=False, passed_on_original=True, duration_ms=24),
+]
+
+_PR4_MUTANT_MATRIX = {
+    "M1": {"test_sec_output_redirection_blocked": False, "test_sec_escaped_quote_pipeline_rce": False, "test_sec_command_substitution_blocked": True, "test_edge_whitespace_only_rejected": True, "test_edge_escaped_quote_inside_double_quotes": True, "test_state_absolute_binary_path_basename": True, "test_reg_single_quoted_grep_alternation": True, "test_reg_sed_inplace_blocked": True},
+    "M2": {"test_sec_command_substitution_blocked": False, "test_sec_escaped_quote_pipeline_rce": False, "test_sec_output_redirection_blocked": True, "test_edge_whitespace_only_rejected": True, "test_edge_escaped_quote_inside_double_quotes": True, "test_state_absolute_binary_path_basename": True, "test_reg_single_quoted_grep_alternation": True, "test_reg_sed_inplace_blocked": True},
+    "M3": {"test_edge_whitespace_only_rejected": False, "test_sec_escaped_quote_pipeline_rce": False, "test_sec_output_redirection_blocked": True, "test_sec_command_substitution_blocked": True, "test_edge_escaped_quote_inside_double_quotes": True, "test_state_absolute_binary_path_basename": True, "test_reg_single_quoted_grep_alternation": True, "test_reg_sed_inplace_blocked": True},
+    "M4": {"test_edge_escaped_quote_inside_double_quotes": False, "test_sec_escaped_quote_pipeline_rce": False, "test_sec_output_redirection_blocked": True, "test_sec_command_substitution_blocked": True, "test_edge_whitespace_only_rejected": True, "test_state_absolute_binary_path_basename": True, "test_reg_single_quoted_grep_alternation": True, "test_reg_sed_inplace_blocked": True},
+    "M5": {"test_state_absolute_binary_path_basename": False, "test_sec_escaped_quote_pipeline_rce": False, "test_sec_output_redirection_blocked": True, "test_sec_command_substitution_blocked": True, "test_edge_whitespace_only_rejected": True, "test_edge_escaped_quote_inside_double_quotes": True, "test_reg_single_quoted_grep_alternation": True, "test_reg_sed_inplace_blocked": True},
+    "M6": {"test_reg_single_quoted_grep_alternation": False, "test_sec_escaped_quote_pipeline_rce": False, "test_sec_output_redirection_blocked": True, "test_sec_command_substitution_blocked": True, "test_edge_whitespace_only_rejected": True, "test_edge_escaped_quote_inside_double_quotes": True, "test_state_absolute_binary_path_basename": True, "test_reg_sed_inplace_blocked": True},
+    "M7": {"test_reg_sed_inplace_blocked": False, "test_sec_escaped_quote_pipeline_rce": False, "test_sec_output_redirection_blocked": True, "test_sec_command_substitution_blocked": True, "test_edge_whitespace_only_rejected": True, "test_edge_escaped_quote_inside_double_quotes": True, "test_state_absolute_binary_path_basename": True, "test_reg_single_quoted_grep_alternation": True},
+    "M8": {"test_sec_escaped_quote_pipeline_rce": False, "test_sec_output_redirection_blocked": True, "test_sec_command_substitution_blocked": True, "test_edge_whitespace_only_rejected": True, "test_edge_escaped_quote_inside_double_quotes": True, "test_state_absolute_binary_path_basename": True, "test_reg_single_quoted_grep_alternation": True, "test_reg_sed_inplace_blocked": True},  # SURVIVED
+}
+
+_PR4_SANDBOX_REPORT = SandboxExecutionReport(
+    sandbox_agent="antigravity-preview-09-2026",
+    environment_id="env_remote_cisco_pr3",
+    execution_mode="recorded_sandbox_replay",
+    script_command="python /workspace/harness/run_dual_track_verification.py --target src/vulnerability_localization_benchmark/sandbox.py",
+    pr_test_results=_PR4_TEST_RUN_RESULTS,
+    mutant_matrix=_PR4_MUTANT_MATRIX,
+    sandbox_stdout_logs=[
+        "[stage-0.5:scope-triage] Mode=SINGLE_FILE_UNIT | Mounted: src/vulnerability_localization_benchmark/sandbox.py (8.4KB) | Skipped: uv.lock (1.0MB), data/manifest.csv (1.1MB), docs/*.pdf",
+        "[antigravity-sandbox] Container env_remote_cisco_pr3 initialized.",
+        "[antigravity-sandbox] === TRACK (a): 5-Attempt Adaptive Red-Team Loop on sandbox.py ===",
+        "[redteam:security] Attempt 1/5: validate_command('ls | rm -rf /') -> BLOCKED (\\brm\\b)",
+        "[redteam:security] Attempt 2/5: validate_command('ls && unauthorized_rce_binary') -> BLOCKED (&&)",
+        "[redteam:security] Attempt 3/5: validate_command('ls \\\\\" | unauthorized_rce_binary \"') -> 🔥 BREACHED! (2/2 Repro Confirmed)",
+        "[redteam:edge_cases] Attempt 1/5: validate_command('ls || unauthorized_binary') -> BLOCKED (\\|\\|)",
+        "[redteam:edge_cases] Attempt 2/5: validate_command('ls ; unauthorized_binary') -> 🔥 BREACHED! (2/2 Repro Confirmed)",
+        "[redteam:state] Attempt 1/5: validate_command('python -c ...') -> BLOCKED (\\bpython\\s)",
+        "[redteam:state] Attempt 2/5: validate_command('find . -exec python3 ...') -> 🔥 BREACHED! (2/2 Repro Confirmed)",
+        "[antigravity-sandbox] === TRACK (b): Blind Mutant Matrix (M1..M8) ===",
+        "[antigravity-sandbox] Enforcing Pass(PR_orig) ^ Fail(Mutant): 7 of 8 planted bugs caught (87.5%). M8 (ANSI-C $'\\x7c') survived.",
+    ],
+)
+
+_PR4_DETERMINISTIC_SCORE = compute_deterministic_scores(
+    swarm_outputs=_PR4_SWARM_OUTPUTS,
+    blind_mutants=_PR4_BLIND_MUTANTS,
+    sandbox_report=_PR4_SANDBOX_REPORT,
+    require_two_repros=True,
+)
+
+_PR4_ONE_CARD_SUMMARY = OneCardExecutiveSummary(
+    headline_verdict="REJECT_RECOMMENDED",
+    residual_risk_level="CRITICAL",
+    one_line_takeaway="PR #3's custom _split_pipeline(cmd) state machine in cisco-foundation-ai/vulnerability-localization-benchmark was breached in 3 adaptive red-team turns via unquoted backslash-escaped quotes (ls \\\" | cmd\"), ';'/'\\n' chaining, and 'find -exec python3'.",
+    finding_highlights=[
+        "CRITICAL (Attempt 3/5 Breach - INV-CS-1): Unquoted '\\\"' in `ls \\\" | cmd \"` tricks `_split_pipeline` into entering quote mode, hiding `| cmd` from `ALLOWED_CMDS` while `bash -c` executes the pipeline.",
+        "CRITICAL (Attempt 2/5 Breach - INV-CS-2): Semicolon (`;`) and newline (`\\n`) command separators are missing from `DENIED_PATTERNS` and ignored by `_split_pipeline`.",
+        "HIGH (Attempt 2/5 Breach - INV-CS-3): `r'\\bpython\\s'` fails to match `python3`, and `find` in `ALLOWED_CMDS` allows `-exec` arbitrary command execution.",
+    ],
+    blind_spot_explanation="7 of 8 blind mutants were caught (87.5%). Mutant M8 (Bash ANSI-C $'\\x7c' hex-escaped pipe encoding) survived because the test suite tested standard ASCII quotes rather than bash-specific $'...' C-escapes.",
+    recommended_fix_snippet="""# Fix in src/vulnerability_localization_benchmark/sandbox.py:
+# 1. Handle backslash escapes OUTSIDE quotes in _split_pipeline (or use shlex.shlex):
+        else:
+            if ch == "\\\\" and i + 1 < len(cmd):
+                cur.append(ch)
+                cur.append(cmd[i + 1])
+                i += 2
+                continue
+# 2. Add ';', '\\n', versioned interpreters (python3), and 'find -exec' to DENIED_PATTERNS:
+    r"[;\\n]",
+    r"\\b(bash|sh|zsh|python\\d*|perl|ruby)\\b",
+    r"\\bfind\\b.*\\s-(exec|execdir|ok|delete)\\b",
+""",
+)
+
+
+# ==============================================================================
+# STAGE 0.5 SMART SCOPE TRIAGE PROFILES & ANALYZER
+# ==============================================================================
+
+_PR1_SCOPE_TRIAGE = ScopeTriageResult(
+    scope_mode="SINGLE_FILE_UNIT",
+    selection_source="agent_auto",
+    primary_target_file="acme_pay/ledger_core.py",
+    mounted_files=["acme_pay/ledger_core.py"],
+    skipped_heavy_paths=["migrations/*.sql (4.2MB)", "frontend/dist/* (12.8MB)", "poetry.lock (1.4MB)"],
+    estimated_mount_size_kb=9.2,
+    rationale="Target module ledger_core.py is self-contained with in-memory mocks for DB/cache/gateway; full repo tree and static assets skipped for fast isolated unit red-teaming.",
+)
+
+_PR2_SCOPE_TRIAGE = ScopeTriageResult(
+    scope_mode="SINGLE_FILE_UNIT",
+    selection_source="agent_auto",
+    primary_target_file="quota_engine/limiter.py",
+    mounted_files=["quota_engine/limiter.py"],
+    skipped_heavy_paths=["benchmarks/load_traces.parquet (18.5MB)", "uv.lock (0.9MB)"],
+    estimated_mount_size_kb=6.8,
+    rationale="SlidingWindowLimiter only depends on Python stdlib + mockable Redis sorted-set interface; single-file unit harness selected.",
+)
+
+_PR3_SCOPE_TRIAGE = ScopeTriageResult(
+    scope_mode="SINGLE_FILE_UNIT",
+    selection_source="agent_auto",
+    primary_target_file="acme_pay/auth_middleware.py",
+    mounted_files=[],
+    skipped_heavy_paths=["ALL (Halted at Stage 0 Guardrail before sandbox mount)"],
+    estimated_mount_size_kb=0.0,
+    rationale="Stage 0 Guardrail intercepted prompt-injection payload in 64ms; zero files mounted to sandbox.",
+)
+
+_PR4_SCOPE_TRIAGE = ScopeTriageResult(
+    scope_mode="SINGLE_FILE_UNIT",
+    selection_source="agent_auto",
+    primary_target_file="src/vulnerability_localization_benchmark/sandbox.py",
+    mounted_files=[
+        "src/vulnerability_localization_benchmark/sandbox.py",
+        "tests/test_sandbox_pipeline_quotes.py",
+    ],
+    skipped_heavy_paths=[
+        "uv.lock (1.0MB)",
+        "data/manifest.csv (1.1MB)",
+        "docs/VulnLoc_Paper.pdf (1.0MB)",
+        "scripts/ (docker evaluation scripts)",
+    ],
+    estimated_mount_size_kb=8.4,
+    rationale="AST import scan confirmed sandbox.py only imports Python stdlib (os, re, subprocess); skipped 3.1MB of CVE datasets and lockfiles to run 5-turn shell parser fuzzing in <1s.",
+)
+
+_PR5_SCOPE_TRIAGE = ScopeTriageResult(
+    scope_mode="SPARSE_PACKAGE_TREE",
+    selection_source="agent_auto",
+    primary_target_file="src/vulnerability_localization_benchmark/scoring.py",
+    mounted_files=[
+        "src/vulnerability_localization_benchmark/scoring.py",
+        "src/vulnerability_localization_benchmark/cli.py",
+        "src/vulnerability_localization_benchmark/models.py",
+    ],
+    skipped_heavy_paths=[
+        "uv.lock (1.0MB)",
+        "data/manifest.csv (1.1MB)",
+        "docs/VulnLoc_Paper.pdf (1.0MB)",
+    ],
+    estimated_mount_size_kb=14.6,
+    rationale="Detected cross-module relative imports between cli.py, scoring.py, and models.py; mounted sparse 1-hop package tree (14.6 KB) while skipping 3.1MB of static datasets.",
+)
+
+
+def analyze_scope_triage(
+    repo_name: str,
+    changed_files: List[str],
+    code_text: str,
+    scope_override: str = "auto",
+) -> ScopeTriageResult:
+    """
+    Stage 0.5 Smart Scope Triage analyzer:
+    Determines whether to mount a Single-File Unit, Sparse Package Tree, or Live Server Daemon
+    based on changed file extensions, local relative imports, and web server entrypoints.
+    """
+    primary_file = changed_files[0] if changed_files else "target_module.py"
+    code_lower = (code_text or "").lower()
+
+    # Check user override first
+    override_map = {
+        "single_file": "SINGLE_FILE_UNIT",
+        "sparse_package": "SPARSE_PACKAGE_TREE",
+        "server_daemon": "LIVE_SERVER_DAEMON",
+    }
+    if scope_override in override_map:
+        chosen_mode = override_map[scope_override]
+        source = "user_override"
+    else:
+        source = "agent_auto"
+        has_server_framework = any(
+            kw in code_lower
+            for kw in ["fastapi(", "flask(__name__)", "@app.get", "@app.post", "uvicorn.run", "express()"]
+        )
+        has_cross_module_imports = any(
+            kw in code_lower
+            for kw in ["from .", "from src.", "from app.", "import internal_"]
+        ) or len(changed_files) > 2
+
+        if has_server_framework:
+            chosen_mode = "LIVE_SERVER_DAEMON"
+        elif has_cross_module_imports:
+            chosen_mode = "SPARSE_PACKAGE_TREE"
+        else:
+            chosen_mode = "SINGLE_FILE_UNIT"
+
+    mounted = changed_files[:4] if changed_files else [primary_file]
+    if chosen_mode == "SPARSE_PACKAGE_TREE" and len(mounted) == 1:
+        pkg_dir = primary_file.rsplit("/", 1)[0] if "/" in primary_file else "src"
+        mounted = [primary_file, f"{pkg_dir}/__init__.py", f"{pkg_dir}/models.py"]
+    elif chosen_mode == "LIVE_SERVER_DAEMON" and "conftest_daemon.py" not in mounted:
+        mounted = [*mounted, "harness/live_http_redteam_client.py"]
+
+    size_kb = round(max(2.4, len(code_text or "") / 1024.0 * 1.25), 1)
+    rationale_map = {
+        "SINGLE_FILE_UNIT": f"Target '{primary_file}' has zero complex internal package dependencies; mounting isolated single-file unit ({size_kb} KB) and skipping lockfiles/assets.",
+        "SPARSE_PACKAGE_TREE": f"Detected multi-file / cross-module imports across {len(mounted)} files; mounting sparse 1-hop dependency tree ({size_kb} KB).",
+        "LIVE_SERVER_DAEMON": f"Detected ASGI/WSGI HTTP routes in '{primary_file}'; booting live server daemon inside sandbox for iterative HTTP payload fuzzing.",
+    }
+    return ScopeTriageResult(
+        scope_mode=chosen_mode,  # type: ignore
+        selection_source=source,  # type: ignore
+        primary_target_file=primary_file,
+        mounted_files=mounted,
+        skipped_heavy_paths=["uv.lock / package-lock.json", "data/* (datasets)", "docs/*.pdf", "node_modules/"],
+        estimated_mount_size_kb=size_kb,
+        rationale=rationale_map[chosen_mode],
+    )
+
+
+# ==============================================================================
 # MASTER REGISTRY OF SCENARIOS
 # ==============================================================================
 
 SAMPLE_PRS: Dict[str, Dict[str, Any]] = {
+    "pr-cisco-sandbox-bypass": {
+        "id": "pr-cisco-sandbox-bypass",
+        "title": "PR #3: Make sandbox pipeline splitting quote-aware (Cisco Benchmark)",
+        "repo_name": "cisco-foundation-ai/vulnerability-localization-benchmark",
+        "author": "etragardh",
+        "description": "Replaces naive cmd.split('|') with custom quote-aware _split_pipeline(cmd) in sandbox.py so quoted regex pipes (grep -E 'a|b') are allowed.",
+        "diff": PR_CISCO_SANDBOX_DIFF,
+        "code": PR_CISCO_SANDBOX_CODE,
+        "phase_support": ["phase1_mvp", "phase2_full"],
+        "is_adversarial": False,
+        "guardrail": _PR4_GUARDRAIL,
+        "scope_triage": _PR4_SCOPE_TRIAGE,
+        "invariant_plan": _PR4_INVARIANT_PLAN,
+        "blind_mutants": _PR4_BLIND_MUTANTS,
+        "swarm_outputs": _PR4_SWARM_OUTPUTS,
+        "sandbox_report": _PR4_SANDBOX_REPORT,
+        "deterministic_score": _PR4_DETERMINISTIC_SCORE,
+        "one_card_summary": _PR4_ONE_CARD_SUMMARY,
+    },
+    "pr-cisco-scoring-divzero": {
+        "id": "pr-cisco-scoring-divzero",
+        "title": "PR #6: Add evaluation metric aggregation & scoring CLI (Cisco Benchmark)",
+        "repo_name": "cisco-foundation-ai/vulnerability-localization-benchmark",
+        "author": "etragardh",
+        "description": "Adds multi-module benchmark evaluation metric aggregation across scoring.py, cli.py, and models.py (Sparse Package Tree mode).",
+        "diff": PR_CISCO_SANDBOX_DIFF,
+        "code": PR_CISCO_SANDBOX_CODE,
+        "phase_support": ["phase1_mvp", "phase2_full"],
+        "is_adversarial": False,
+        "guardrail": _PR4_GUARDRAIL,
+        "scope_triage": _PR5_SCOPE_TRIAGE,
+        "invariant_plan": _PR4_INVARIANT_PLAN,
+        "blind_mutants": _PR4_BLIND_MUTANTS,
+        "swarm_outputs": _PR4_SWARM_OUTPUTS,
+        "sandbox_report": _PR4_SANDBOX_REPORT,
+        "deterministic_score": _PR4_DETERMINISTIC_SCORE,
+        "one_card_summary": _PR4_ONE_CARD_SUMMARY,
+    },
     "pr-checkout-race": {
         "id": "pr-checkout-race",
         "title": "PR #412: AI-Generated Instant Refund & Partial Wallet Settlement",
@@ -1170,6 +2026,7 @@ SAMPLE_PRS: Dict[str, Dict[str, Any]] = {
         "phase_support": ["phase1_mvp", "phase2_full"],
         "is_adversarial": False,
         "guardrail": _PR1_GUARDRAIL,
+        "scope_triage": _PR1_SCOPE_TRIAGE,
         "invariant_plan": _PR1_INVARIANT_PLAN,
         "blind_mutants": _PR1_BLIND_MUTANTS,
         "swarm_outputs": _PR1_SWARM_OUTPUTS,
@@ -1188,6 +2045,7 @@ SAMPLE_PRS: Dict[str, Dict[str, Any]] = {
         "phase_support": ["phase1_mvp", "phase2_full"],
         "is_adversarial": False,
         "guardrail": _PR2_GUARDRAIL,
+        "scope_triage": _PR2_SCOPE_TRIAGE,
         "invariant_plan": _PR2_INVARIANT_PLAN,
         "blind_mutants": _PR2_BLIND_MUTANTS,
         "swarm_outputs": _PR2_SWARM_OUTPUTS,
@@ -1206,6 +2064,7 @@ SAMPLE_PRS: Dict[str, Dict[str, Any]] = {
         "phase_support": ["phase1_mvp", "phase2_full"],
         "is_adversarial": True,
         "guardrail": _PR3_GUARDRAIL,
+        "scope_triage": _PR3_SCOPE_TRIAGE,
         "invariant_plan": _PR3_INVARIANT_PLAN,
         "blind_mutants": _PR3_BLIND_MUTANTS,
         "swarm_outputs": _PR3_SWARM_OUTPUTS,
@@ -1219,6 +2078,7 @@ SAMPLE_PRS: Dict[str, Dict[str, Any]] = {
 for _k, _v in SAMPLE_PRS.items():
     _v["original_code"] = _v["code"]
     _v["recorded_guardrail"] = _v["guardrail"].model_dump()
+    _v["recorded_scope_triage"] = _v["scope_triage"].model_dump()
     _v["recorded_invariant_plan"] = _v["invariant_plan"].model_dump()
     _v["recorded_blind_mutants"] = _v["blind_mutants"].model_dump()
     _v["recorded_swarm_outputs"] = [s.model_dump() for s in _v["swarm_outputs"]]
@@ -1240,6 +2100,7 @@ def list_sample_prs_metadata() -> List[Dict[str, Any]]:
             "code": item["code"],
             "phase_support": item["phase_support"],
             "is_adversarial": item["is_adversarial"],
+            "scope_triage": item["scope_triage"].model_dump() if item.get("scope_triage") else None,
         })
     return results
 
@@ -1263,6 +2124,7 @@ def get_sample_pr_response(pr_id: str, phase_mode: str = "phase2_full") -> FullV
         author=data["author"],
         phase_mode=phase_mode,  # type: ignore
         guardrail=data["guardrail"],
+        scope_triage=data.get("scope_triage"),
         invariant_plan=data["invariant_plan"],
         swarm_outputs=swarm_outputs,
         sandbox_report=data["sandbox_report"],

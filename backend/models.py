@@ -12,6 +12,33 @@ class GuardrailResult(BaseModel):
     latency_ms: int = Field(default=85, description="Execution time in milliseconds.")
 
 
+class ScopeTriageResult(BaseModel):
+    scope_mode: Literal["SINGLE_FILE_UNIT", "SPARSE_PACKAGE_TREE", "LIVE_SERVER_DAEMON"] = Field(
+        default="SINGLE_FILE_UNIT",
+        description="Stage 0.5 Smart Scope Triage decision for sandbox context mounting.",
+    )
+    selection_source: Literal["agent_auto", "user_override"] = Field(
+        default="agent_auto",
+        description="Whether scope_mode was automatically selected by Stage 0.5 or overridden by the user.",
+    )
+    primary_target_file: str = Field(description="Primary target source file under red-team verification.")
+    mounted_files: List[str] = Field(default_factory=list, description="Minimal slice of files mounted into the Antigravity sandbox.")
+    skipped_heavy_paths: List[str] = Field(
+        default_factory=list,
+        description="Heavy lockfiles, datasets, or docs skipped to optimize sandbox spin-up and token footprint.",
+    )
+    estimated_mount_size_kb: float = Field(default=8.4, description="Total mounted payload size in KB.")
+    rationale: str = Field(description="Explanation of why single-file, sparse-package, or live-server daemon mode was chosen.")
+
+
+class RedTeamAttemptStep(BaseModel):
+    attempt_num: int = Field(description="Attempt number within the 5-turn cap (1..5).")
+    attack_hypothesis: str = Field(description="Bypass hypothesis or mutation strategy for this turn.")
+    payload_snippet: str = Field(description="Adversarial payload or function call injected in this turn.")
+    sandbox_observation: str = Field(description="Target's defensive block response or exception trace observed in sandbox.")
+    status: Literal["BLOCKED", "BREACHED", "DEFENDED"] = Field(description="Outcome of this attempt turn.")
+
+
 class InvariantItem(BaseModel):
     id: str = Field(description="Unique ID like INV-1, INV-2")
     category: Literal["security", "edge_cases", "state", "regression"] = Field(description="Primary attacker category responsible for testing this invariant.")
@@ -53,6 +80,10 @@ class GeneratedTestCase(BaseModel):
     target_invariant_id: str = Field(description="Which invariant ID this test verifies/attacks.")
     description: str = Field(description="What this breaking/verification test checks.")
     pytest_code: str = Field(description="Self-contained Python test function `def test_...(target_module):` that raises AssertionError if the invariant is violated.")
+    max_attempts: int = Field(default=5, description="Hard upper bound on iterative red-team mutation attempts.")
+    attempts_used: int = Field(default=1, description="Number of iterative observe-mutate-attack turns executed.")
+    breached_on_attempt: Optional[int] = Field(default=None, description="Turn number (1..5) on which the defense was breached, or None if defended.")
+    attempt_history: List[RedTeamAttemptStep] = Field(default_factory=list, description="Turn-by-turn Observe-Mutate-Attack trace (up to 5 attempts).")
 
 
 class AttackerSwarmOutput(BaseModel):
@@ -70,6 +101,10 @@ class SingleTestRunResult(BaseModel):
     passed_on_original: bool = Field(description="True if test passed cleanly on original PR code (eligible to count for mutant kills).")
     error_trace: Optional[str] = None
     duration_ms: int = 42
+    max_attempts: int = Field(default=5, description="Hard upper bound on iterative red-team mutation attempts.")
+    attempts_used: int = Field(default=1, description="Number of iterative observe-mutate-attack turns executed.")
+    breached_on_attempt: Optional[int] = Field(default=None, description="Turn number (1..5) on which the defense was breached, or None if defended.")
+    attempt_history: List[RedTeamAttemptStep] = Field(default_factory=list, description="Turn-by-turn Observe-Mutate-Attack trace (up to 5 attempts).")
 
 
 class MutantKillEvaluation(BaseModel):
@@ -128,6 +163,7 @@ class FullVerificationRunResponse(BaseModel):
     author: str
     phase_mode: Literal["phase1_mvp", "phase2_full"] = "phase2_full"
     guardrail: GuardrailResult
+    scope_triage: Optional[ScopeTriageResult] = None
     invariant_plan: InvariantExtractionPlan
     swarm_outputs: List[AttackerSwarmOutput]
     sandbox_report: SandboxExecutionReport

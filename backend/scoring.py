@@ -32,11 +32,13 @@ def compute_deterministic_scores(
     sandbox_report: SandboxExecutionReport,
     require_two_repros: bool = True,
 ) -> DeterministicScoreReport:
-    # Map test_id -> attacker_id
+    # Map test_id -> attacker_id and GeneratedTestCase
     test_to_attacker: Dict[str, str] = {}
+    test_to_case = {}
     for swarm in swarm_outputs:
         for t in swarm.tests:
             test_to_attacker[t.test_id] = swarm.attacker_id
+            test_to_case[t.test_id] = t
 
     # 1. Analyze Track (a): Original PR Code Execution Results
     passed_on_orig_set = set()
@@ -44,6 +46,19 @@ def compute_deterministic_scores(
     flaky_filtered_count = 0
 
     for res in sandbox_report.pr_test_results:
+        # Sync iterative red-team attempt metadata between GeneratedTestCase and SingleTestRunResult
+        case = test_to_case.get(res.test_id)
+        if case is not None:
+            if not res.attempt_history and case.attempt_history:
+                res.attempt_history = case.attempt_history
+                res.attempts_used = case.attempts_used
+                res.breached_on_attempt = case.breached_on_attempt
+                res.max_attempts = case.max_attempts
+            elif res.attempt_history and not case.attempt_history:
+                case.attempt_history = res.attempt_history
+                case.attempts_used = res.attempts_used
+                case.breached_on_attempt = res.breached_on_attempt
+                case.max_attempts = res.max_attempts
         # Strict Baseline Pass: passed both runs on original PR code
         if res.run_1_passed and res.run_2_passed:
             passed_on_orig_set.add(res.test_id)

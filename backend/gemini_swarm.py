@@ -191,6 +191,7 @@ async def _run_single_flash_attacker(
     plan: InvariantExtractionPlan,
     attacker_id: str,
     live_api: bool = False,
+    max_attempts: int = 5,
 ) -> AttackerSwarmOutput:
     if not live_api and "recorded_swarm_outputs" in pr_data:
         for item in pr_data["recorded_swarm_outputs"]:
@@ -207,11 +208,14 @@ async def _run_single_flash_attacker(
                 store=False,
                 system_instruction=(
                     f"You are the `{attacker_id}` specialist in a parallel AI Red-Team Swarm (Gemini 3.8 Flash). "
-                    "Write self-contained Python test functions `def test_<name>(target_module):` that either "
-                    "expose bugs in the PR code OR strictly assert the invariants so any broken mutant fails."
+                    f"For each attack vector, simulate an Adaptive Multi-Turn Red-Team Loop (up to max_attempts={max_attempts}: "
+                    "Observe -> Mutate -> Attack). Populate `attempt_history` (Attempt 1..k with BLOCKED/BREACHED/DEFENDED), "
+                    "`attempts_used`, and `breached_on_attempt`, and write self-contained Python test functions "
+                    "`def test_<name>(target_module):` that either expose bugs in the PR code OR strictly assert the invariants."
                 ),
                 input=(
                     f"Attacker Role: {attacker_id}\n"
+                    f"Max Red-Team Attempts per Vector: {max_attempts}\n"
                     f"Invariants & Plan:\n{plan.model_dump_json(indent=2)}\n\n"
                     f"Target PR Code:\n{pr_data.get('original_code')}"
                 ),
@@ -239,9 +243,11 @@ async def run_parallel_attacker_swarm(
     plan: InvariantExtractionPlan,
     include_regression: bool = True,
     live_api: bool = False,
+    max_attempts: int = 5,
 ) -> List[AttackerSwarmOutput]:
     """
-    Runs 3 (Phase 1) or 4 (Phase 2) parallel `gemini-3.8-flash` attacker agents concurrently.
+    Runs 3 (Phase 1) or 4 (Phase 2) parallel `gemini-3.8-flash` attacker agents concurrently
+    with Adaptive Multi-Turn Red-Team Loop (max_attempts=5).
     Notice `blind_mutants` is NOT a parameter here — the swarm is 100% blind to planted bugs.
     """
     attacker_ids = ["security", "edge_cases", "state"]
@@ -249,7 +255,7 @@ async def run_parallel_attacker_swarm(
         attacker_ids.append("regression")
 
     tasks = [
-        _run_single_flash_attacker(pr_data, plan, attacker_id, live_api=live_api)
+        _run_single_flash_attacker(pr_data, plan, attacker_id, live_api=live_api, max_attempts=max_attempts)
         for attacker_id in attacker_ids
     ]
     return list(await asyncio.gather(*tasks))

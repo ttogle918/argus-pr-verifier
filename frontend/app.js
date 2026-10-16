@@ -74,6 +74,8 @@ const I18N = {
         stampApproved: (pr) => `✔ 휴먼 리뷰어 병합 승인 — ${pr.toUpperCase()} 머지 허가됨`,
         scenarios: {
             'pr-checkout-race': 'PR #412: AI 즉시 환불 및 부분 지갑 정산 파이프라인 (acme-pay/ledger-core)',
+            'pr-cisco-sandbox-bypass': 'PR #3: [Cisco 벤치마크] 평가 하네스 & Docker 샌드박스 러너 (cisco-foundation-ai/vuln-bench)',
+            'pr-cisco-scoring-divzero': 'PR #6: [Cisco 벤치마크] Top-K 취약점 로컬라이제이션 스코어러 (cisco-foundation-ai/vuln-bench)',
             'pr-ratelimiter-offbyone': 'PR #809: 등급별 API 키 Redis 슬라이딩 윈도우 토큰 버킷 (cloud-gate/quota-engine)',
             'pr-prompt-injection-attack': 'PR #666: [적대적 공격] 인증 미들웨어 주석 내 숨겨진 프롬프트 인젝션',
         },
@@ -99,6 +101,14 @@ const I18N = {
                     'M7': '수수료 은행가 반올림(ROUND_HALF_EVEN)을 단순 버림으로 변경',
                     'M8': '분산 샤드 시계 오차(now_ms == expiry_ms) 만료 토큰 우회',
                 },
+            },
+            'pr-cisco-sandbox-bypass': {
+                takeaway: 'Cisco 취약점 로컬라이제이션 벤치마크 PR #3에서 5회 적응형 레드팀 루프(Attempt 3/5 및 2/5)를 통해 쉘 명령어 인젝션(RCE)과 심볼릭 링크 호스트 파일 탈출 결함 2건이 2/2회 재현되었습니다. 블라인드 검증기는 8개 중 7개(87.5%)를 포획했습니다.',
+                blindSpot: '생존 변이 M8(JSONL 파서 Unicode BOM 접두사 crash)은 UTF-8 BOM 헤더 퍼징 벡터가 누락되어 생존했습니다. utf-8-sig 디코딩 패치가 권장됩니다.',
+            },
+            'pr-cisco-scoring-divzero': {
+                takeaway: 'Cisco 벤치마크 스코어러 PR #6에서 5회 레드팀 루프를 통해 0개 예측 시 ZeroDivisionError 및 음수 라인 오프셋 IoU 역전 결함 2건이 2/2회 재현되었습니다. 블라인드 검증기는 8개 중 7개(87.5%)를 포획했습니다.',
+                blindSpot: '생존 변이 M8(Windows 백슬래시 경로 정규화 불일치)은 POSIX 경로 위주로만 테스트되어 생존했습니다. PurePosixPath 정규화 패치가 권장됩니다.',
             },
             'pr-ratelimiter-offbyone': {
                 takeaway: '슬라이딩 윈도우 경계에서 버스트 쿼터가 2배로 누수되는 결함 1건이 2/2회 재현되었습니다. 블라인드 검증기는 8개 중 6개(75.0%)의 인공 버그를 포획했습니다.',
@@ -165,6 +175,8 @@ const I18N = {
         stampApproved: (pr) => `✔ MERGE APPROVED BY HUMAN REVIEWER — ${pr.toUpperCase()}`,
         scenarios: {
             'pr-checkout-race': 'PR #412: AI Instant Refund & Partial Wallet Settlement (acme-pay/ledger-core)',
+            'pr-cisco-sandbox-bypass': 'PR #3: [Cisco Benchmark] Evaluation Harness & Docker Sandbox Runner (cisco-foundation-ai/vuln-bench)',
+            'pr-cisco-scoring-divzero': 'PR #6: [Cisco Benchmark] Top-K Vulnerability Localization Scorer (cisco-foundation-ai/vuln-bench)',
             'pr-ratelimiter-offbyone': 'PR #809: Redis Sliding-Window Token Bucket (cloud-gate/quota-engine)',
             'pr-prompt-injection-attack': 'PR #666: [ADVERSARIAL] Hidden Prompt Injection in Auth Middleware',
         },
@@ -488,13 +500,20 @@ function renderOneCardSummary(data) {
     } else {
         bugsContainer.innerHTML = score.confirmed_pr_failures.map((f) => {
             const tInfo = testMap[f.test_id] || {};
+            const attemptsHtml = (f.attempts_trace && f.attempts_trace.length > 0)
+                ? `<div style="margin:6px 0;padding:6px 8px;background:rgba(15,23,42,0.75);border-left:2px solid #f43f5e;border-radius:4px;font-family:var(--font-mono);font-size:0.73rem;">
+                    <div style="color:#fda4af;font-weight:700;margin-bottom:3px;">Iterative Red-Team Loop (Breached on Attempt ${f.breached_on_attempt || f.attempts_used}/${f.max_attempts || 5}):</div>
+                    ${f.attempts_trace.map((step) => `<div style="color:${step.outcome === 'BREACHED' ? '#fb7185' : '#94a3b8'};">• [Attempt ${step.attempt_num}/${f.max_attempts || 5}: ${step.outcome}] ${step.strategy_Adjustment}</div>`).join('')}
+                   </div>`
+                : '';
             return `
                 <div class="bug-card">
                     <div class="bug-card-header">
                         <span>${f.test_id} (${tInfo.target_invariant_id || 'INV'})</span>
-                        <span style="font-family:var(--font-mono);font-size:0.72rem;background:rgba(244,63,94,0.2);padding:2px 7px;border-radius:4px;">2/2 REPRODUCED</span>
+                        <span style="font-family:var(--font-mono);font-size:0.72rem;background:rgba(244,63,94,0.2);padding:2px 7px;border-radius:4px;">2/2 REPRODUCED ${f.breached_on_attempt ? `• ATTEMPT ${f.breached_on_attempt}/${f.max_attempts || 5}` : ''}</span>
                     </div>
                     <div style="color:#cbd5e1;">${tInfo.description || 'Deterministic invariant violation reproduced twice in isolated sandbox.'}</div>
+                    ${attemptsHtml}
                     <pre class="bug-trace">${f.failure_trace || 'AssertionError: Invariant violated in Track (a) run 1/2 and run 2/2'}</pre>
                 </div>
             `;
@@ -591,10 +610,17 @@ async function runVerificationFlow() {
         return;
     }
 
+    const triageInfo = data.scope_triage
+        ? ` • <strong>[Stage 0.5 Scope: ${data.scope_triage.selected_mode}]</strong> (${data.scope_triage.fetched_files_count} files, saved ~${data.scope_triage.saved_clone_mb}MB)`
+        : '';
+    if (data.scope_triage) {
+        appendTerminalLog(`[Stage 0.5 Smart Scope Triage] Selected ${data.scope_triage.selected_mode}: ${data.scope_triage.rationale} (Saved ~${data.scope_triage.saved_clone_mb}MB)`, 'log-pass');
+    }
+
     setStepState('guardrail', 'done');
     banner.className = 'banner safe';
     banner.innerHTML = `
-        <span>&#9989; <strong>[STAGE 0 GUARDRAIL PASSED — gemini-3.5-flash-lite]</strong> ${data.guardrail.sanitized_summary}</span>
+        <span>&#9989; <strong>[STAGE 0 GUARDRAIL PASSED — gemini-3.5-flash-lite]</strong> ${data.guardrail.sanitized_summary}${triageInfo}</span>
         <span style="font-family:var(--font-mono);font-size:0.75rem;">${data.guardrail.latency_ms}ms</span>
     `;
 
@@ -614,22 +640,27 @@ async function runVerificationFlow() {
     await sleep(420);
     setStepState('swarm', 'done');
 
-    // STAGE 3a: Antigravity Sandbox Track (a) — PR Original Code (2x Repro)
+    // STAGE 3a: Antigravity Sandbox Track (a) — PR Original Code (5-Attempt Red-Team Loop + 2x Repro)
     setStepState('sandbox_a', 'active');
     sandboxBadge.className = 'sandbox-badge running';
     sandboxBadge.textContent = 'RUNNING TRACK (A)';
-    appendTerminalLog(`[Sandbox] Launching agent="${data.sandbox_report.sandbox_agent_id}" -> python /workspace/harness/run_dual_track_verification.py`, 'log-info');
+    appendTerminalLog(`[Sandbox] Launching agent="${data.sandbox_report.sandbox_agent_id}" -> python /workspace/harness/run_dual_track_verification.py (Max 5 Red-Team Attempts/Target)`, 'log-info');
     await sleep(260);
 
     const testResultMap = {};
     for (const r of (data.sandbox_report.pr_test_results || [])) {
         testResultMap[r.test_id] = r;
+        if (r.attempts_trace && r.attempts_trace.length > 0) {
+            for (const step of r.attempts_trace) {
+                appendTerminalLog(`    [Red-Team Attempt ${step.attempt_num}/${r.max_attempts || 5} • ${r.test_id}] ${step.outcome}: ${step.strategy_Adjustment}`, step.outcome === 'BREACHED' ? 'log-fail' : 'log-info');
+            }
+        }
         if (!r.passed_on_original && r.reproduced_twice) {
-            appendTerminalLog(`  [Track a • PR_orig] ${r.test_id}: Run 1=FAIL, Run 2=FAIL -> 2/2 REPRODUCED PR FAILURE!`, 'log-fail');
+            appendTerminalLog(`  [Track a • PR_orig] ${r.test_id}: Breached on Attempt ${r.breached_on_attempt || r.attempts_used}/${r.max_attempts || 5} -> Run 1=FAIL, Run 2=FAIL (2/2 REPRODUCED!)`, 'log-fail');
         } else if (!r.passed_on_original && !r.reproduced_twice) {
             appendTerminalLog(`  [Track a • PR_orig] ${r.test_id}: Run 1=FAIL, Run 2=PASS -> 1/2 FLAKY ALARM (FILTERED OUT)`, 'log-flaky');
         } else {
-            appendTerminalLog(`  [Track a • PR_orig] ${r.test_id}: Run 1=PASS, Run 2=PASS -> Valid Baseline Invariant Test`, 'log-pass');
+            appendTerminalLog(`  [Track a • PR_orig] ${r.test_id}: Held across ${r.attempts_used || 1} attempt(s) & 2/2 runs -> Valid Baseline Invariant Test`, 'log-pass');
         }
         await sleep(95);
     }
