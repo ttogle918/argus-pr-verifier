@@ -1,6 +1,7 @@
 # 🛡️ Argus-PR: AI Swarm PR Red-Team & Blind Meta-Verification Engine
 
 - 📊 **Presentation Deck (PPT 바로가기)**: [**View Interactive Slides (Web)**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/presentation.html) · [`presentation.html`](./presentation.html)
+- 🎬 **Guided 7-Step Demo Video (`🔴 1 ~ 🔴 7`)**: [**Watch Interactive Video Player (Web)**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html) · [`argus_pr_demo.webm`](./argus_pr_demo.webm) · [**Step-by-Step Guide (`docs/11`)**](./docs/11_Guided_Demo_Walkthrough.md)
 - 🇰🇷 **Korean Documentation (한국어 버전 바로가기)**: [**한국어 README (`README_ko.md`) 보러가기 →**](./README_ko.md)
 - 🇺🇸 **English Documentation (EN 버전 바로가기)**: [**English README (`README.md`)**](./README.md)
 
@@ -8,6 +9,7 @@
 > An autonomous swarm of AI red-team agents that attempts to break AI-written Pull Requests before merge—and proves how trustworthy its own verification is through strictly isolated **Blind Mutation Testing**.
 
 [![Presentation Deck](https://img.shields.io/badge/📊_Presentation_Deck-Interactive_Slides-FF6F00)](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/presentation.html)
+[![Demo Video Player](https://img.shields.io/badge/🎬_Demo_Video-🔴_1..7_Walkthrough-E11D48)](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html)
 [![English README](https://img.shields.io/badge/Docs-English-blue)](./README.md)
 [![Korean README](https://img.shields.io/badge/문서-한국어-green)](./README_ko.md)
 [![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Cloud_Run-00C853)](https://argus-pr-verifier-987693331070.asia-northeast3.run.app/)
@@ -21,9 +23,13 @@
 
 ## 🎥 Live Demo & Repository Links
 
-![Argus-PR Demo GIF](./argus_pr_demo.gif)
+![Argus-PR Guided Demo GIF (🔴 1 -> 🔴 7)](./argus_pr_demo.gif)
 
 - **🚀 Live Deployed Application (Google Cloud Run)**: [https://argus-pr-verifier-987693331070.asia-northeast3.run.app/](https://argus-pr-verifier-987693331070.asia-northeast3.run.app/)
+- **🎬 Guided E2E Demo Video (`🔴 1` $\to$ `🔴 7` + Bonus `PR #666`)**:
+  - [**▶ Open Interactive Web Video Player with Chapter Jumps (`demo_video.html`)**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html)
+  - [**⬇ Direct High-Res Video File (`./argus_pr_demo.webm`, 9.5 MB)**](./argus_pr_demo.webm) · [**Raw Stream Link**](https://raw.githubusercontent.com/ttogle918/argus-pr-verifier/main/argus_pr_demo.webm)
+  - [**🧭 Detailed 7-Step Visual Walkthrough Document (`docs/11_Guided_Demo_Walkthrough.md`)**](./docs/11_Guided_Demo_Walkthrough.md)
 - **📊 Interactive Presentation Deck (PPT)**: [Open Web Slides](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/presentation.html) (`./presentation.html`)
 - **🌐 Public GitHub Repository**: [https://github.com/ttogle918/argus-pr-verifier](https://github.com/ttogle918/argus-pr-verifier)
 
@@ -175,19 +181,45 @@ docker run -p 8080:8080 -e GEMINI_API_KEY="your-gemini-api-key" argus-pr
 
 ---
 
-## 🧭 6. Step-by-Step Demo Walkthrough for Judges
+## 🧭 6. Step-by-Step Demo Walkthrough for Judges (`🔴 1` $\to$ `🔴 7`)
 
-1. **Select a PR Scenario or Upload Custom PR / ZIP**:
-   - Choose **`PR #412: AI Instant Refund`**, **`PR #3 (Cisco): Sandbox Pipeline Quote Bypass`**, **`PR #809: Redis Sliding-Window`**, or **`PR #666: Adversarial Prompt Injection`**.
-   - Or click **`[+ Custom PR / Diff]`** to paste any GitHub PR URL, unified diff, or multi-file `.zip` bundle.
-2. **Launch the Blind Verification Swarm & Multi-Persona BOLA DAST**:
-   - Click **`[⚡ Launch Verification]`** to stream real-time SSE telemetry across the **Swimlane View**.
-   - In the Scope Triage banner, click **`[🔐 Run Multi-Persona BOLA DAST]`** to mint 3 virtual personas (`Victim: Tenant A`, `Attacker: Tenant B`, `Anonymous`) and inspect the Cross-Tenant AuthZ Matrix (`PROVEN_BOLA_BYPASS` vs `ENFORCED_ISOLATION`).
-3. **Trigger Blue-Team CEGIS Self-Healing Patch Loop (Stage 6)**:
-   - Scroll to the **One-Card Executive Summary** and click **`[🔧 Apply Recommended Fix & Re-Verify]`**.
-   - Inspect the **`🛡️ Blue-Team CEGIS Self-Healing Loop`** timeline showing **Attempt #1 (`FAILED_COUNTEREXAMPLE` at Gate 3: TOCTOU race)** $\to$ **Attempt #2 (`VERIFIED` across all 4 Gates with `cache.set_nx` atomic lock)** and watch the verdict update to **`PASS (MERGE READY)`**.
-4. **Export Verified PR Bundle & Pinned Regression Suite (Stage 7)**:
-   - Click **`[📦 Export PR + Pinned Regression Test]`** next to the Merge Gate buttons to view and copy the complete `tests/security/test_argus_regression_*.py` file, production patch diff, and GitHub Actions CI workflow YAML, then click **`[✅ Approve Merge]`**.
+All primary action buttons in the UI are labeled with red numbered badges (`🔴 1` through `🔴 7`) so judges can test the entire closed-loop pipeline in exact chronological order (full visual guide in [`docs/11_Guided_Demo_Walkthrough.md`](docs/11_Guided_Demo_Walkthrough.md)):
+
+| Step | UI Badge | Button Label & Selector | Pipeline Action |
+| :--- | :--- | :--- | :--- |
+| **Step 1** | `🔴 1` | **`View PR Diff / PR Diff 보기`** (`#toggle-diff-btn`) | Inspect the raw Pull Request unified code diff before verification. |
+| **Step 2** | `🔴 2` | **`Launch Blind Verification Swarm`** (`#launch-btn`) | Triggers Stage 0 Guardrail, Stage 0.5 Smart Scope Triage, Track 1A/1B (`gemini-4-argon`), Stage 2 Parallel 4x `gemini-3.8-flash` 5-Attempt Red-Team Swarm, and Stage 3 Dual-Track Sandbox. |
+| **Step 3** | `🔴 3` | **`🔐 Run Multi-Persona BOLA DAST`** (`#run-live-dast-bola-btn`) | Mints 3 virtual JWT personas (`Victim: Tenant A`, `Attacker: Tenant B`, `Anonymous`) to verify Cross-Tenant BOLA/IDOR (`PROVEN_BOLA_BYPASS` vs `ENFORCED_ISOLATION`). |
+| **Step 4** | `🔴 4` / `🔴 4-1` | **`+ Plant Custom Bug / 추가 & 재계산`** (`#toggle-mutant-form-btn`, `#submit-custom-mutant-btn`) | Inject a live custom synthetic bug (`M9`) on the fly and deterministically recompute the Blind Mutation Kill Score ($M/K$). |
+| **Step 5** | `🔴 5` | **`Apply Recommended Fix & Re-Verify`** (`#apply-patch-btn`) | Triggers the **Stage 6 Blue-Team CEGIS Self-Healing Loop** across 4 Verification Gates (Attempt #1 fails at Gate 3 TOCTOU counterexample $\to$ Attempt #2 passes all 4/4 Gates). |
+| **Step 6** | `🔴 6` | **`Export PR + Pinned Regression Test`** (`#export-bundle-btn`) | Opens the **Stage 7 Living Security Regression Suite Modal** with the verified patch diff, pinned `pytest` regression suite, and GitHub Actions CI YAML. |
+| **Step 7** | `🔴 7` | **`Approve Merge / 병합 최종 승인`** (`#approve-btn`, `#reject-btn`) | Records the **Human-in-the-Loop** final merge gate decision in SQLite. |
+
+<details>
+<summary><b>📸 Click to expand Step-by-Step Screenshots (<code>🔴 1</code> ~ <code>🔴 7</code> + Bonus <code>PR #666</code>)</b></summary>
+
+#### `🔴 1` & `🔴 2`: View PR Diff & Launch Blind Verification Swarm
+![Step 2 - Blind Verification Swarm Complete](./docs/screenshots/demo_step_2_swarm_done.png)
+
+#### `🔴 3`: Multi-Persona Cross-Tenant BOLA DAST Matrix
+![Step 3 - Multi-Persona BOLA DAST Matrix](./docs/screenshots/demo_step_3_bola_dast.png)
+
+#### `🔴 4`: Live Custom Mutant Injection & Deterministic Score Recomputation
+![Step 4 - Custom Mutant Injection](./docs/screenshots/demo_step_4_custom_mutant.png)
+
+#### `🔴 5`: Blue-Team CEGIS Self-Healing 4-Gate Loop (`Attempt #1 Fail` $\to$ `Attempt #2 Verified`)
+![Step 5 - Blue-Team CEGIS Self-Healing Patch Verified](./docs/screenshots/demo_step_5_cegis_patch.png)
+
+#### `🔴 6`: Export Verified PR Bundle & Pinned `pytest` Regression Suite
+![Step 6 - Export PR Bundle Modal](./docs/screenshots/demo_step_6_export_bundle.png)
+
+#### `🔴 7`: Human-in-the-Loop Final Merge Approval
+![Step 7 - Human Merge Gate Approved](./docs/screenshots/demo_step_7_approved.png)
+
+#### 🛡️ Bonus (`PR #666`): Stage 0 Adversarial Prompt-Injection Guardrail Quarantine
+![Bonus Step 8 - Stage 0 Prompt Injection Guardrail Quarantine](./docs/screenshots/demo_step_8_guardrail_blocked.png)
+
+</details>
 
 ---
 
@@ -205,3 +237,4 @@ All detailed architecture specifications, data models, sequence diagrams, and in
 - [`docs/08_Enterprise_Agent_Expansion_Ideas.md`](docs/08_Enterprise_Agent_Expansion_Ideas.md) & [`docs/08_Enterprise_Agent_Expansion_Ideas_ko.md`](docs/08_Enterprise_Agent_Expansion_Ideas_ko.md) — Enterprise AppSec Agent Expansion Specifications
 - [`docs/09_Agent_Orchestration_and_LLM_Call_Flow.md`](docs/09_Agent_Orchestration_and_LLM_Call_Flow.md) & [`docs/09_Agent_Orchestration_and_LLM_Call_Flow_ko.md`](docs/09_Agent_Orchestration_and_LLM_Call_Flow_ko.md) — Complete Node 0 $\to$ Node 6 Agent Orchestration & LLM Call Flow
 - [`docs/10_Next_Session_Handoff_and_Code_Review.md`](docs/10_Next_Session_Handoff_and_Code_Review.md) & [`docs/10_Next_Session_Handoff_and_Code_Review_ko.md`](docs/10_Next_Session_Handoff_and_Code_Review_ko.md) — Code Review Audit & Top 1~3 Implementation Verification Summary
+- [`docs/11_Guided_Demo_Walkthrough.md`](docs/11_Guided_Demo_Walkthrough.md) & [`docs/11_Guided_Demo_Walkthrough_ko.md`](docs/11_Guided_Demo_Walkthrough_ko.md) — Guided 7-Step (`🔴 1` ~ `🔴 7`) Demo Video & Visual Walkthrough Guide

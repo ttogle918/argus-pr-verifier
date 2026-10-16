@@ -2,6 +2,7 @@
 Patch scripts/build_presentation.py and verify zero Korean characters in EN mode.
 """
 import re
+import os
 from html.parser import HTMLParser
 
 BUILD_SCRIPT = os.path.join(os.path.dirname(__file__), "build_presentation.py")

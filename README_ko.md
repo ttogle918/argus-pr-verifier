@@ -1,6 +1,7 @@
 # 🛡️ Argus-PR: AI 레드팀 스웜 및 블라인드 메타 검증 시스템
 
 - 📊 **발표 자료 (PPT 바로가기)**: [**인터랙티브 발표 슬라이드 웹에서 바로 보기 →**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/presentation.html) · [`presentation.html`](./presentation.html)
+- 🎬 **번호순(`🔴 1 ~ 🔴 7`) 데모 영상 바로보기**: [**인터랙티브 웹 비디오 플레이어 열기 →**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html) · [`argus_pr_demo.webm`](./argus_pr_demo.webm) · [**단계별 캡처 가이드 (`docs/11_ko`)**](./docs/11_Guided_Demo_Walkthrough_ko.md)
 - 🇺🇸 **English Documentation (EN 버전 바로가기)**: [**View English README (`README.md`) →**](./README.md)
 - 🇰🇷 **한국어 문서 (KO 버전 바로가기)**: [**한국어 README (`README_ko.md`)**](./README_ko.md)
 
@@ -8,6 +9,7 @@
 > 병합(Merge) 전에 AI가 작성한 Pull Request를 깨뜨리기 위해 다중 턴 공격을 수행하는 **AI 레드팀 에이전트 스웜(Swarm)**과, 철저히 격리된 **블라인드 변이 테스트(Blind Mutation Testing)**를 통해 그 검증 자체의 신뢰도를 수학적으로 증명하는 시스템입니다.
 
 [![Presentation Deck](https://img.shields.io/badge/📊_발표자료_PPT-Interactive_Slides-FF6F00)](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/presentation.html)
+[![Demo Video Player](https://img.shields.io/badge/🎬_데모_영상-🔴_1..7_순차_시연-E11D48)](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html)
 [![English README](https://img.shields.io/badge/Docs-English-blue)](./README.md)
 [![Korean README](https://img.shields.io/badge/문서-한국어-green)](./README_ko.md)
 [![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Cloud_Run-00C853)](https://argus-pr-verifier-987693331070.asia-northeast3.run.app/)
@@ -21,9 +23,13 @@
 
 ## 🎥 라이브 데모 및 저장소 링크
 
-![Argus-PR Demo GIF](./argus_pr_demo.gif)
+![Argus-PR Guided Demo GIF (🔴 1 -> 🔴 7)](./argus_pr_demo.gif)
 
 - **🚀 라이브 배포 데모 (Google Cloud Run)**: [https://argus-pr-verifier-987693331070.asia-northeast3.run.app/](https://argus-pr-verifier-987693331070.asia-northeast3.run.app/)
+- **🎬 번호순(`🔴 1` $\to$ `🔴 7` + 보너스 `PR #666`) E2E 데모 녹화 영상**:
+  - [**▶ 챕터 점프 지원 웹 비디오 플레이어 바로 열기 (`demo_video.html`)**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html)
+  - [**⬇ 고화질 원본 비디오 파일 (`./argus_pr_demo.webm`, 9.5 MB)**](./argus_pr_demo.webm) · [**GitHub Raw 직접 스트리밍/다운로드**](https://raw.githubusercontent.com/ttogle918/argus-pr-verifier/main/argus_pr_demo.webm)
+  - [**🧭 번호순(`🔴 1 ~ 🔴 7`) 단계별 화면 캡처 및 상세 시연 가이드 (`docs/11_Guided_Demo_Walkthrough_ko.md`)**](./docs/11_Guided_Demo_Walkthrough_ko.md)
 - **📊 인터랙티브 발표 슬라이드 (PPT)**: [웹에서 바로 열기 (HTML Preview)](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/presentation.html) (`./presentation.html`)
 - **🌐 공개 GitHub 저장소 (Public GitHub Repo)**: [https://github.com/ttogle918/argus-pr-verifier](https://github.com/ttogle918/argus-pr-verifier)
 
@@ -175,19 +181,45 @@ docker run -p 8080:8080 -e GEMINI_API_KEY="your-gemini-api-key" argus-pr
 
 ---
 
-## 🧭 6. 심사위원용 데모 시연 가이드 (Demo Walkthrough)
+## 🧭 6. 심사위원용 번호순(`🔴 1` $\to$ `🔴 7`) 데모 시연 가이드
 
-1. **검증 대상 PR 선택 또는 커스텀 PR / ZIP 업로드**:
-   - 상단 드롭다운에서 **`PR #412: AI Instant Refund`**, **`PR #3 (Cisco): Sandbox Pipeline Quote Bypass`**, **`PR #809: Redis Sliding-Window`**, **`PR #666: Adversarial Prompt Injection`** 중 하나를 선택합니다.
-   - 또는 **`[+ Custom PR / Diff]`** 버튼을 눌러 GitHub PR 주소, Diff, 또는 멀티파일 `.zip` 아카이브를 업로드합니다.
-2. **블라인드 검증 스웜 실행 & 멀티 페르소나 BOLA DAST 검증 (Stage 0 ~ Stage 5)**:
-   - **`[⚡ 검증 스웜 실행]`**을 클릭해 실시간 SSE 스트리밍으로 Stage 0 가드레일, Stage 0.5 스마트 범위 분류, Track A(5회 적응형 레드팀 루프) 및 Track B(8개 봉인 변이 교차 검증)를 확인합니다.
-   - 상단 Scope Triage 배너의 **`[🔐 멀티 페르소나 BOLA DAST 실행]`** 버튼을 클릭하여 3개 가상 페르소나(`Victim: Tenant A`, `Attacker: Tenant B`, `Anonymous`) 교차 호출 매트릭스(`PROVEN_BOLA_BYPASS` vs `ENFORCED_ISOLATION`)를 확인합니다.
-3. **Blue-Team CEGIS 자가 치유 패치 루프 실행 (Stage 6)**:
-   - 하단 One-Card 요약 리포트에서 **`[🔧 권장 패치 자동 적용 및 재검증]`** 버튼을 클릭합니다.
-   - **`🛡️ Blue-Team CEGIS Self-Healing Loop`** 배너에서 **Attempt #1 (`patch_3802_att1`, Gate 3 TOCTOU 반례 실패 `FAILED_COUNTEREXAMPLE`)** $\to$ **Attempt #2 (`patch_3802_att2`, `cache.set_nx` 원자적 분산 락 합성 후 4-Gate 전원 `VERIFIED`)** 타임라인과 함께 최종 판정이 **`PASS (MERGE READY)`**로 전환되는 것을 확인합니다.
-4. **검증된 PR 번들 & 고정 회귀 테스트 내보내기 및 최종 승인 (Stage 7)**:
-   - One-Card 하단 액션 바에서 **`[📦 PR 번들 + 고정 회귀 테스트 내보내기]`** 버튼을 클릭해 `tests/security/test_argus_regression_*.py` 코드, 프로덕션 패치 Diff, GitHub Actions CI YAML을 원클릭 복사하고 **`[✅ 병합 승인 (Approve Merge)]`**으로 감사 로그를 기록합니다.
+UI 화면의 모든 핵심 버튼 앞에 **`🔴 1`부터 `🔴 7`까지 빨간색 순서 배지**가 표시되어 있어, 심사위원이 번호 순서대로 클릭만 하면 전체 폐루프 파이프라인을 즉시 체험할 수 있습니다 (전체 상세 화면은 [`docs/11_Guided_Demo_Walkthrough_ko.md`](docs/11_Guided_Demo_Walkthrough_ko.md) 참조):
+
+| 단계 | 버튼 배지 | UI 버튼 이름 (셀렉터) | 실행되는 파이프라인 단계 및 핵심 검증 동작 |
+| :--- | :--- | :--- | :--- |
+| **1단계** | `🔴 1` | **`PR Diff 보기`** (`#toggle-diff-btn`) | 검증 전 대상 Pull Request의 원본 코드 변경점(Unified Diff)을 펼쳐서 확인합니다. |
+| **2단계** | `🔴 2` | **`블라인드 검증 스웜 실행`** (`#launch-btn`) | Stage 0 가드레일 $\to$ Stage 0.5 스마트 범위 분류 $\to$ Track 1A/1B (`gemini-4-argon` 정보 격리) $\to$ Stage 2 병렬 `4x gemini-3.8-flash` 5회 적응형 공격 루프 $\to$ Stage 3 듀얼 트랙 샌드박스를 실행합니다. |
+| **3단계** | `🔴 3` | **`🔐 Run Multi-Persona BOLA DAST`** (`#run-live-dast-bola-btn`) | 3개의 가상 JWT 페르소나(`Victim: Tenant A`, `Attacker: Tenant B`, `Anonymous`)를 즉석 발급해 테넌트 간 권한 우회(`PROVEN_BOLA_BYPASS` vs `ENFORCED_ISOLATION`)를 실증합니다. |
+| **4단계** | `🔴 4` / `🔴 4-1` | **`+ 커스텀 버그 심기` / `추가 & 재계산`** (`#toggle-mutant-form-btn`, `#submit-custom-mutant-btn`) | 심사위원이 직접 커스텀 인공 버그(`M9`)를 주입하고, `backend/scoring.py`가 블라인드 변이 탐지율($M/K$)을 즉석에서 재계산(`8/9 = 88.9%`)하는 것을 검증합니다. |
+| **5단계** | `🔴 5` | **`권장 패치 적용 후 재검증`** (`#apply-patch-btn`) | **Stage 6 Blue-Team CEGIS 4-Gate 자가 치유 루프**를 가동하여 Attempt #1(Gate 3 TOCTOU 반례 실패) $\to$ Attempt #2(4대 게이트 전원 통과)로 패치를 완성하고 `ALLOW_MERGE` 및 `100% (9/9)` 탐지율을 달성합니다. |
+| **6단계** | `🔴 6` | **`Export PR + Pinned Regression Test`** (`#export-bundle-btn`) | **Stage 7 영구 보안 회귀 테스트 번들 모달**을 열어 검증된 패치 Diff + 고정 `pytest` 회귀 테스트(`tests/test_regression_pr_142.py`) + GitHub Actions CI YAML을 추출합니다. |
+| **7단계** | `🔴 7` | **`병합 최종 승인`** (`#approve-btn`, `#reject-btn`) | **Human-in-the-Loop 최종 병합 게이트**에서 승인 도장을 찍고 SQLite 감사 로그에 영구 기록합니다. |
+
+<details>
+<summary><b>📸 클릭하여 단계별 실행 화면 캡처 보기 (<code>🔴 1</code> ~ <code>🔴 7</code> + 보너스 <code>PR #666</code>)</b></summary>
+
+#### `🔴 1` & `🔴 2`: PR Diff 확인 및 블라인드 검증 스웜 실행 완료
+![Step 2 - 블라인드 검증 스웜 완료](./docs/screenshots/demo_step_2_swarm_done.png)
+
+#### `🔴 3`: 멀티 페르소나 교차 테넌트 BOLA DAST 매트릭스
+![Step 3 - 멀티 페르소나 BOLA DAST 매트릭스](./docs/screenshots/demo_step_3_bola_dast.png)
+
+#### `🔴 4`: 실시간 커스텀 버그(`M9`) 심기 및 탐지율 재계산
+![Step 4 - 커스텀 버그 심기 및 재계산](./docs/screenshots/demo_step_4_custom_mutant.png)
+
+#### `🔴 5`: Blue-Team CEGIS 4-Gate 자가 치유 루프 (`Attempt #1 실패` $\to$ `Attempt #2 통과`)
+![Step 5 - Blue-Team CEGIS 자가 치유 패치 완료](./docs/screenshots/demo_step_5_cegis_patch.png)
+
+#### `🔴 6`: 검증된 PR 패치 + 고정 `pytest` 회귀 테스트 번들 추출 모달
+![Step 6 - PR 번들 및 회귀 테스트 모달](./docs/screenshots/demo_step_6_export_bundle.png)
+
+#### `🔴 7`: Human-in-the-Loop 최종 병합 승인 완료
+![Step 7 - 병합 최종 승인 완료](./docs/screenshots/demo_step_7_approved.png)
+
+#### 🛡️ 보너스 (`PR #666`): Stage 0 적대적 프롬프트 인젝션 가드레일 즉시 차단
+![Bonus Step 8 - Stage 0 프롬프트 인젝션 차단](./docs/screenshots/demo_step_8_guardrail_blocked.png)
+
+</details>
 
 ---
 
@@ -205,3 +237,4 @@ docker run -p 8080:8080 -e GEMINI_API_KEY="your-gemini-api-key" argus-pr
 - [`docs/08_Enterprise_Agent_Expansion_Ideas.md`](docs/08_Enterprise_Agent_Expansion_Ideas.md) & [`docs/08_Enterprise_Agent_Expansion_Ideas_ko.md`](docs/08_Enterprise_Agent_Expansion_Ideas_ko.md) — 엔터프라이즈 AppSec 에이전트 확장 기능 상세 명세
 - [`docs/09_Agent_Orchestration_and_LLM_Call_Flow.md`](docs/09_Agent_Orchestration_and_LLM_Call_Flow.md) & [`docs/09_Agent_Orchestration_and_LLM_Call_Flow_ko.md`](docs/09_Agent_Orchestration_and_LLM_Call_Flow_ko.md) — Node 0 $\to$ Node 6 멀티 에이전트 오케스트레이션 및 LLM 호출 흐름도
 - [`docs/10_Next_Session_Handoff_and_Code_Review.md`](docs/10_Next_Session_Handoff_and_Code_Review.md) & [`docs/10_Next_Session_Handoff_and_Code_Review_ko.md`](docs/10_Next_Session_Handoff_and_Code_Review_ko.md) — 코드 리뷰 및 Top 1~3 구현 검증 완료 요약서
+- [`docs/11_Guided_Demo_Walkthrough.md`](docs/11_Guided_Demo_Walkthrough.md) & [`docs/11_Guided_Demo_Walkthrough_ko.md`](docs/11_Guided_Demo_Walkthrough_ko.md) — 번호순(`🔴 1` ~ `🔴 7`) 데모 영상 및 단계별 캡처 시연 가이드

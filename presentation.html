@@ -271,6 +271,10 @@
   body.lang-mode-en p.lang-en,
   body.lang-mode-en section.lang-en,
   body.lang-mode-en span.lang-en-block { display: block !important; }
+  img.lang-ko { display: block !important; }
+  img.lang-en { display: none !important; }
+  body.lang-mode-en img.lang-ko { display: none !important; }
+  body.lang-mode-en img.lang-en { display: block !important; }
 
   /* Print Media */
   @media print {
@@ -303,8 +307,8 @@
 
   <div class="nav-controls">
     <div class="lang-toggle">
-      <button class="lang-btn active" id="btn-ko" onclick="setLanguage('ko')">KO 한국어</button>
-      <button class="lang-btn" id="btn-en" onclick="setLanguage('en')">EN English</button>
+      <button class="lang-btn active" id="btn-ko" onclick="setLanguage('ko')"><span class="lang-ko">KO 한국어</span><span class="lang-en">KO</span></button>
+      <button class="lang-btn" id="btn-en" onclick="setLanguage('en')"><span class="lang-ko">EN 영어</span><span class="lang-en">EN</span></button>
     </div>
     <button class="print-btn" onclick="window.print()">
       PRINT / PDF
@@ -605,7 +609,8 @@
 
     <div class="main">
       <div class="diagram-frame standard">
-        <img src="docs/image/diagram_user_journey.svg" alt="End-to-End User Journey Diagram" style="max-height: 405px;">
+        <img class="lang-ko" src="docs/image/diagram_user_journey_ko.svg" alt="End-to-End User Journey Diagram" style="max-height: 405px;">
+        <img class="lang-en" src="docs/image/diagram_user_journey_en.svg" alt="End-to-End User Journey Diagram" style="max-height: 405px;">
         <div class="diagram-caption">
           <span class="lang-ko">▲ 전체 엔드투엔드 파이프라인 시퀀스 다이어그램 (보안 차단 &rarr; 슬라이싱 &rarr; 스웜 &rarr; 원카드)</span>
           <span class="lang-en">▲ End-to-End Pipeline Sequence Diagram (Perimeter &rarr; AST Slicing &rarr; Swarm &rarr; One-Card)</span>
@@ -710,7 +715,8 @@
 
     <div class="main">
       <div class="diagram-frame standard">
-        <img src="docs/image/diagram_stage0_guardrail.svg" alt="Stage 0 Guardrail and Scope Slicer Diagram" style="max-height: 405px;">
+        <img class="lang-ko" src="docs/image/diagram_stage0_guardrail_ko.svg" alt="Stage 0 Guardrail and Scope Slicer Diagram" style="max-height: 405px;">
+        <img class="lang-en" src="docs/image/diagram_stage0_guardrail_en.svg" alt="Stage 0 Guardrail and Scope Slicer Diagram" style="max-height: 405px;">
         <div class="diagram-caption">
           <span class="lang-ko">▲ Stage 0 초저지연 프롬프트 인젝션 검문 및 Stage 0.5 스마트 범위 슬라이싱 구조도</span>
           <span class="lang-en">▲ Stage 0 Low-Latency Prompt Injection Quarantine &amp; Stage 0.5 Smart Scope Slicing Topology</span>
@@ -815,7 +821,8 @@
 
     <div class="main">
       <div class="diagram-frame extra-large">
-        <img src="docs/image/diagram_dual_track.svg" alt="Argus-PR Dual-Track Blind Verification Architecture" style="max-height: 520px;">
+        <img class="lang-ko" src="docs/image/diagram_dual_track_ko.svg" alt="Argus-PR Dual-Track Blind Verification Architecture" style="max-height: 520px;">
+        <img class="lang-en" src="docs/image/diagram_dual_track_en.svg" alt="Argus-PR Dual-Track Blind Verification Architecture" style="max-height: 520px;">
         <div class="diagram-caption">
           <span class="lang-ko">▲ Argus-PR 듀얼 트랙 블라인드 검증 아키텍처 다이어그램 (중앙 정보 격리벽 및 2-Phase 샌드박스)</span>
           <span class="lang-en">▲ Argus-PR Dual-Track Blind Verification Architecture Diagram (Central Information Wall &amp; 2-Phase Sandbox)</span>
@@ -890,7 +897,8 @@
 
     <div class="main">
       <div class="diagram-frame standard">
-        <img src="docs/image/diagram_stage2_swarm.svg" alt="Stage 2 Attacker Swarm and BOLA Matrix Diagram" style="max-height: 405px;">
+        <img class="lang-ko" src="docs/image/diagram_stage2_swarm_ko.svg" alt="Stage 2 Attacker Swarm and BOLA Matrix Diagram" style="max-height: 405px;">
+        <img class="lang-en" src="docs/image/diagram_stage2_swarm_en.svg" alt="Stage 2 Attacker Swarm and BOLA Matrix Diagram" style="max-height: 405px;">
         <div class="diagram-caption">
           <span class="lang-ko">▲ Stage 2 4대 공격자 스웜 구성 및 Multi-Persona BOLA 교차 테넌트 차분 매트릭스</span>
           <span class="lang-en">▲ Stage 2 4-Attacker Swarm Topology &amp; Multi-Persona BOLA Cross-Tenant Differential Matrix</span>
@@ -995,7 +1003,8 @@
 
     <div class="main">
       <div class="diagram-frame standard">
-        <img src="docs/image/diagram_stage3_sandbox.svg" alt="Stage 3 Sandbox and Differential Execution Diagram" style="max-height: 405px;">
+        <img class="lang-ko" src="docs/image/diagram_stage3_sandbox_ko.svg" alt="Stage 3 Sandbox and Differential Execution Diagram" style="max-height: 405px;">
+        <img class="lang-en" src="docs/image/diagram_stage3_sandbox_en.svg" alt="Stage 3 Sandbox and Differential Execution Diagram" style="max-height: 405px;">
         <div class="diagram-caption">
           <span class="lang-ko">▲ Stage 3 Antigravity 격리 리눅스 샌드박스 및 Track (a)/(b) 차분 실행 구조도</span>
           <span class="lang-en">▲ Stage 3 Antigravity Remote Linux Sandbox &amp; Track (a)/(b) Differential Execution Flow</span>
@@ -1100,7 +1109,8 @@
 
     <div class="main">
       <div class="diagram-frame standard">
-        <img src="docs/image/diagram_stage4_onecard.svg" alt="Stage 4 Scoring and One-Card Gate Diagram" style="max-height: 405px;">
+        <img class="lang-ko" src="docs/image/diagram_stage4_onecard_ko.svg" alt="Stage 4 Scoring and One-Card Gate Diagram" style="max-height: 405px;">
+        <img class="lang-en" src="docs/image/diagram_stage4_onecard_en.svg" alt="Stage 4 Scoring and One-Card Gate Diagram" style="max-height: 405px;">
         <div class="diagram-caption">
           <span class="lang-ko">▲ Stage 4 Python 결정론적 채점 엔진 및 리뷰어 원카드(One-Card) 의사결정 게이트</span>
           <span class="lang-en">▲ Stage 4 Deterministic Python Scoring Engine &amp; Reviewer One-Card Decision Gate</span>
@@ -1205,7 +1215,8 @@
 
     <div class="main">
       <div class="diagram-frame standard">
-        <img src="docs/image/diagram_cegis_and_bundle.svg" alt="CEGIS Self-Healing Loop and Bundle Export Diagram" style="max-height: 405px;">
+        <img class="lang-ko" src="docs/image/diagram_cegis_and_bundle_ko.svg" alt="CEGIS Self-Healing Loop and Bundle Export Diagram" style="max-height: 405px;">
+        <img class="lang-en" src="docs/image/diagram_cegis_and_bundle_en.svg" alt="CEGIS Self-Healing Loop and Bundle Export Diagram" style="max-height: 405px;">
         <div class="diagram-caption">
           <span class="lang-ko">▲ 반례 유도 자가 치유(CEGIS) 4-Gate 루프 및 영구 PR 자산 번들 수출 흐름</span>
           <span class="lang-en">▲ Counterexample-Guided Self-Healing (CEGIS) 4-Gate Loop &amp; Permanent PR Bundle Export</span>
@@ -1318,7 +1329,8 @@
 
     <div class="main">
       <div class="diagram-frame standard">
-        <img src="docs/image/diagram_agent_hierarchy.svg" alt="Dual-Layer AI Hierarchy and Delegation Diagram" style="max-height: 405px;">
+        <img class="lang-ko" src="docs/image/diagram_agent_hierarchy_ko.svg" alt="Dual-Layer AI Hierarchy and Delegation Diagram" style="max-height: 405px;">
+        <img class="lang-en" src="docs/image/diagram_agent_hierarchy_en.svg" alt="Dual-Layer AI Hierarchy and Delegation Diagram" style="max-height: 405px;">
         <div class="diagram-caption">
           <span class="lang-ko">▲ 런타임 모델 라우팅 (Layer A) vs 빌드타임 서브에이전트 위임 기준 (Layer B)</span>
           <span class="lang-en">▲ Runtime Model Routing (Layer A) vs Build-Time Subagent Delegation (Layer B)</span>
@@ -1335,9 +1347,21 @@
             <span class="card-badge badge-purple">INTERACTIONS API</span>
           </div>
           <ul class="card-list">
-            <li><b>gemini-3.5-flash-lite</b>: ~68ms 초저지연 프롬프트 인젝션 스캐너 (Stage 0).</li>
-            <li><b>gemini-4-argon</b>: 고난도 불변성(INV-1..4) 추출, 비밀 미끼 주입, 최종 리스크 종합.</li>
-            <li><b>4x gemini-3.8-flash</b>: 동시성/보안 파괴 테스트 생성을 위한 고속 4대 병렬 스웜.</li>
+            <li>
+              <b>gemini-3.5-flash-lite</b>:
+              <span class="lang-ko">~68ms 초저지연 프롬프트 인젝션 스캐너 (Stage 0).</span>
+              <span class="lang-en">~68ms ultra-low latency prompt injection scanner (Stage 0).</span>
+            </li>
+            <li>
+              <b>gemini-4-argon</b>:
+              <span class="lang-ko">고난도 불변성(INV-1..4) 추출, 비밀 미끼 주입, 최종 리스크 종합.</span>
+              <span class="lang-en">Extracts complex invariants (INV-1..4), injects canary secrets, synthesizes final risk.</span>
+            </li>
+            <li>
+              <b>4x gemini-3.8-flash</b>:
+              <span class="lang-ko">동시성/보안 파괴 테스트 생성을 위한 고속 4대 병렬 스웜.</span>
+              <span class="lang-en">High-speed 4-agent parallel swarm for generating concurrency/security break tests.</span>
+            </li>
           </ul>
         </div>
 
@@ -1350,9 +1374,20 @@
             <span class="card-badge badge-accent">INVOKE_SUBAGENT</span>
           </div>
           <ul class="card-list">
-            <li><b>pro (Argon)</b>: 정보 격리벽·샌드박스 하네스 설계, 실시간 터미널 &amp; UI 상태 머신.</li>
-            <li><b>flash (3.8 Flash)</b>: 대량 벤치마크 PR 데이터셋 생성, Playwright E2E GIF 자동 캡처.</li>
-            <li><b>원칙</b>: 깊은 추론·무결성은 <code>pro</code>, 병렬 구현·반복 보일러플레이트는 <code>flash</code>.</li>
+            <li>
+              <b>pro (Argon)</b>:
+              <span class="lang-ko">정보 격리벽·샌드박스 하네스 설계, 실시간 터미널 &amp; UI 상태 머신.</span>
+              <span class="lang-en">Air-gapped isolation wall &amp; sandbox harness design, live terminal &amp; UI state machine.</span>
+            </li>
+            <li>
+              <b>flash (3.8 Flash)</b>:
+              <span class="lang-ko">대량 벤치마크 PR 데이터셋 생성, Playwright E2E GIF 자동 캡처.</span>
+              <span class="lang-en">Synthetic benchmark PR dataset generation, automated Playwright E2E GIF capture.</span>
+            </li>
+            <li>
+              <span class="lang-ko"><b>원칙</b>: 깊은 추론·무결성은 <code>pro</code>, 병렬 구현·반복 보일러플레이트는 <code>flash</code>.</span>
+              <span class="lang-en"><b>Principle</b>: Deep reasoning &amp; safety invariant integrity use <code>pro</code>, parallel task execution &amp; boilerplate use <code>flash</code>.</span>
+            </li>
           </ul>
         </div>
       </div>
@@ -1456,7 +1491,7 @@
           <ul class="card-list">
             <li>
               <span class="lang-ko"><b>해커톤 데모 무결성 보장</b>: 상단 바의 <code>기록 재생 안전 모드</code> 토글 시 사전 검증된 벤치마크 트레이스를 로드하여 1.5초 내에 완벽 재현.</span>
-              <span class="lang-en"><b>Hackathon Demo Reliability</b>: The <code>기록 재생 안전 모드</code> toggle serves pre-verified high-fidelity traces within 1.5 seconds.</span>
+              <span class="lang-en"><b>Hackathon Demo Reliability</b>: The <code>Safe Replay Mode</code> toggle serves pre-verified high-fidelity traces within 1.5 seconds.</span>
             </li>
             <li>
               <span class="lang-ko"><b>채점 엔진은 100% 실시간 실행</b>: 트레이스를 재생하더라도 <code>backend/scoring.py</code>의 수학적 채점 엔진은 실시간 계산되어 점수의 조작이 불가능함.</span>
@@ -1563,9 +1598,18 @@
           </div>
           <p class="card-p"><b>PR ID</b>: <code>pr-checkout-race</code></p>
           <ul class="card-list">
-            <li><b>탐지 결함</b>: 결제 잔액 중복 차감 동시성 레이스 (State Attacker 2/2 포착).</li>
-            <li><b>변이체 점수</b>: 8개 중 7개 처치 (87.5% 검증 신뢰도).</li>
-            <li><b>인간 결정</b>: 🛑 Merge Rejected &rarr; 자가 치유 패치 적용.</li>
+            <li>
+              <span class="lang-ko"><b>탐지 결함</b>: 결제 잔액 중복 차감 동시성 레이스 (State Attacker 2/2 포착).</span>
+              <span class="lang-en"><b>Detected Defect</b>: Double-deduction balance race condition (Caught 2/2 by State Attacker).</span>
+            </li>
+            <li>
+              <span class="lang-ko"><b>변이체 점수</b>: 8개 중 7개 처치 (87.5% 검증 신뢰도).</span>
+              <span class="lang-en"><b>Mutant Score</b>: 7 of 8 killed (87.5% verification reliability).</span>
+            </li>
+            <li>
+              <span class="lang-ko"><b>인간 결정</b>: 🛑 Merge Rejected &rarr; 자가 치유 패치 적용.</span>
+              <span class="lang-en"><b>Human Decision</b>: 🛑 Merge Rejected &rarr; Apply CEGIS self-healing patch.</span>
+            </li>
           </ul>
         </div>
 
@@ -1579,9 +1623,18 @@
           </div>
           <p class="card-p"><b>PR ID</b>: <code>pr-ratelimiter-offbyone</code></p>
           <ul class="card-list">
-            <li><b>탐지 결함</b>: 슬라이딩 윈도우 &gt; 대신 &ge; 비교로 인한 1회 오버플로우 허용.</li>
-            <li><b>변이체 점수</b>: 8개 중 8개 처치 (100% 무결성 달성).</li>
-            <li><b>인간 결정</b>: 🛑 Merge Rejected &rarr; 경계 연산자 수정 패치 반영.</li>
+            <li>
+              <span class="lang-ko"><b>탐지 결함</b>: 슬라이딩 윈도우 &gt; 대신 &ge; 비교로 인한 1회 오버플로우 허용.</span>
+              <span class="lang-en"><b>Detected Defect</b>: 1-request overflow permitted due to &gt; instead of &ge; comparison in sliding window.</span>
+            </li>
+            <li>
+              <span class="lang-ko"><b>변이체 점수</b>: 8개 중 8개 처치 (100% 무결성 달성).</span>
+              <span class="lang-en"><b>Mutant Score</b>: 8 of 8 killed (100% invariant integrity achieved).</span>
+            </li>
+            <li>
+              <span class="lang-ko"><b>인간 결정</b>: 🛑 Merge Rejected &rarr; 경계 연산자 수정 패치 반영.</span>
+              <span class="lang-en"><b>Human Decision</b>: 🛑 Merge Rejected &rarr; Apply boundary operator fix patch.</span>
+            </li>
           </ul>
         </div>
 
@@ -1595,9 +1648,18 @@
           </div>
           <p class="card-p"><b>PR ID</b>: <code>pr-prompt-injection-attack</code></p>
           <ul class="card-list">
-            <li><b>공격 페이로드</b>: PR 주석 내 <code>IGNORE PREVIOUS INSTRUCTIONS</code>.</li>
-            <li><b>가드레일 방어</b>: Gemini 3.5 Flash-Lite가 68ms 만에 즉시 격리 차단.</li>
-            <li><b>인간 결정</b>: 🛑 Quarantined (LLM 및 샌드박스 비용 0원 방어).</li>
+            <li>
+              <span class="lang-ko"><b>공격 페이로드</b>: PR 주석 내 <code>IGNORE PREVIOUS INSTRUCTIONS</code>.</span>
+              <span class="lang-en"><b>Attack Payload</b>: <code>IGNORE PREVIOUS INSTRUCTIONS</code> inside PR commit comments.</span>
+            </li>
+            <li>
+              <span class="lang-ko"><b>가드레일 방어</b>: Gemini 3.5 Flash-Lite가 68ms 만에 즉시 격리 차단.</span>
+              <span class="lang-en"><b>Guardrail Defense</b>: Gemini 3.5 Flash-Lite quarantined within 68ms.</span>
+            </li>
+            <li>
+              <span class="lang-ko"><b>인간 결정</b>: 🛑 Quarantined (LLM 및 샌드박스 비용 0원 방어).</span>
+              <span class="lang-en"><b>Human Decision</b>: 🛑 Quarantined ($0 downstream LLM &amp; sandbox compute cost).</span>
+            </li>
           </ul>
         </div>
       </div>
