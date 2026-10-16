@@ -1501,7 +1501,7 @@ html_content = """<!DOCTYPE html>
 <!-- ========================================================================= -->
 <!-- SLIDE 11: BENCHMARK RESULTS & CONCLUSION                                  -->
 <!-- ========================================================================= -->
-<section class="page" id="p-08">
+<section class="page" id="p-11">
   <div class="phead">
     <div class="left">
       <span class="idx">11</span>
@@ -1689,6 +1689,15 @@ html_content = """<!DOCTYPE html>
 </html>
 """
 
+# 1. Write docs/presentation.html (uses image/ prefix)
+docs_content = html_content.replace('src="docs/image/', 'src="image/')
 with open(TEMPLATE_PATH, "w", encoding="utf-8") as f:
-    f.write(html_content)
-print(f"Updated {TEMPLATE_PATH}")
+    f.write(docs_content)
+print(f"Updated {TEMPLATE_PATH} (relative image/ path)")
+
+# 2. Write root presentation.html (uses docs/image/ prefix)
+ROOT_PATH = os.path.join(os.path.dirname(__file__), "..", "presentation.html")
+root_content = html_content.replace('src="image/', 'src="docs/image/')
+with open(ROOT_PATH, "w", encoding="utf-8") as f:
+    f.write(root_content)
+print(f"Updated {ROOT_PATH} (relative docs/image/ path)")
