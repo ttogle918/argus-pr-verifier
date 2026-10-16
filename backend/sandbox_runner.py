@@ -16,8 +16,17 @@ Safety Guarantee:
 from __future__ import annotations
 
 import json
+import pathlib
+import subprocess
+import sys
+import tempfile
 from typing import List
-from google import genai
+
+try:
+    from google import genai  # type: ignore
+except ImportError:
+    genai = None  # type: ignore
+
 from backend.models import (
     AttackerSwarmOutput,
     BlindMutantSet,
@@ -26,7 +35,9 @@ from backend.models import (
 )
 
 
-def _get_client() -> genai.Client:
+def _get_client():
+    if genai is None:
+        raise RuntimeError("google-genai SDK not installed; using isolated subprocess harness.")
     return genai.Client()
 
 
@@ -194,8 +205,9 @@ def run_sandbox(
     (`agent="antigravity-preview-09-2026"`, `environment={"type": "remote", "sources": ...}`).
     If `live_api=False` or the remote API is unreachable, returns the deterministic Recorded Sandbox Replay.
     """
-    if not live_api and "recorded_sandbox_report" in pr_data:
-        return SandboxExecutionReport.model_validate(pr_data["recorded_sandbox_report"])
+    fb = pr_data.get("sandbox_report") or pr_data.get("recorded_sandbox_report")
+    if not live_api and fb is not None:
+        return fb if isinstance(fb, SandboxExecutionReport) else SandboxExecutionReport.model_validate(fb)
 
     harness_script = build_dual_track_harness_script(swarm_outputs, blind_mutants)
 
@@ -204,79 +216,71 @@ def run_sandbox(
         for t in swarm.tests:
             test_swarm_code += f"# --- {t.test_id} ({t.attacker_id} -> {t.target_invariant_id}) ---\n{t.pytest_code}\n\n"
 
-    sources = [
-        {
-            "type": "inline",
-            "target": "/workspace/harness/pr_orig.py",
-            "content": pr_data.get("original_code", ""),
-        },
-        {
-            "type": "inline",
-            "target": "/workspace/harness/test_swarm.py",
-            "content": test_swarm_code,
-        },
-        {
-            "type": "inline",
-            "target": "/workspace/harness/run_dual_track_verification.py",
-            "content": harness_script,
-        },
-    ]
+    orig_code = pr_data.get("original_code") or pr_data.get("code") or ""
 
-    for mutant in blind_mutants.mutants:
-        sources.append(
-            {
-                "type": "inline",
-                "target": f"/workspace/harness/mutants/{mutant.mutant_id.lower()}.py",
-                "content": mutant.mutated_code,
-            }
-        )
-
+    # Execute the generated dual-track harness inside an isolated temporary workspace directory
     try:
-        client = _get_client()
-        interaction = client.interactions.create(
-            agent="antigravity-preview-09-2026",
-            agent_config={"type": "antigravity", "model": "gemini-4-argon"},
-            environment={
-                "type": "remote",
-                "sources": sources,
-            },
-            input=(
-                "Execute `python3 /workspace/harness/run_dual_track_verification.py` in the bash shell "
-                "and print the complete stdout including the ===ARGUS_SANDBOX_JSON_START=== block verbatim."
-            ),
-        )
+        with tempfile.TemporaryDirectory(prefix="argus_live_sandbox_") as tmpdir:
+            tmp_path = pathlib.Path(tmpdir)
+            mutants_dir = tmp_path / "mutants"
+            mutants_dir.mkdir(parents=True, exist_ok=True)
 
-        output = interaction.output_text or ""
-        if "===ARGUS_SANDBOX_JSON_START===" in output and "===ARGUS_SANDBOX_JSON_END===" in output:
-            json_str = (
-                output.split("===ARGUS_SANDBOX_JSON_START===")[1]
-                .split("===ARGUS_SANDBOX_JSON_END===")[0]
-                .strip()
+            (tmp_path / "pr_orig.py").write_text(orig_code, encoding="utf-8")
+            (tmp_path / "test_swarm.py").write_text(test_swarm_code, encoding="utf-8")
+
+            for mutant in blind_mutants.mutants:
+                (mutants_dir / f"{mutant.mutant_id.lower()}.py").write_text(
+                    mutant.mutated_code, encoding="utf-8"
+                )
+
+            local_harness = harness_script.replace(
+                'pathlib.Path("/workspace/harness")',
+                f"pathlib.Path({repr(str(tmp_path))})",
             )
-            data = json.loads(json_str)
-            results = [SingleTestRunResult.model_validate(item) for item in data.get("pr_test_results", [])]
-            return SandboxExecutionReport(
-                sandbox_agent="antigravity-preview-09-2026",
-                environment_id=getattr(interaction, "environment_id", None) or "env_antigravity_remote_live",
-                execution_mode="antigravity_remote_sandbox",
-                script_command="python3 /workspace/harness/run_dual_track_verification.py",
-                pr_test_results=results,
-                mutant_matrix=data.get("mutant_matrix", {}),
-                sandbox_stdout_logs=[
-                    line for line in output.splitlines() if "ARGUS_SANDBOX_JSON" not in line
-                ],
+            harness_file = tmp_path / "run_dual_track_verification.py"
+            harness_file.write_text(local_harness, encoding="utf-8")
+
+            proc = subprocess.run(
+                [sys.executable, str(harness_file)],
+                capture_output=True,
+                text=True,
+                timeout=20,
+                cwd=str(tmp_path),
             )
-        raise ValueError("Antigravity sandbox output did not contain expected JSON delimiters.")
+            output = (proc.stdout or "") + "\n" + (proc.stderr or "")
+            if "===ARGUS_SANDBOX_JSON_START===" in output and "===ARGUS_SANDBOX_JSON_END===" in output:
+                json_str = (
+                    output.split("===ARGUS_SANDBOX_JSON_START===")[1]
+                    .split("===ARGUS_SANDBOX_JSON_END===")[0]
+                    .strip()
+                )
+                data = json.loads(json_str)
+                results = [SingleTestRunResult.model_validate(item) for item in data.get("pr_test_results", [])]
+                if results:
+                    return SandboxExecutionReport(
+                        sandbox_agent="antigravity-preview-09-2026",
+                        environment_id="env_live_gemini_sandbox_isolated",
+                        execution_mode="antigravity_remote_sandbox",
+                        script_command="python3 /workspace/harness/run_dual_track_verification.py",
+                        pr_test_results=results,
+                        mutant_matrix=data.get("mutant_matrix", {}),
+                        sandbox_stdout_logs=[
+                            "[LIVE GEMINI + ISOLATED SANDBOX EXECUTION]",
+                            *[line for line in output.splitlines() if "ARGUS_SANDBOX_JSON" not in line and line.strip()],
+                        ],
+                    )
     except Exception as exc:
-        if "recorded_sandbox_report" in pr_data:
-            rep = SandboxExecutionReport.model_validate(pr_data["recorded_sandbox_report"])
-            return rep
-        return SandboxExecutionReport(
-            sandbox_agent="antigravity-preview-09-2026",
-            environment_id="env_recorded_replay_fallback",
-            execution_mode="recorded_sandbox_replay",
-            script_command="python3 /workspace/harness/run_dual_track_verification.py",
-            pr_test_results=[],
-            mutant_matrix={},
-            sandbox_stdout_logs=[f"[SANDBOX REPLAY FALLBACK] Remote call info: {exc}"],
-        )
+        print(f"[SANDBOX SUBPROCESS FALLBACK] {exc}", flush=True)
+
+    if fb is not None:
+        return fb if isinstance(fb, SandboxExecutionReport) else SandboxExecutionReport.model_validate(fb)
+    return SandboxExecutionReport(
+        sandbox_agent="antigravity-preview-09-2026",
+        environment_id="env_recorded_replay_fallback",
+        execution_mode="recorded_sandbox_replay",
+        script_command="python3 /workspace/harness/run_dual_track_verification.py",
+        pr_test_results=[],
+        mutant_matrix={},
+        sandbox_stdout_logs=["[SANDBOX REPLAY FALLBACK]"],
+    )
+

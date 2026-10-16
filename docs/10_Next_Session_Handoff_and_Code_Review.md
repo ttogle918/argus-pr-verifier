@@ -41,16 +41,17 @@
 
 ## 2. 다음 세션 시작용 단계별 체크리스트 (Step 1: 코드 리뷰 $\to$ Step 2: 신규 기능 구현)
 
-### Step 1. 기존 구현 코드 리뷰 체크리스트 (Code Review First)
-다음 세션을 시작할 때 에이전트가 새 기능을 바로 짜기 전에 반드시 아래 항목을 먼저 점검하도록 지시합니다:
-1. **백엔드 정합성 및 비동기 병렬성 점검**:
-   - [`backend/main.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/main.py#L1131-L1133)에서 Live API 모드 시 Track 1A(`extract_invariants_and_plan`)와 Track 1B(`plant_blind_bugs`)를 `asyncio.gather(asyncio.to_thread(...), asyncio.to_thread(...))`로 병렬화할 수 있는지 확인.
-   - [`backend/sandbox_runner.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/sandbox_runner.py)의 `build_dual_track_harness_script()`가 생성하는 `/workspace/harness/run_dual_track_verification.py` 실행 시 타임아웃, 임시 디렉토리 정리(`tempfile.TemporaryDirectory`), 인코딩(`utf-8`) 누수가 없는지 점검.
-   - [`backend/workspace_slicer.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/workspace_slicer.py)와 [`backend/live_dast_runner.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/live_dast_runner.py)의 예외 처리 및 포트 정리 점검.
-2. **프론트엔드 UI/UX 및 DOM 상태 동기화 점검**:
-   - [`frontend/index.html`](file:///c:/Users/ttogl/workspace/google-hack/frontend/index.html), [`frontend/styles.css`](file:///c:/Users/ttogl/workspace/google-hack/frontend/styles.css), [`frontend/app.js`](file:///c:/Users/ttogl/workspace/google-hack/frontend/app.js)에서 다크/화이트 테마 전환, `#agent-topology-drawer` 다이어그램 단계별 하이라이트(`setPipelineStep`), 스윔레인 2열 그리드 레이아웃 깨짐 여부가 모든 PR 시나리오에서 정상인지 확인.
-3. **기존 단위/통합 테스트 통과 확인**:
-   - `.\.venv\Scripts\python.exe -m pytest tests/ -v` 실행하여 100% PASS 확인.
+### Step 1. 코드 리뷰 및 Live API 최적화 체크리스트 — **현재 세션에서 선제 수정 완료!**
+다음 세션의 코드 리뷰 대상으로予定되어 있던 핵심 병목 및 정합성 항목들을 **이번 세션에서 모두 선제 수정 완료**했습니다:
+1. **`GOOGLE_API_KEY` vs `GEMINI_API_KEY` 환경변수 충돌 및 불필요한 이중 호출 제거 ([`backend/gemini_swarm.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/gemini_swarm.py#L43-L68))**:
+   - 시스템 환경변수에 만료/잘못된 `GOOGLE_API_KEY`와 정상 작동하는 `.env`의 `GEMINI_API_KEY`가 동시에 존재할 때 `google-genai` SDK가 `GOOGLE_API_KEY`를 우선 선택하여 매 호출마다 1차 실패 후 폴백으로 넘어가는 현상을 수정했습니다 (`os.environ.pop("GOOGLE_API_KEY", None)` 및 `GEMINI_API_KEY` 명시적 주입).
+   - 타임아웃(`timed out`) 발생 시 동일한 무거운 프롬프트를 REST로 한 번 더 중복 호출하던 이중 재시도 병목을 제거하여 대기 시간을 절반으로 단축했습니다.
+2. **타임아웃 상향 및 실제 API 모델 매핑 ([`backend/gemini_swarm.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/gemini_swarm.py#L71-L152))**:
+   - Stage별 최적 타임아웃 상향: Stage 0 Guardrail `45s`, Track 1A / 4x Swarm / One-Card `90s`, Track 1B 8-Mutant 생성 `110s`.
+   - `MODEL_FALLBACK_MAP` 추가: 기본 모델(`gemini-4-argon`, `gemini-3.8-flash`, `gemini-3.5-flash-lite`)이 해당 API 키에서 직접 지원되면 즉시 호출하고, 미지원 키 환경에서는 자동으로 `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`로 매핑됩니다.
+3. **Track 1A & Track 1B 비동기 병렬 호출 및 이벤트 루프 논블로킹 처리 ([`backend/gemini_swarm.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/gemini_swarm.py#L319-L343), [`backend/main.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/main.py#L1309-L1318))**:
+   - `run_dual_track_argon_parallel()`을 통해 Track 1A(`extract_invariants_and_plan`)와 Track 1B(`plant_blind_bugs`)가 `asyncio.gather` + `asyncio.to_thread`로 동시에 병렬 실행되도록 수정했습니다 (단일 트랙 시간 내에 두 트랙 모두 완료).
+   - `run_prompt_injection_guardrail`, `sandbox_runner.run_sandbox`, `synthesize_one_card_summary`도 모두 `await asyncio.to_thread(...)`로 감싸 SSE 스트리밍 중 이벤트 루프 블로킹이 전혀 발생하지 않습니다.
 
 ### Step 2. `docs/` 기반 차세대 기능 구현 로드맵 (After Code Review)
 코드 리뷰 통과 후 [`docs/00_Implement_plan.md`](file:///c:/Users/ttogl/workspace/google-hack/docs/00_Implement_plan.md), [`docs/03_ERD_and_Data_Model.md`](file:///c:/Users/ttogl/workspace/google-hack/docs/03_ERD_and_Data_Model.md), [`docs/05_API_and_SSE_Spec.md`](file:///c:/Users/ttogl/workspace/google-hack/docs/05_API_and_SSE_Spec.md), [`docs/08_Enterprise_Agent_Expansion_Ideas.md`](file:///c:/Users/ttogl/workspace/google-hack/docs/08_Enterprise_Agent_Expansion_Ideas.md), [`docs/09_Agent_Orchestration_and_LLM_Call_Flow.md`](file:///c:/Users/ttogl/workspace/google-hack/docs/09_Agent_Orchestration_and_LLM_Call_Flow.md)에 명세된 3대 기능을 구현합니다:

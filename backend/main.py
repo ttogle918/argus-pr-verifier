@@ -1214,7 +1214,7 @@ async def _stream_verification_events(req: VerifyRequest):
     await asyncio.sleep(0.1)
 
     if is_live and gemini_swarm:
-        guardrail = gemini_swarm.run_prompt_injection_guardrail(pr_data, live_api=True)
+        guardrail = await asyncio.to_thread(gemini_swarm.run_prompt_injection_guardrail, pr_data, True)
     else:
         guardrail = pr_data.get("guardrail") or GuardrailResult(
             is_safe=True, risk_level="SAFE", detected_threats=[], sanitized_summary="Checked clean.", latency_ms=68
@@ -1307,21 +1307,13 @@ async def _stream_verification_events(req: VerifyRequest):
     await asyncio.sleep(0.15)
 
     # --------------------------------------------------------------------------
-    # STAGE 2: INVARIANTS & ATTACK PLAN + SEALED MUTANTS
+    # STAGE 2: INVARIANTS & ATTACK PLAN + SEALED MUTANTS (PARALLEL)
     # --------------------------------------------------------------------------
     if is_live and gemini_swarm:
-        inv_plan, blind_mutants = await asyncio.gather(
-            asyncio.to_thread(
-                gemini_swarm.extract_invariants_and_plan,
-                pr_data,
-                include_regression=include_regression,
-                live_api=True,
-            ),
-            asyncio.to_thread(
-                gemini_swarm.plant_blind_bugs,
-                pr_data,
-                live_api=True,
-            ),
+        inv_plan, blind_mutants = await gemini_swarm.run_dual_track_argon_parallel(
+            pr_data,
+            include_regression=include_regression,
+            live_api=True,
         )
     else:
         inv_plan = pr_data.get("invariant_plan")
@@ -1362,7 +1354,9 @@ async def _stream_verification_events(req: VerifyRequest):
             swarm_outputs = [s for s in swarm_outputs if s.attacker_id != "regression"]
 
     if is_live and sandbox_runner:
-        sandbox_report = sandbox_runner.run_sandbox(pr_data, blind_mutants, swarm_outputs, live_api=True)
+        sandbox_report = await asyncio.to_thread(
+            sandbox_runner.run_sandbox, pr_data, blind_mutants, swarm_outputs, True
+        )
     else:
         sandbox_report = pr_data.get("sandbox_report")
 
@@ -1446,7 +1440,9 @@ async def _stream_verification_events(req: VerifyRequest):
     await asyncio.sleep(0.1)
 
     if is_live and gemini_swarm:
-        one_card = gemini_swarm.synthesize_one_card_summary(pr_data, score_report, inv_plan, live_api=True)
+        one_card = await asyncio.to_thread(
+            gemini_swarm.synthesize_one_card_summary, pr_data, score_report, inv_plan, True
+        )
     else:
         one_card = pr_data.get("one_card_summary")
 
@@ -1517,11 +1513,32 @@ async def _execute_full_verification_pipeline(
 
     # 1. Guardrail
     if live_api and gemini_swarm:
-        guardrail = gemini_swarm.run_prompt_injection_guardrail(pr_data, live_api=True)
+        guardrail = await asyncio.to_thread(gemini_swarm.run_prompt_injection_guardrail, pr_data, True)
     else:
         guardrail = pr_data.get("guardrail")
 
     if not guardrail.is_safe:
+        one_card = pr_data.get("one_card_summary") or OneCardExecutiveSummary(
+            headline_verdict="REJECT_RECOMMENDED",
+            residual_risk_level="CRITICAL",
+            one_line_takeaway="Blocked by Stage 0 Guardrail: Adversarial prompt injection payload detected.",
+            finding_highlights=guardrail.detected_threats or ["Adversarial instruction detected"],
+            blind_spot_explanation="Perimeter defense neutralized payload before reaching synthesis.",
+            recommended_fix_snippet="# REJECT PR: Remove malicious injection payloads.",
+        )
+        score_report = pr_data.get("deterministic_score") or DeterministicScoreReport(
+            total_tests_generated=0,
+            valid_baseline_tests=0,
+            confirmed_pr_failures_count=0,
+            flaky_filtered_count=0,
+            confirmed_pr_failures=[],
+            planted_bugs_total=0,
+            planted_bugs_caught=0,
+            detection_score_pct=0.0,
+            detection_score_label="Blocked by Guardrail (0 tests run)",
+            mutant_evaluations=[],
+            surviving_mutants=[],
+        )
         return FullVerificationRunResponse(
             run_id=run_id,
             pr_id=pr_data.get("id", "custom"),
@@ -1534,27 +1551,23 @@ async def _execute_full_verification_pipeline(
             invariant_plan=pr_data.get("invariant_plan"),
             swarm_outputs=[],
             sandbox_report=pr_data.get("sandbox_report"),
-            deterministic_score=pr_data.get("deterministic_score"),
-            one_card_summary=pr_data.get("one_card_summary"),
+            deterministic_score=score_report,
+            one_card_summary=one_card,
         )
 
-    # 2. Invariants & Mutants
+    # 2. Invariants & Mutants (Parallel Track 1A + Track 1B)
     if live_api and gemini_swarm:
-        inv_plan, blind_mutants = await asyncio.gather(
-            asyncio.to_thread(
-                gemini_swarm.extract_invariants_and_plan,
-                pr_data,
-                include_regression=include_regression,
-                live_api=True,
-            ),
-            asyncio.to_thread(
-                gemini_swarm.plant_blind_bugs,
-                pr_data,
-                live_api=True,
-            ),
+        inv_plan, blind_mutants = await gemini_swarm.run_dual_track_argon_parallel(
+            pr_data,
+            include_regression=include_regression,
+            live_api=True,
         )
-        swarm_outputs = await gemini_swarm.run_parallel_attacker_swarm(pr_data, inv_plan, include_regression=include_regression, live_api=True)
-        sandbox_report = sandbox_runner.run_sandbox(pr_data, blind_mutants, swarm_outputs, live_api=True)
+        swarm_outputs = await gemini_swarm.run_parallel_attacker_swarm(
+            pr_data, inv_plan, include_regression=include_regression, live_api=True
+        )
+        sandbox_report = await asyncio.to_thread(
+            sandbox_runner.run_sandbox, pr_data, blind_mutants, swarm_outputs, True
+        )
     else:
         inv_plan = pr_data.get("invariant_plan")
         blind_mutants = pr_data.get("blind_mutants")
@@ -1573,7 +1586,9 @@ async def _execute_full_verification_pipeline(
 
     # 4. One-Card synthesis
     if live_api and gemini_swarm:
-        one_card = gemini_swarm.synthesize_one_card_summary(pr_data, score_report, inv_plan, live_api=True)
+        one_card = await asyncio.to_thread(
+            gemini_swarm.synthesize_one_card_summary, pr_data, score_report, inv_plan, True
+        )
     else:
         one_card = pr_data.get("one_card_summary")
 
