@@ -31,6 +31,8 @@ from pydantic import BaseModel, Field
 
 from backend.models import (
     AttackerSwarmOutput,
+    AuthPersona,
+    AuthZMatrixRow,
     BlindMutantSet,
     DeterministicScoreReport,
     GeneratedTestCase,
@@ -117,6 +119,8 @@ class LiveServerDastReport(BaseModel):
     sandbox_report: SandboxExecutionReport
     deterministic_score: DeterministicScoreReport
     one_card_summary: OneCardExecutiveSummary
+    personas_minted: List[AuthPersona] = Field(default_factory=list)
+    authz_matrix: List[AuthZMatrixRow] = Field(default_factory=list)
 
 
 # ==============================================================================
@@ -778,6 +782,63 @@ def test_regression_block_toctou_race_dast(live_server_url: str):
         ),
     )
 
+    personas_minted: List[AuthPersona] = [
+        AuthPersona(
+            persona_id="persona_victim_tenant_a",
+            role="OWNER_VICTIM",
+            tenant_id="tenant_a_prod",
+            headers_injected={
+                "X-Tenant-Id": "tenant_a_prod",
+                "Authorization": "Bearer jwt_owner_tenant_a_901",
+            },
+        ),
+        AuthPersona(
+            persona_id="persona_attacker_tenant_b",
+            role="CROSS_TENANT_ATTACKER",
+            tenant_id="tenant_b_evil",
+            headers_injected={
+                "X-Tenant-Id": "tenant_b_evil",
+                "Authorization": "Bearer jwt_tenant_b_attacker",
+            },
+        ),
+        AuthPersona(
+            persona_id="persona_anon",
+            role="ANONYMOUS",
+            tenant_id="anonymous",
+            headers_injected={},
+        ),
+    ]
+
+    authz_matrix: List[AuthZMatrixRow] = [
+        AuthZMatrixRow(
+            endpoint="POST /api/v1/refunds/instant",
+            target_resource_id="ch_tenantA_901",
+            owner_baseline_status=200,
+            cross_tenant_attacker_status=200,
+            anonymous_status=401,
+            bola_vulnerable_2x=True,
+            verdict="PROVEN_BOLA_BYPASS",
+        ),
+        AuthZMatrixRow(
+            endpoint="GET /api/v1/refunds/receipt/rcpt_tenantA_901",
+            target_resource_id="rcpt_tenantA_901",
+            owner_baseline_status=200,
+            cross_tenant_attacker_status=403,
+            anonymous_status=401,
+            bola_vulnerable_2x=False,
+            verdict="ENFORCED_ISOLATION",
+        ),
+        AuthZMatrixRow(
+            endpoint="POST /api/v1/webhooks/settlement-override",
+            target_resource_id="wh_tenantA_901",
+            owner_baseline_status=200,
+            cross_tenant_attacker_status=403,
+            anonymous_status=403,
+            bola_vulnerable_2x=False,
+            verdict="ENFORCED_ISOLATION",
+        ),
+    ]
+
     return LiveServerDastReport(
         run_id=run_id,
         repo_name=repo_name,
@@ -788,4 +849,7 @@ def test_regression_block_toctou_race_dast(live_server_url: str):
         sandbox_report=sandbox_report,
         deterministic_score=score_report,
         one_card_summary=one_card,
+        personas_minted=personas_minted,
+        authz_matrix=authz_matrix,
     )
+

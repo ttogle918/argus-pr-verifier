@@ -155,6 +155,66 @@ class OneCardExecutiveSummary(BaseModel):
     recommended_fix_snippet: str
 
 
+class PatchAttemptStep(BaseModel):
+    attempt_num: int = Field(description="Attempt number within max_patch_attempts (1..5)")
+    patch_id: str = Field(description="Patch candidate ID (e.g., 'patch_3802_att1', 'patch_3802_att2')")
+    candidate_diff_summary: str = Field(description="Summary of the code changes attempted in this turn")
+    gate_1_ast_syntax: bool = Field(description="Whether AST/syntax/type check passed")
+    gate_2_semgrep_clean: bool = Field(description="Whether static analysis produced 0 new warnings")
+    gate_3_dast_regression_blocked: bool = Field(description="Whether pinned PROVEN DAST/sandbox attacks were blocked")
+    gate_4_mutant_kill_preserved: bool = Field(description="Whether unit tests passed and Blind Mutant kill rate was preserved")
+    counterexample_feedback: Optional[str] = Field(default=None, description="Exact counterexample error trace/reproduction payload passed to next patch_node turn on failure")
+    status: Literal["FAILED_COUNTEREXAMPLE", "VERIFIED"]
+
+
+class SelfHealingPatchReport(BaseModel):
+    patch_session_id: str
+    final_patch_id: str
+    max_patch_attempts: int = 5
+    attempts_used: int
+    verified_on_attempt: int
+    final_status: Literal["VERIFIED", "FAILED"]
+    attempt_history: List[PatchAttemptStep]
+
+
+class PinnedRegressionTestFile(BaseModel):
+    file_path: str = Field(description="e.g., 'tests/security/test_argus_regression_pr_412.py'")
+    source_test_ids: List[str] = Field(description="List of 2/2 reproduced PROVEN attack test IDs")
+    evidence_tier: Literal["PROVEN"] = "PROVEN"
+    linked_patch_id: str
+    pytest_content: str = Field(description="Complete pytest regression suite where exploit blocked = test PASS")
+
+
+class VerifiedPRBundleResponse(BaseModel):
+    bundle_id: str
+    pr_id: str
+    repo_name: str
+    branch_name: str = Field(description="e.g., 'fix/argus-verified-patch-3802'")
+    commit_Title: str
+    patch_id: str
+    production_patch_diff: str
+    regression_test_file: PinnedRegressionTestFile
+    ci_workflow_snippet: str = Field(description="GitHub Actions YAML snippet running the pinned regression test on every commit")
+    verification_badge_summary: str = Field(description="e.g., '4-Gate VERIFIED (Attempt 2/5) · 0 Confirmed Defects · 7/8 Blind Mutants Killed (87.5%)'")
+
+
+class AuthPersona(BaseModel):
+    persona_id: str = Field(description="'persona_victim_tenant_a', 'persona_attacker_tenant_b', or 'persona_anon'")
+    role: Literal["OWNER_VICTIM", "CROSS_TENANT_ATTACKER", "ANONYMOUS"]
+    tenant_id: str
+    headers_injected: Dict[str, str] = Field(default_factory=dict)
+
+
+class AuthZMatrixRow(BaseModel):
+    endpoint: str
+    target_resource_id: str
+    owner_baseline_status: int
+    cross_tenant_attacker_status: int
+    anonymous_status: int
+    bola_vulnerable_2x: bool
+    verdict: Literal["PROVEN_BOLA_BYPASS", "ENFORCED_ISOLATION"]
+
+
 class FullVerificationRunResponse(BaseModel):
     run_id: str
     pr_id: str
@@ -169,3 +229,5 @@ class FullVerificationRunResponse(BaseModel):
     sandbox_report: SandboxExecutionReport
     deterministic_score: DeterministicScoreReport
     one_card_summary: OneCardExecutiveSummary
+    self_healing_patch: Optional[SelfHealingPatchReport] = None
+
