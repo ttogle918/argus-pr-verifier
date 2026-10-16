@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARGUS-PR | AI Swarm PR Red-Teaming & Blind Meta-Verifier</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Top Telemetry Header -->
+    <header class="top-bar">
+        <div class="brand-group">
+            <div class="logo-badge">ARGUS-PR</div>
+            <div class="brand-text">
+                <h1>AI Swarm PR Red-Teaming &amp; Blind Meta-Verifier</h1>
+                <p>Adversarial Invariant Verification &bull; Isolated Blind Mutation Testing &bull; Antigravity Sandbox</p>
+            </div>
+        </div>
+        <div class="model-pills">
+            <span class="pill guardrail-pill" title="Stage 0 Untrusted Input Scanner">
+                <span class="dot"></span>Guardrail: <strong>gemini-3.5-flash-lite</strong>
+            </span>
+            <span class="pill planner-pill" title="Isolated Invariant Planner &amp; Blind Bug Planter (store=False)">
+                <span class="dot"></span>Planner &amp; Planter: <strong>gemini-4-argon (store=False)</strong>
+            </span>
+            <span class="pill swarm-pill" title="4 Parallel Attacker Subagents">
+                <span class="dot"></span>Swarm (4x): <strong>gemini-3.8-flash</strong>
+            </span>
+            <span class="pill sandbox-pill" title="Autonomous Remote Linux Sandbox Script Execution">
+                <span class="dot"></span>Sandbox: <strong>antigravity-preview-09-2026</strong>
+            </span>
+        </div>
+    </header>
+
+    <!-- Control Bar -->
+    <section class="control-panel">
+        <div class="control-group">
+            <label for="scenario-selector" class="control-label">Target Pull Request</label>
+            <select id="scenario-selector">
+                <option value="pr-checkout-race">PR #412: AI Instant Refund &amp; Partial Wallet Settlement (acme-pay/ledger-core)</option>
+                <option value="pr-ratelimiter-offbyone">PR #809: Redis Sliding-Window Token Bucket (cloud-gate/quota-engine)</option>
+                <option value="pr-prompt-injection-attack">PR #666: [ADVERSARIAL] Hidden Prompt Injection in Auth Middleware</option>
+            </select>
+        </div>
+
+        <div class="toggles">
+            <label class="toggle-chip" title="Toggle between Phase 1 MVP (3 attackers, 1x run) and Phase 2 Full (4 attackers, 2x repro, Guardrail)">
+                <input type="checkbox" id="phase-toggle" checked>
+                <span>Phase 2 Full (4 Attackers + 2x Repro)</span>
+            </label>
+            <label class="toggle-chip" title="Use Recorded Sandbox Replay for deterministic instant demo or call Live Gemini &amp; Antigravity API">
+                <input type="checkbox" id="mode-toggle" checked>
+                <span>Recorded Sandbox Replay (Safe Mode)</span>
+            </label>
+            <button id="toggle-diff-btn" class="secondary-btn" type="button">View PR Diff</button>
+        </div>
+
+        <button id="launch-btn" class="primary-btn" type="button">
+            <span class="btn-icon">&#9889;</span> Launch Blind Verification Swarm
+        </button>
+    </section>
+
+    <!-- Collapsible PR Diff Drawer -->
+    <section id="pr-diff-drawer" class="diff-drawer hidden">
+        <div class="diff-header">
+            <span id="diff-title">PR Diff Under Inspection</span>
+            <span id="diff-meta" class="diff-meta"></span>
+        </div>
+        <pre id="diff-code" class="diff-code"></pre>
+    </section>
+
+    <!-- Pipeline Progress Stepper -->
+    <section class="pipeline-stepper" id="pipeline-stepper">
+        <div class="step-pill" data-step="guardrail">0. Flash-Lite Guardrail</div>
+        <div class="step-arrow">&rarr;</div>
+        <div class="step-pill" data-step="blind_plan">1. Blind Dual-Track (Argon)</div>
+        <div class="step-arrow">&rarr;</div>
+        <div class="step-pill" data-step="swarm">2. 4x Flash Attacker Swarm</div>
+        <div class="step-arrow">&rarr;</div>
+        <div class="step-pill" data-step="sandbox_a">3a. Sandbox PR (2x Repro)</div>
+        <div class="step-arrow">&rarr;</div>
+        <div class="step-pill" data-step="sandbox_b">3b. Sandbox 8 Mutants</div>
+        <div class="step-arrow">&rarr;</div>
+        <div class="step-pill" data-step="one_card">4. Deterministic Score &amp; One-Card</div>
+    </section>
+
+    <main class="dashboard">
+        <!-- Stage 0: Prompt-Injection Guardrail Banner -->
+        <div id="guardrail-banner" class="banner hidden"></div>
+
+        <!-- Stage 1 & 2: Dual-Track Blind Verification Swimlanes ("Lane View") -->
+        <div class="swimlanes">
+            <!-- Left Lane: Track A (Invariant Planner + Attacker Swarm) -->
+            <div class="lane track-a">
+                <div class="lane-header">
+                    <div>
+                        <span class="lane-tag tag-blue">TRACK A &bull; ATTACKER SWARM</span>
+                        <h3>Invariant Extraction &amp; Parallel Breaking Tests</h3>
+                    </div>
+                    <span class="model-tag">gemini-4-argon &rarr; 4x gemini-3.8-flash</span>
+                </div>
+                <div id="invariants-box" class="invariants-box">
+                    <div class="empty-state">Click <strong>Launch Blind Verification Swarm</strong> to extract formal PR invariants and dispatch attackers.</div>
+                </div>
+                <div id="swarm-content" class="swarm-grid"></div>
+            </div>
+
+            <!-- Center Information Wall Divider -->
+            <div class="divider">
+                <div class="wall-line"></div>
+                <div class="wall-badge">
+                    <div class="wall-icon">&#128274;</div>
+                    <div class="badge-title">BLIND INFORMATION WALL</div>
+                    <div class="sub-badge">Zero Shared Context</div>
+                    <code class="wall-code">store=False</code>
+                    <div class="wall-desc">Planted bugs are NEVER revealed to Planner or Attackers</div>
+                </div>
+                <div class="wall-line"></div>
+            </div>
+
+            <!-- Right Lane: Track B (Isolated Blind Bug Planter) -->
+            <div class="lane track-b">
+                <div class="lane-header">
+                    <div>
+                        <span class="lane-tag tag-purple">TRACK B &bull; META-VERIFIER BENCHMARK</span>
+                        <h3>Blind Bug Planter (8 Synthetic Mutants)</h3>
+                    </div>
+                    <span class="model-tag">gemini-4-argon (Isolated Call)</span>
+                </div>
+                <div class="formula-bar">
+                    <span>Differential Kill Rule:</span>
+                    <code>Caught(m_i) &iff; Pass(PR_orig) &and; Fail(m_i)</code>
+                </div>
+                <div id="planter-content" class="mutants-grid">
+                    <div class="empty-state">8 blind mutations (M1..M8) will be planted in isolated shadow copies to benchmark the swarm.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stage 3: Antigravity Remote Sandbox Terminal -->
+        <div class="sandbox-terminal">
+            <div class="terminal-header">
+                <div class="terminal-dots">
+                    <span class="t-dot red"></span>
+                    <span class="t-dot yellow"></span>
+                    <span class="t-dot green"></span>
+                </div>
+                <div class="terminal-title">
+                    <code>agent="antigravity-preview-09-2026"</code> &mdash; <span>python /workspace/harness/run_dual_track_verification.py</span>
+                </div>
+                <div id="sandbox-status-badge" class="sandbox-badge">IDLE</div>
+            </div>
+            <div id="terminal-output" class="terminal-body">
+                <div class="log-muted">[Antigravity Remote Linux Sandbox Ready] Waiting for verification harness payload...</div>
+            </div>
+        </div>
+
+        <!-- Stage 4: Human Reviewer One-Card Executive Summary -->
+        <div id="one-card-summary" class="hero-card hidden">
+            <div class="one-card-top">
+                <div id="hero-verdict" class="hero-header"></div>
+                <div id="human-decision-stamp" class="decision-stamp hidden"></div>
+            </div>
+
+            <p id="hero-takeaway" class="hero-takeaway"></p>
+
+            <!-- 3 Deterministic Python-Calculated KPI Boxes -->
+            <div class="metrics">
+                <div class="metric-box" id="metric-bugs"></div>
+                <div class="metric-box" id="metric-score"></div>
+                <div class="metric-box" id="metric-risk"></div>
+            </div>
+
+            <!-- Confirmed 2/2 Breaking Tests & Argon Residual Risk Synthesis -->
+            <div class="one-card-columns">
+                <div class="one-card-col">
+                    <h4 class="section-subtitle">&#128680; Confirmed PR Breaking Tests (Reproduced 2/2 Times in Sandbox)</h4>
+                    <div id="bug-details" class="bug-details"></div>
+                </div>
+                <div class="one-card-col">
+                    <h4 class="section-subtitle">&#129514; Residual Risk &amp; Recommended Security Patch (Argon Synthesis)</h4>
+                    <div id="residual-details" class="residual-details"></div>
+                </div>
+            </div>
+
+            <!-- Human-in-the-Loop Merge Gate Actions -->
+            <div class="human-actions">
+                <div class="reviewer-prompt">
+                    <strong>Human Merge Gate:</strong> Review the confirmed 2/2 breaking tests, the deterministic blind detection score (<span id="inline-score-label"></span>), and surviving mutant blind spots before deciding.
+                </div>
+                <div class="action-buttons">
+                    <button id="reject-btn" class="danger-btn" type="button">&#10060; Reject Merge &amp; Request Fixes</button>
+                    <button id="approve-btn" class="success-btn" type="button">&#9989; Approve &amp; Merge PR</button>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>

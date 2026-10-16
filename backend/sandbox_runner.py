@@ -1,0 +1,264 @@
+"""
+Autonomous Sandbox Runner for Argus-PR using Antigravity Managed Agent (`antigravity-preview-09-2026`).
+
+Executes dual-track verification inside a Google-hosted remote Linux sandbox:
+- Track (a): Executes generated attacker tests against the original PR code TWICE (`run_1`, `run_2`)
+  to verify 2/2 reproducibility of PR defects and establish `passed_on_original` (`Pass(PR_orig)`).
+- Track (b): Executes the same test suite against the 8 Blind Mutants (`M1..M8`) to build
+  `mutant_matrix[mutant_id][test_id] = passed_bool`.
+
+Safety Guarantee:
+- Never executes untrusted LLM-generated tests locally on the host/Cloud Run container.
+- All live script execution runs remotely via `agent="antigravity-preview-09-2026"` with `environment={"type": "remote", ...}`.
+- When `execution_mode == "replay"` or remote sandbox quota is unavailable, uses deterministic Recorded Sandbox Replay.
+"""
+
+from __future__ import annotations
+
+import json
+from typing import List
+from google import genai
+from backend.models import (
+    AttackerSwarmOutput,
+    BlindMutantSet,
+    SandboxExecutionReport,
+    SingleTestRunResult,
+)
+
+
+def _get_client() -> genai.Client:
+    return genai.Client()
+
+
+def build_dual_track_harness_script(
+    swarm_outputs: List[AttackerSwarmOutput],
+    blind_mutants: BlindMutantSet,
+) -> str:
+    """
+    Generates the self-contained Python script `/workspace/harness/run_dual_track_verification.py`
+    that Antigravity (`antigravity-preview-09-2026`) executes inside the isolated Linux sandbox.
+    """
+    test_metadata = []
+    for swarm in swarm_outputs:
+        for t in swarm.tests:
+            test_metadata.append(
+                {
+                    "test_id": t.test_id,
+                    "attacker_id": t.attacker_id,
+                    "target_invariant_id": t.target_invariant_id,
+                }
+            )
+    mutant_ids = [m.mutant_id for m in blind_mutants.mutants]
+
+    return f'''#!/usr/bin/env python3
+"""
+Argus-PR Dual-Track Verification Harness
+Executed inside Antigravity Managed Linux Sandbox (antigravity-preview-09-2026)
+"""
+import importlib.util
+import json
+import pathlib
+import time
+import traceback
+
+HARNESS_DIR = pathlib.Path("/workspace/harness")
+TEST_META = {json.dumps(test_metadata, indent=2)}
+MUTANT_IDS = {json.dumps(mutant_ids)}
+
+
+def load_module_from_path(mod_name: str, file_path: pathlib.Path):
+    spec = importlib.util.spec_from_file_location(mod_name, str(file_path))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def run_single_test(test_func, target_mod):
+    t0 = time.perf_counter()
+    try:
+        test_func(target_mod)
+        ms = int((time.perf_counter() - t0) * 1000)
+        return True, None, max(1, ms)
+    except Exception as exc:
+        ms = int((time.perf_counter() - t0) * 1000)
+        tb = "".join(traceback.format_exception_only(type(exc), exc)).strip()
+        return False, tb, max(1, ms)
+
+
+def main():
+    print("[ANTIGRAVITY SANDBOX] Booting Dual-Track Verification Harness...")
+    test_mod = load_module_from_path("test_swarm", HARNESS_DIR / "test_swarm.py")
+
+    pr_test_results = []
+    passed_on_orig = set()
+
+    print("=== TRACK (a): EXECUTING SWARM TESTS AGAINST ORIGINAL PR CODE (2x REPRO CHECK) ===")
+    for meta in TEST_META:
+        tid = meta["test_id"]
+        fn = getattr(test_mod, tid, None)
+        if fn is None:
+            continue
+
+        # Run 1 on fresh module load
+        orig_mod_1 = load_module_from_path("pr_orig_r1", HARNESS_DIR / "pr_orig.py")
+        r1_pass, r1_err, d1 = run_single_test(fn, orig_mod_1)
+
+        # Run 2 on fresh module load (2x Reproducibility verification)
+        orig_mod_2 = load_module_from_path("pr_orig_r2", HARNESS_DIR / "pr_orig.py")
+        r2_pass, r2_err, d2 = run_single_test(fn, orig_mod_2)
+
+        reproduced_twice = (not r1_pass) and (not r2_pass)
+        baseline_pass = r1_pass and r2_pass
+        if baseline_pass:
+            passed_on_orig.add(tid)
+            print(f"  [PASS 2/2] {{tid}} ({{meta['attacker_id']}}) -> Eligible for Track (b) Mutant Kill")
+        elif reproduced_twice:
+            print(f"  [FAIL 2/2 REPRODUCED] {{tid}} ({{meta['attacker_id']}}) -> {{r2_err}}")
+        else:
+            print(f"  [FLAKY 1/2 FILTERED] {{tid}} ({{meta['attacker_id']}}) -> Ignored")
+
+        pr_test_results.append({{
+            "test_id": tid,
+            "attacker_id": meta["attacker_id"],
+            "target_invariant_id": meta["target_invariant_id"],
+            "run_1_passed": r1_pass,
+            "run_2_passed": r2_pass,
+            "reproduced_twice": reproduced_twice,
+            "passed_on_original": baseline_pass,
+            "error_trace": r2_err or r1_err,
+            "duration_ms": d1 + d2,
+        }})
+
+    print("=== TRACK (b): EXECUTING SWARM TESTS AGAINST 8 BLIND MUTANTS (M1..M8) ===")
+    mutant_matrix = {{}}
+    for mid in MUTANT_IDS:
+        mutant_matrix[mid] = {{}}
+        m_path = HARNESS_DIR / "mutants" / f"{{mid.lower()}}.py"
+        caught_by = []
+        for meta in TEST_META:
+            tid = meta["test_id"]
+            fn = getattr(test_mod, tid, None)
+            if fn is None:
+                continue
+            try:
+                m_mod = load_module_from_path(f"mutant_{{mid}}_{{tid}}", m_path)
+                m_pass, _, _ = run_single_test(fn, m_mod)
+            except Exception:
+                m_pass = False
+            mutant_matrix[mid][tid] = m_pass
+            if (not m_pass) and (tid in passed_on_orig):
+                caught_by.append(tid)
+        status_str = f"CAUGHT by {{caught_by}}" if caught_by else "SURVIVED (UNCAUGHT)"
+        print(f"  [MUTANT {{mid}}] -> {{status_str}}")
+
+    report = {{
+        "pr_test_results": pr_test_results,
+        "mutant_matrix": mutant_matrix,
+    }}
+    print("===ARGUS_SANDBOX_JSON_START===")
+    print(json.dumps(report))
+    print("===ARGUS_SANDBOX_JSON_END===")
+
+
+if __name__ == "__main__":
+    main()
+'''
+
+
+def run_sandbox(
+    pr_data: dict,
+    blind_mutants: BlindMutantSet,
+    swarm_outputs: List[AttackerSwarmOutput],
+    live_api: bool = False,
+) -> SandboxExecutionReport:
+    """
+    Runs the dual-track verification script inside the Google-hosted Antigravity Linux sandbox
+    (`agent="antigravity-preview-09-2026"`, `environment={"type": "remote", "sources": ...}`).
+    If `live_api=False` or the remote API is unreachable, returns the deterministic Recorded Sandbox Replay.
+    """
+    if not live_api and "recorded_sandbox_report" in pr_data:
+        return SandboxExecutionReport.model_validate(pr_data["recorded_sandbox_report"])
+
+    harness_script = build_dual_track_harness_script(swarm_outputs, blind_mutants)
+
+    test_swarm_code = "# Generated by Gemini 3.8 Flash Parallel Attacker Swarm\n\n"
+    for swarm in swarm_outputs:
+        for t in swarm.tests:
+            test_swarm_code += f"# --- {t.test_id} ({t.attacker_id} -> {t.target_invariant_id}) ---\n{t.pytest_code}\n\n"
+
+    sources = [
+        {
+            "type": "inline",
+            "target": "/workspace/harness/pr_orig.py",
+            "content": pr_data.get("original_code", ""),
+        },
+        {
+            "type": "inline",
+            "target": "/workspace/harness/test_swarm.py",
+            "content": test_swarm_code,
+        },
+        {
+            "type": "inline",
+            "target": "/workspace/harness/run_dual_track_verification.py",
+            "content": harness_script,
+        },
+    ]
+
+    for mutant in blind_mutants.mutants:
+        sources.append(
+            {
+                "type": "inline",
+                "target": f"/workspace/harness/mutants/{mutant.mutant_id.lower()}.py",
+                "content": mutant.mutated_code,
+            }
+        )
+
+    try:
+        client = _get_client()
+        interaction = client.interactions.create(
+            agent="antigravity-preview-09-2026",
+            agent_config={"type": "antigravity", "model": "gemini-4-argon"},
+            environment={
+                "type": "remote",
+                "sources": sources,
+            },
+            input=(
+                "Execute `python3 /workspace/harness/run_dual_track_verification.py` in the bash shell "
+                "and print the complete stdout including the ===ARGUS_SANDBOX_JSON_START=== block verbatim."
+            ),
+        )
+
+        output = interaction.output_text or ""
+        if "===ARGUS_SANDBOX_JSON_START===" in output and "===ARGUS_SANDBOX_JSON_END===" in output:
+            json_str = (
+                output.split("===ARGUS_SANDBOX_JSON_START===")[1]
+                .split("===ARGUS_SANDBOX_JSON_END===")[0]
+                .strip()
+            )
+            data = json.loads(json_str)
+            results = [SingleTestRunResult.model_validate(item) for item in data.get("pr_test_results", [])]
+            return SandboxExecutionReport(
+                sandbox_agent="antigravity-preview-09-2026",
+                environment_id=getattr(interaction, "environment_id", None) or "env_antigravity_remote_live",
+                execution_mode="antigravity_remote_sandbox",
+                script_command="python3 /workspace/harness/run_dual_track_verification.py",
+                pr_test_results=results,
+                mutant_matrix=data.get("mutant_matrix", {}),
+                sandbox_stdout_logs=[
+                    line for line in output.splitlines() if "ARGUS_SANDBOX_JSON" not in line
+                ],
+            )
+        raise ValueError("Antigravity sandbox output did not contain expected JSON delimiters.")
+    except Exception as exc:
+        if "recorded_sandbox_report" in pr_data:
+            rep = SandboxExecutionReport.model_validate(pr_data["recorded_sandbox_report"])
+            return rep
+        return SandboxExecutionReport(
+            sandbox_agent="antigravity-preview-09-2026",
+            environment_id="env_recorded_replay_fallback",
+            execution_mode="recorded_sandbox_replay",
+            script_command="python3 /workspace/harness/run_dual_track_verification.py",
+            pr_test_results=[],
+            mutant_matrix={},
+            sandbox_stdout_logs=[f"[SANDBOX REPLAY FALLBACK] Remote call info: {exc}"],
+        )
