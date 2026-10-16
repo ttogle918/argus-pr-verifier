@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARGUS-PR | AI Swarm PR Red-Teaming & Blind Meta-Verifier</title>
+    <title>ARGUS-PR | AI Swarm PR Red-Teaming &amp; Blind Meta-Verifier</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,51 +12,62 @@
         <div class="brand-group">
             <div class="logo-badge">ARGUS-PR</div>
             <div class="brand-text">
-                <h1>AI Swarm PR Red-Teaming &amp; Blind Meta-Verifier</h1>
-                <p>Adversarial Invariant Verification &bull; Isolated Blind Mutation Testing &bull; Antigravity Sandbox</p>
+                <h1 id="ui-brand-title">AI Swarm PR Red-Teaming &amp; Blind Meta-Verifier</h1>
+                <p id="ui-brand-subtitle">Adversarial Invariant Verification &bull; Isolated Blind Mutation Testing &bull; Antigravity Sandbox</p>
             </div>
         </div>
-        <div class="model-pills">
-            <span class="pill guardrail-pill" title="Stage 0 Untrusted Input Scanner">
-                <span class="dot"></span>Guardrail: <strong>gemini-3.5-flash-lite</strong>
-            </span>
-            <span class="pill planner-pill" title="Isolated Invariant Planner &amp; Blind Bug Planter (store=False)">
-                <span class="dot"></span>Planner &amp; Planter: <strong>gemini-4-argon (store=False)</strong>
-            </span>
-            <span class="pill swarm-pill" title="4 Parallel Attacker Subagents">
-                <span class="dot"></span>Swarm (4x): <strong>gemini-3.8-flash</strong>
-            </span>
-            <span class="pill sandbox-pill" title="Autonomous Remote Linux Sandbox Script Execution">
-                <span class="dot"></span>Sandbox: <strong>antigravity-preview-09-2026</strong>
-            </span>
+        <div class="header-right">
+            <div class="model-pills">
+                <span class="pill guardrail-pill" title="Stage 0 Untrusted Input Scanner">
+                    <span class="dot"></span>Guardrail: <strong>gemini-3.5-flash-lite</strong>
+                </span>
+                <span class="pill planner-pill" title="Isolated Invariant Planner &amp; Blind Bug Planter (store=False)">
+                    <span class="dot"></span>Planner &amp; Planter: <strong>gemini-4-argon (store=False)</strong>
+                </span>
+                <span class="pill swarm-pill" title="4 Parallel Attacker Subagents">
+                    <span class="dot"></span>Swarm (4x): <strong>gemini-3.8-flash</strong>
+                </span>
+                <span class="pill sandbox-pill" title="Autonomous Remote Linux Sandbox Script Execution">
+                    <span class="dot"></span>Sandbox: <strong>antigravity-preview-09-2026</strong>
+                </span>
+            </div>
+            <div class="lang-switch-group" role="group" aria-label="Language Switcher">
+                <button id="lang-ko-btn" class="lang-btn active" type="button">KO 한국어</button>
+                <button id="lang-en-btn" class="lang-btn" type="button">EN English</button>
+            </div>
         </div>
     </header>
 
     <!-- Control Bar -->
     <section class="control-panel">
         <div class="control-group">
-            <label for="scenario-selector" class="control-label">Target Pull Request</label>
-            <select id="scenario-selector">
-                <option value="pr-checkout-race">PR #412: AI Instant Refund &amp; Partial Wallet Settlement (acme-pay/ledger-core)</option>
-                <option value="pr-ratelimiter-offbyone">PR #809: Redis Sliding-Window Token Bucket (cloud-gate/quota-engine)</option>
-                <option value="pr-prompt-injection-attack">PR #666: [ADVERSARIAL] Hidden Prompt Injection in Auth Middleware</option>
-            </select>
+            <label for="scenario-selector" class="control-label" id="ui-target-pr-label">Target Pull Request</label>
+            <div class="selector-row">
+                <select id="scenario-selector">
+                    <option value="pr-checkout-race">PR #412: AI Instant Refund &amp; Partial Wallet Settlement (acme-pay/ledger-core)</option>
+                    <option value="pr-ratelimiter-offbyone">PR #809: Redis Sliding-Window Token Bucket (cloud-gate/quota-engine)</option>
+                    <option value="pr-prompt-injection-attack">PR #666: [ADVERSARIAL] Hidden Prompt Injection in Auth Middleware</option>
+                </select>
+                <button id="open-import-modal-btn" class="import-pr-btn" type="button" title="Import a live GitHub PR by URL or paste custom diff">
+                    + GitHub PR / Diff 불러오기
+                </button>
+            </div>
         </div>
 
         <div class="toggles">
             <label class="toggle-chip" title="Toggle between Phase 1 MVP (3 attackers, 1x run) and Phase 2 Full (4 attackers, 2x repro, Guardrail)">
                 <input type="checkbox" id="phase-toggle" checked>
-                <span>Phase 2 Full (4 Attackers + 2x Repro)</span>
+                <span id="ui-phase-toggle-text">Phase 2 Full (4 Attackers + 2x Repro)</span>
             </label>
             <label class="toggle-chip" title="Use Recorded Sandbox Replay for deterministic instant demo or call Live Gemini &amp; Antigravity API">
                 <input type="checkbox" id="mode-toggle" checked>
-                <span>Recorded Sandbox Replay (Safe Mode)</span>
+                <span id="ui-mode-toggle-text">Recorded Sandbox Replay (Safe Mode)</span>
             </label>
-            <button id="toggle-diff-btn" class="secondary-btn" type="button">View PR Diff</button>
+            <button id="toggle-diff-btn" class="secondary-btn" type="button">PR Diff 보기</button>
         </div>
 
         <button id="launch-btn" class="primary-btn" type="button">
-            <span class="btn-icon">&#9889;</span> Launch Blind Verification Swarm
+            <span class="btn-icon">&#9889;</span> <span id="ui-launch-btn-text">Launch Blind Verification Swarm</span>
         </button>
     </section>
 
@@ -71,17 +82,17 @@
 
     <!-- Pipeline Progress Stepper -->
     <section class="pipeline-stepper" id="pipeline-stepper">
-        <div class="step-pill" data-step="guardrail">0. Flash-Lite Guardrail</div>
+        <div class="step-pill" data-step="guardrail" id="step-label-guardrail">0. Flash-Lite Guardrail</div>
         <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="blind_plan">1. Blind Dual-Track (Argon)</div>
+        <div class="step-pill" data-step="blind_plan" id="step-label-blind">1. Blind Dual-Track (Argon)</div>
         <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="swarm">2. 4x Flash Attacker Swarm</div>
+        <div class="step-pill" data-step="swarm" id="step-label-swarm">2. 4x Flash Attacker Swarm</div>
         <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="sandbox_a">3a. Sandbox PR (2x Repro)</div>
+        <div class="step-pill" data-step="sandbox_a" id="step-label-sandbox-a">3a. Sandbox PR (2x Repro)</div>
         <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="sandbox_b">3b. Sandbox 8 Mutants</div>
+        <div class="step-pill" data-step="sandbox_b" id="step-label-sandbox-b">3b. Sandbox 8 Mutants</div>
         <div class="step-arrow">&rarr;</div>
-        <div class="step-pill" data-step="one_card">4. Deterministic Score &amp; One-Card</div>
+        <div class="step-pill" data-step="one_card" id="step-label-one-card">4. Deterministic Score &amp; One-Card</div>
     </section>
 
     <main class="dashboard">
@@ -94,13 +105,13 @@
             <div class="lane track-a">
                 <div class="lane-header">
                     <div>
-                        <span class="lane-tag tag-blue">TRACK A &bull; ATTACKER SWARM</span>
-                        <h3>Invariant Extraction &amp; Parallel Breaking Tests</h3>
+                        <span class="lane-tag tag-blue" id="ui-track-a-tag">TRACK A &bull; ATTACKER SWARM</span>
+                        <h3 id="ui-track-a-title">Invariant Extraction &amp; Parallel Breaking Tests</h3>
                     </div>
                     <span class="model-tag">gemini-4-argon &rarr; 4x gemini-3.8-flash</span>
                 </div>
                 <div id="invariants-box" class="invariants-box">
-                    <div class="empty-state">Click <strong>Launch Blind Verification Swarm</strong> to extract formal PR invariants and dispatch attackers.</div>
+                    <div class="empty-state" id="ui-track-a-empty">Click <strong>Launch Blind Verification Swarm</strong> to extract formal PR invariants and dispatch attackers.</div>
                 </div>
                 <div id="swarm-content" class="swarm-grid"></div>
             </div>
@@ -110,10 +121,10 @@
                 <div class="wall-line"></div>
                 <div class="wall-badge">
                     <div class="wall-icon">&#128274;</div>
-                    <div class="badge-title">BLIND INFORMATION WALL</div>
-                    <div class="sub-badge">Zero Shared Context</div>
+                    <div class="badge-title" id="ui-wall-title">BLIND INFORMATION WALL</div>
+                    <div class="sub-badge" id="ui-wall-sub">Zero Shared Context</div>
                     <code class="wall-code">store=False</code>
-                    <div class="wall-desc">Planted bugs are NEVER revealed to Planner or Attackers</div>
+                    <div class="wall-desc" id="ui-wall-desc">Planted bugs are NEVER revealed to Planner or Attackers</div>
                 </div>
                 <div class="wall-line"></div>
             </div>
@@ -122,17 +133,41 @@
             <div class="lane track-b">
                 <div class="lane-header">
                     <div>
-                        <span class="lane-tag tag-purple">TRACK B &bull; META-VERIFIER BENCHMARK</span>
-                        <h3>Blind Bug Planter (8 Synthetic Mutants)</h3>
+                        <span class="lane-tag tag-purple" id="ui-track-b-tag">TRACK B &bull; META-VERIFIER BENCHMARK</span>
+                        <h3 id="ui-track-b-title">Blind Bug Planter (8 Synthetic Mutants)</h3>
                     </div>
-                    <span class="model-tag">gemini-4-argon (Isolated Call)</span>
+                    <div class="lane-header-actions">
+                        <button id="toggle-mutant-form-btn" class="mini-action-btn" type="button" title="Plant an additional custom bug to test deterministic M/K calibration">
+                            + 커스텀 버그 심기
+                        </button>
+                        <span class="model-tag">gemini-4-argon (Isolated)</span>
+                    </div>
                 </div>
                 <div class="formula-bar">
-                    <span>Differential Kill Rule:</span>
+                    <span id="ui-formula-label">Differential Kill Rule:</span>
                     <code>Caught(m_i) &iff; Pass(PR_orig) &and; Fail(m_i)</code>
                 </div>
+
+                <!-- Collapsible Custom Blind Mutant Adder Form (ported from Crucible Calibration Tab) -->
+                <div id="custom-mutant-form" class="custom-mutant-form hidden">
+                    <div class="mutant-form-row">
+                        <input id="custom-mutant-title" type="text" placeholder="예: 음수 수수료 우회 버그 (Negative fee bypass)" class="modal-input">
+                        <select id="custom-mutant-category" class="modal-select">
+                            <option value="security">Security</option>
+                            <option value="edge_cases">Edge Cases</option>
+                            <option value="state">State / Concurrency</option>
+                            <option value="regression">Regression</option>
+                        </select>
+                        <select id="custom-mutant-caught" class="modal-select">
+                            <option value="true">Caught (탐지됨)</option>
+                            <option value="false">Survived (미탐지 사각지대)</option>
+                        </select>
+                        <button id="submit-custom-mutant-btn" class="primary-btn mini-submit-btn" type="button">추가 &amp; 재계산</button>
+                    </div>
+                </div>
+
                 <div id="planter-content" class="mutants-grid">
-                    <div class="empty-state">8 blind mutations (M1..M8) will be planted in isolated shadow copies to benchmark the swarm.</div>
+                    <div class="empty-state" id="ui-track-b-empty">8 blind mutations (M1..M8) will be planted in isolated shadow copies to benchmark the swarm.</div>
                 </div>
             </div>
         </div>
@@ -159,8 +194,20 @@
         <div id="one-card-summary" class="hero-card hidden">
             <div class="one-card-top">
                 <div id="hero-verdict" class="hero-header"></div>
-                <div id="human-decision-stamp" class="decision-stamp hidden"></div>
+                <div class="one-card-utility-btns">
+                    <button id="apply-patch-btn" class="utility-btn patch-btn" type="button" title="Apply Argon's recommended security patch and re-verify in sandbox">
+                        &#128295; <span id="ui-apply-patch-text">권장 패치 적용 후 재검증</span>
+                    </button>
+                    <button id="copy-prompt-btn" class="utility-btn" type="button" title="Copy structured AI fix prompt to clipboard">
+                        &#128203; <span id="ui-copy-prompt-text">AI 수정 프롬프트 복사</span>
+                    </button>
+                    <button id="export-json-btn" class="utility-btn" type="button" title="Download full verification report &amp; decision as JSON">
+                        &#11015; <span id="ui-export-json-text">JSON 리포트 저장</span>
+                    </button>
+                </div>
             </div>
+
+            <div id="human-decision-stamp" class="decision-stamp hidden"></div>
 
             <p id="hero-takeaway" class="hero-takeaway"></p>
 
@@ -174,11 +221,11 @@
             <!-- Confirmed 2/2 Breaking Tests & Argon Residual Risk Synthesis -->
             <div class="one-card-columns">
                 <div class="one-card-col">
-                    <h4 class="section-subtitle">&#128680; Confirmed PR Breaking Tests (Reproduced 2/2 Times in Sandbox)</h4>
+                    <h4 class="section-subtitle" id="ui-col-left-title">&#128680; Confirmed PR Breaking Tests (Reproduced 2/2 Times in Sandbox)</h4>
                     <div id="bug-details" class="bug-details"></div>
                 </div>
                 <div class="one-card-col">
-                    <h4 class="section-subtitle">&#129514; Residual Risk &amp; Recommended Security Patch (Argon Synthesis)</h4>
+                    <h4 class="section-subtitle" id="ui-col-right-title">&#129514; Residual Risk &amp; Recommended Security Patch (Argon Synthesis)</h4>
                     <div id="residual-details" class="residual-details"></div>
                 </div>
             </div>
@@ -186,15 +233,83 @@
             <!-- Human-in-the-Loop Merge Gate Actions -->
             <div class="human-actions">
                 <div class="reviewer-prompt">
-                    <strong>Human Merge Gate:</strong> Review the confirmed 2/2 breaking tests, the deterministic blind detection score (<span id="inline-score-label"></span>), and surviving mutant blind spots before deciding.
+                    <div id="ui-merge-gate-prompt">
+                        <strong>Human Merge Gate:</strong> Review the confirmed 2/2 breaking tests, the deterministic blind detection score (<span id="inline-score-label"></span>), and surviving mutant blind spots before deciding.
+                    </div>
+                    <input id="reviewer-notes-input" type="text" class="reviewer-notes-input" placeholder="리뷰어 코멘트 입력 (선택 사항 — 예: M8 시계 오차 경계 조건 및 음수 환불 패치 후 재요청)">
                 </div>
                 <div class="action-buttons">
-                    <button id="reject-btn" class="danger-btn" type="button">&#10060; Reject Merge &amp; Request Fixes</button>
-                    <button id="approve-btn" class="success-btn" type="button">&#9989; Approve &amp; Merge PR</button>
+                    <button id="reject-btn" class="danger-btn" type="button">&#10060; <span id="ui-reject-btn-text">Reject Merge &amp; Request Fixes</span></button>
+                    <button id="approve-btn" class="success-btn" type="button">&#9989; <span id="ui-approve-btn-text">Approve &amp; Merge PR</span></button>
                 </div>
             </div>
         </div>
     </main>
+
+    <!-- GitHub PR URL & Custom Diff Import Modal (Ported from Crucible) -->
+    <div id="import-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <span class="lane-tag tag-blue">LIVE GITHUB API &amp; CUSTOM PR IMPORTER</span>
+                    <h3 id="modal-heading">실제 GitHub PR URL 또는 커스텀 Diff 불러오기</h3>
+                </div>
+                <button id="close-import-modal-btn" class="modal-close-btn" type="button">&times;</button>
+            </div>
+
+            <div class="modal-tabs">
+                <button id="tab-github-btn" class="modal-tab active" type="button">&#128279; GitHub PR URL 불러오기</button>
+                <button id="tab-custom-btn" class="modal-tab" type="button">&#128221; 커스텀 PR 코드/Diff 직접 붙여넣기</button>
+            </div>
+
+            <!-- Tab 1: GitHub PR URL -->
+            <div id="modal-tab-github" class="modal-body">
+                <label class="control-label" for="github-url-input" id="ui-gh-url-label">
+                    Public GitHub PR URL 또는 <code>owner/repo#번호</code> 입력
+                </label>
+                <div class="gh-input-row">
+                    <input id="github-url-input" type="text" class="modal-input" placeholder="https://github.com/pallets/flask/pull/5402 또는 owner/repo#123">
+                    <button id="fetch-github-pr-btn" class="primary-btn" type="button">GitHub에서 불러오기</button>
+                </div>
+                <div class="quick-presets">
+                    <span class="preset-hint">원클릭 테스트 예시:</span>
+                    <button type="button" class="preset-chip" data-gh="pallets/flask#5402">pallets/flask#5402</button>
+                    <button type="button" class="preset-chip" data-gh="psf/requests#6655">psf/requests#6655</button>
+                    <button type="button" class="preset-chip" data-gh="encode/httpx#3120">encode/httpx#3120</button>
+                </div>
+                <div id="import-modal-status" class="import-status"></div>
+            </div>
+
+            <!-- Tab 2: Custom Paste PR -->
+            <div id="modal-tab-custom" class="modal-body hidden">
+                <div class="modal-grid-2">
+                    <div>
+                        <label class="control-label" for="custom-pr-title">PR 제목</label>
+                        <input id="custom-pr-title" type="text" class="modal-input" value="PR #901: AI Async Escrow Batch Payout">
+                    </div>
+                    <div>
+                        <label class="control-label" for="custom-pr-repo">레포지토리 (owner/repo)</label>
+                        <input id="custom-pr-repo" type="text" class="modal-input" value="fintech-core/escrow-engine">
+                    </div>
+                </div>
+                <div style="margin-top:8px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <label class="control-label" for="custom-pr-diff">PR Unified Diff 또는 Python 코드</label>
+                        <button id="fill-adversarial-sample-btn" type="button" class="preset-chip">프롬프트 인젝션 공격 샘플 채우기</button>
+                    </div>
+                    <textarea id="custom-pr-diff" rows="6" class="modal-textarea">def release_escrow_batch(escrow_Account, payouts):
+    # AI-generated batch payout without atomic balance lock
+    for item in payouts:
+        escrow_Account["balance"] -= item["amount"]
+    return escrow_Account["balance"]</textarea>
+                </div>
+                <div class="modal-footer-actions">
+                    <button id="submit-custom-pr-btn" class="primary-btn" type="button">커스텀 PR 등록 및 블라인드 검증 실행</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>
