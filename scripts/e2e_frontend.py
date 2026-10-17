@@ -68,7 +68,7 @@ def main():
         with sync_playwright() as p:
             browser = p.chromium.launch()
             page = browser.new_page(viewport={"width": 1440, "height": 900})
-            page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+            page.on("console", lambda m: errors.append(f"{m.text} [{m.location.get('url', '')}]") if m.type == "error" else None)
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.set_default_timeout(10_000)
 
@@ -187,10 +187,12 @@ def main():
             expect(page.locator('[data-testid="lane-test"][data-outcome="breach"]')).to_have_count(3)
 
             # Stream error + retry
+            mark = len(errors)
             page.route("**/api/verify/stream", lambda route: route.abort())
             run_pr(page, "pr-ratelimiter-offbyone")
             expect(tid(page, "error-panel")).to_be_visible(timeout=RUN_TIMEOUT)
             page.unroute("**/api/verify/stream")
+            errors[mark:] = [e for e in errors[mark:] if "ERR_FAILED" not in e]  # intentional abort
             tid(page, "retry-button").click()
             expect(tid(page, "run-status")).to_contain_text("Complete", timeout=RUN_TIMEOUT)
             expect(tid(page, "caught-counter")).to_have_text("6/8")

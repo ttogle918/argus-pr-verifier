@@ -1209,7 +1209,8 @@ async def _stream_verification_events(req: VerifyRequest):
     yield _format_sse({
         "stage": "guardrail_start",
         "model": "gemini-3.5-flash-lite",
-        "execution_mode": "live_api" if is_live else "replay",
+        # Same condition the live stages below use, so the chip never says LIVE while the run replays.
+        "execution_mode": "live_api" if (is_live and gemini_swarm is not None) else "replay",
         "message": "Initiating Stage 0 Prompt-Injection & Untrusted PR Payload Scan...",
     })
     await asyncio.sleep(0.1)
@@ -1680,7 +1681,8 @@ FRONTEND_DIR.mkdir(parents=True, exist_ok=True)
 @app.middleware("http")
 async def disable_static_cache(request: Request, call_next):
     response = await call_next(request)
-    if request.url.path in ("/", "/index.html", "/styles.css", "/app.js"):
+    path = request.url.path
+    if path in ("/", "/index.html") or path.startswith(("/js/", "/css/")):
         response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"

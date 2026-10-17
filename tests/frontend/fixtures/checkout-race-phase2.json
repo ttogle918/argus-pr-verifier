@@ -1596,7 +1596,7 @@
    "recommended_fix_snippet": "# Recommended Fix in acme_pay/ledger_core.py:\ndef settle_refund(self, charge_id: str, refund_amount: float, idempotency_key: str) -> dict:\n    charge = self.db.get_charge(charge_id)\n    # FIX 1: Explicitly validate positive non-zero refund amount\n    if refund_amount <= 0:\n        raise ValueError(f\"Refund amount must be strictly positive, got {refund_amount}\")\n    if refund_amount > charge.remaining_refundable:\n        raise ValueError(f\"Refund {refund_amount} exceeds maximum refundable {charge.remaining_refundable}\")\n\n    # FIX 2: Use atomic SETNX/distributed lock for idempotency transition\n    with self.cache.distributed_lock(f\"lock:{idempotency_key}\", timeout=10):\n        cached_state = self.cache.get(f\"idempotency:{idempotency_key}\")\n        if cached_state in (\"PENDING_SETTLEMENT\", \"SETTLED\"):\n            return self.cache.get(f\"receipt:{idempotency_key}\")\n        self.cache.set(f\"idempotency:{idempotency_key}\", \"PENDING_SETTLEMENT\", ttl=60)\n        self.db.adjust_wallet_balance(charge.user_id, +refund_amount)\n        self.db.adjust_merchant_balance(charge.merchant_id, -refund_amount)\n"
   },
   "final_response": {
-   "run_id": "run_c27a548b5763",
+   "run_id": "run_2546216e9410",
    "pr_id": "pr-checkout-race",
    "pr_title": "PR #412: AI-Generated Instant Refund & Partial Wallet Settlement",
    "repo_name": "acme-pay/ledger-core",
@@ -2480,9 +2480,9 @@
  },
  {
   "stage": "done",
-  "run_id": "run_c27a548b5763",
+  "run_id": "run_2546216e9410",
   "final_response": {
-   "run_id": "run_c27a548b5763",
+   "run_id": "run_2546216e9410",
    "pr_id": "pr-checkout-race",
    "pr_title": "PR #412: AI-Generated Instant Refund & Partial Wallet Settlement",
    "repo_name": "acme-pay/ledger-core",
