@@ -57,3 +57,23 @@ test('_replace_final rebuilds mutants and tracks calibration ids', () => {
   assert.deepEqual(run.calibrationIds, ['M9']);
   assert.equal(run.status, 'complete');
 });
+
+test('_replace_final adopts the response run id, phase and attackers', () => {
+  const events = loadFixture('checkout-race-phase2');
+  const final = structuredClone(events.at(-1).final_response);
+  final.run_id = 'run_new';
+  final.phase_mode = 'phase1_mvp';
+  final.swarm_outputs = final.swarm_outputs.filter((s) => s.attacker_id !== 'regression');
+  const run = reduceRunEvent(replay(events), { stage: '_replace_final', final });
+  assert.equal(run.runId, 'run_new');
+  assert.equal(run.phase, 'phase1_mvp');
+  assert.deepEqual(run.attackers, ['security', 'edge_cases', 'state']);
+});
+
+test('_replace_final keeps the attacker list when the response has no swarm outputs', () => {
+  const events = loadFixture('checkout-race-phase2');
+  const before = replay(events);
+  const final = { ...structuredClone(events.at(-1).final_response), swarm_outputs: [] };
+  const run = reduceRunEvent(before, { stage: '_replace_final', final });
+  assert.deepEqual(run.attackers, before.attackers);
+});

@@ -11,6 +11,8 @@ export function createController({ store, api, sleep = defaultSleep, now = () =>
   const get = () => store.getState();
   const patchState = (key, value) => store.setState((s) => ({ ...s, [key]: { ...s[key], ...value } }));
   const dispatchRun = (evt) => store.setState((s) => ({ ...s, run: reduceRunEvent(s.run, evt) }));
+  // Async follow-ups (patch, mutant, DAST, export) belong to the run that was current when they started.
+  const stale = (startedAt) => get().run.startedAt !== startedAt;
 
   function registerPr(pr) {
     const id = pr.pr_id || pr.id;
@@ -19,6 +21,10 @@ export function createController({ store, api, sleep = defaultSleep, now = () =>
   }
 
   async function importAndRun(request) {
+    if (get().run.status === 'running') {
+      store.setState((s) => ({ ...s, importState: { status: 'error', message: 'A run is in progress. Stop it or wait for it to finish.' } }));
+      return;
+    }
     store.setState((s) => ({ ...s, importState: { status: 'loading', message: '' } }));
     try {
       const data = await request();
@@ -85,7 +91,16 @@ export function createController({ store, api, sleep = defaultSleep, now = () =>
       }
     },
     stop() { abort?.abort(); },
-    retry() { return actions.run(); },
+    retry() {
+      const { run } = get();
+      if (run.status === 'running') return undefined;
+      if (run.prId) {
+        store.setState((s) => ({
+          ...s, selectedPrId: run.prId, options: { ...s.options, phase: run.phase, mode: run.requestedMode },
+        }));
+      }
+      return actions.run();
+    },
 
     async decide(decision, note) {
       const { final } = get().run;
@@ -110,24 +125,29 @@ export function createController({ store, api, sleep = defaultSleep, now = () =>
         caught: run.score.planted_bugs_caught, total: run.score.planted_bugs_total,
         defects: run.score.confirmed_pr_failures_count, verdict: run.oneCard.headline_verdict, risk: run.oneCard.residual_risk_level,
       };
+      const { startedAt } = run;
       store.setState((s) => ({ ...s, patch: { status: 'running', report: null, before, error: null } }));
       try {
         const final = await api.applyPatch(run.final.pr_id, run.phase);
+        if (stale(startedAt)) return;
         dispatchRun({ stage: '_replace_final', final });
         store.setState((s) => ({ ...s, decision: null, patch: { status: 'done', report: final.self_healing_patch ?? null, before, error: null } }));
       } catch (err) {
+        if (stale(startedAt)) return;
         patchState('patch', { status: 'error', error: err.message });
       }
     },
 
     async exportBundle() {
-      const { final } = get().run;
+      const { final, startedAt } = get().run;
       if (!final) return;
       store.setState((s) => ({ ...s, overlay: { name: 'export' }, bundle: { status: 'running', data: null, error: null } }));
       try {
         const data = await api.exportBundle(final.pr_id);
+        if (stale(startedAt)) return;
         store.setState((s) => ({ ...s, bundle: { status: 'done', data, error: null } }));
       } catch (err) {
+        if (stale(startedAt)) return;
         patchState('bundle', { status: 'error', error: err.message });
       }
     },
@@ -135,25 +155,35 @@ export function createController({ store, api, sleep = defaultSleep, now = () =>
     async addMutant({ title, category, description, caught }) {
       const { run } = get();
       if (!run.final) return;
+      const { startedAt } = run;
       const before = new Set(run.mutants.map((m) => m.id));
       store.setState((s) => ({ ...s, mutantForm: { status: 'saving', error: null } }));
       try {
         const final = await api.addMutant({ pr_id: run.final.pr_id, category, title, bug_description: description, caught });
+        if (stale(startedAt)) return;
         const added = (final.deterministic_score?.mutant_evaluations ?? []).map((m) => m.mutant_id).find((id) => !before.has(id)) ?? null;
         dispatchRun({ stage: '_replace_final', final, calibrationId: added });
-        store.setState((s) => ({ ...s, overlay: null, view: 'verify', mutantForm: { status: 'idle', error: null }, ui: { ...s.ui, selectedMutant: added } }));
+        // The calibrated result is a new run: the old decision, patch and export no longer apply.
+        store.setState((s) => ({
+          ...s, overlay: null, view: 'verify', decision: null, patch: fresh.patch, bundle: fresh.bundle,
+          mutantForm: { status: 'idle', error: null }, ui: { ...s.ui, selectedMutant: added },
+        }));
       } catch (err) {
+        if (stale(startedAt)) return;
         store.setState((s) => ({ ...s, mutantForm: { status: 'error', error: err.message } }));
       }
     },
 
     async runLiveDast() {
       const { run } = get();
+      const { startedAt } = run;
       store.setState((s) => ({ ...s, dast: { status: 'running', report: null, error: null } }));
       try {
         const report = await api.liveDast({ repo_name: run.repoName || 'acme-pay/refund-daemon-service', patch_id: 'patch_3802_live_dast', session_patch_attempt: 2 });
+        if (stale(startedAt)) return;
         store.setState((s) => ({ ...s, dast: { status: 'done', report, error: null } }));
       } catch (err) {
+        if (stale(startedAt)) return;
         patchState('dast', { status: 'error', error: err.message });
       }
     },

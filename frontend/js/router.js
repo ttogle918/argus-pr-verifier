@@ -14,16 +14,29 @@ export function viewFromHash(hash, state) {
   return VIEWS.includes(view) && allowedView(view, state) ? view : 'start';
 }
 
+// How the store subscriber syncs the URL: replace a non-route hash (empty, or the skip link's #main),
+// push only when the view itself changed, otherwise leave the URL alone (a pending hashchange may own it).
+export function historyAction(hash, view, lastView) {
+  if (hash === `#/${view}`) return null;
+  if (!/^#\//.test(hash)) return 'replace';
+  return view !== lastView ? 'push' : null;
+}
+
 export function initRouter(store, actions) {
+  let lastView = store.getState().view;
   const fromHash = () => {
     const target = viewFromHash(location.hash, store.getState());
     if (target === null) return;
-    if (store.getState().view !== target) actions.navigate(target);
+    // Fix the URL first so the subscriber sees a matching hash and does not push during back/forward.
     if (`#/${target}` !== location.hash) history.replaceState(null, '', `#/${target}`);
+    if (store.getState().view !== target) actions.navigate(target);
   };
   window.addEventListener('hashchange', fromHash);
   store.subscribe((s) => {
-    if (location.hash !== `#/${s.view}`) history.pushState(null, '', `#/${s.view}`);
+    const action = historyAction(location.hash, s.view, lastView);
+    lastView = s.view;
+    if (action === 'push') history.pushState(null, '', `#/${s.view}`);
+    else if (action === 'replace') history.replaceState(null, '', `#/${s.view}`);
   });
   fromHash();
 }

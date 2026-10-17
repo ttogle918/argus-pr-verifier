@@ -57,8 +57,10 @@ function applyFinal(run, final, calibrationId) {
   }
   const evals = final.deterministic_score?.mutant_evaluations ?? [];
   tests = addKills(tests, evals);
+  const fromSwarm = [...new Set((final.swarm_outputs ?? []).map((s) => s.attacker_id))];
   return {
-    ...run, final, prTitle: final.pr_title || run.prTitle,
+    ...run, final, prTitle: final.pr_title || run.prTitle, runId: final.run_id ?? run.runId, phase,
+    attackers: fromSwarm.length ? fromSwarm : run.attackers,
     score: final.deterministic_score, oneCard: final.one_card_summary,
     matrix: final.sandbox_report?.mutant_matrix ?? null, tests, testOrder: order,
     mutants: evals.map((m) => toMutant(m, m.caught ? 'caught' : 'survived')),

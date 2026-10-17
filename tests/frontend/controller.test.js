@@ -8,7 +8,7 @@ import { createController } from '../../frontend/js/controller.js';
 const PHASE2 = loadFixture('checkout-race-phase2');
 const FINAL = PHASE2.at(-1).final_response;
 
-function setup(overrides = {}) {
+function setup(overrides = {}, { now = () => '2026-10-17T00:00:00Z' } = {}) {
   const calls = [];
   const api = {
     listPrs: async () => [{ id: 'pr-checkout-race', title: 'PR #412', repo_name: 'acme-pay/ledger-core', author: 'devin-bot[ai]' }],
@@ -32,7 +32,7 @@ function setup(overrides = {}) {
   const store = createStore(initialState());
   const downloads = [];
   const actions = createController({
-    store, api, sleep: async () => {}, now: () => '2026-10-17T00:00:00Z',
+    store, api, sleep: async () => {}, now,
     clipboard: { writeText: async () => {} }, download: (name, text) => downloads.push([name, text]),
   });
   return { store, actions, calls, downloads };
@@ -108,4 +108,94 @@ test('downloadReport writes the JSON report', async () => {
   actions.downloadReport();
   assert.equal(downloads[0][0], `argus-pr-report-${FINAL.pr_id}.json`);
   assert.equal(JSON.parse(downloads[0][1]).language, 'en');
+});
+
+const deferred = () => {
+  let resolve;
+  const promise = new Promise((r) => { resolve = r; });
+  return { promise, resolve };
+};
+const ticking = () => { let n = 0; return () => `2026-10-17T00:00:${String(n++).padStart(2, '0')}Z`; };
+
+test('addMutant after applyPatch resets decision, patch and bundle, and adopts the new run id', async () => {
+  const { store, actions } = setup({
+    addMutant: async () => {
+      const f = structuredClone(FINAL);
+      f.run_id = 'run_calibrated';
+      f.deterministic_score.mutant_evaluations.push({ ...f.deterministic_score.mutant_evaluations[7], mutant_id: 'M9', caught: false });
+      return f;
+    },
+    exportBundle: async () => ({ ok: true }),
+  });
+  await actions.run();
+  await actions.applyPatch();
+  await actions.exportBundle();
+  await actions.decide('APPROVE_MERGE', 'ok');
+  await actions.addMutant({ title: 'Neg fee', category: 'security', description: 'd', caught: false });
+  const s = store.getState();
+  assert.equal(s.patch.status, 'idle');
+  assert.equal(s.patch.before, null);
+  assert.equal(s.bundle.status, 'idle');
+  assert.equal(s.decision, null);
+  assert.equal(s.run.runId, 'run_calibrated');
+});
+
+test('importing while a run is in progress is refused without registering the PR', async () => {
+  const gate = deferred();
+  let imported = 0;
+  const { store, actions } = setup({
+    async streamVerify(body, onEvent) { await onEvent(PHASE2[0]); await gate.promise; },
+    importCustom: async () => { imported += 1; return { pr: { pr_id: 'pr-custom', title: 'Custom' } }; },
+  });
+  await actions.loadPrs();
+  const running = actions.run();
+  assert.equal(store.getState().run.status, 'running');
+  await actions.importCustom({ title: 'Custom', repo_name: 'a/b', diff: 'x' });
+  const s = store.getState();
+  assert.deepEqual(s.importState, { status: 'error', message: 'A run is in progress. Stop it or wait for it to finish.' });
+  assert.equal(imported, 0);
+  assert.ok(!s.prs.some((p) => p.id === 'pr-custom'));
+  gate.resolve();
+  await running;
+});
+
+test('retry re-runs the failed run with its own PR, phase and mode', async () => {
+  let fail = true;
+  const { store, actions, calls } = setup({
+    async streamVerify(body, onEvent) {
+      calls.push(['stream', body]);
+      if (fail) throw new Error('Failed to fetch');
+      for (const evt of PHASE2) await onEvent(evt);
+    },
+  });
+  await actions.loadPrs();
+  actions.setOptions({ phase: 'phase1_mvp', mode: 'live_api', scope: 'auto' });
+  await actions.run();
+  assert.equal(store.getState().run.status, 'error');
+  actions.selectPr('pr-other');
+  actions.setOptions({ phase: 'phase2_full', mode: 'replay' });
+  fail = false;
+  await actions.retry();
+  assert.deepEqual(calls.at(-1)[1], { pr_id: 'pr-checkout-race', phase_mode: 'phase1_mvp', execution_mode: 'live_api', scope_override: 'auto' });
+  const s = store.getState();
+  assert.equal(s.selectedPrId, 'pr-checkout-race');
+  assert.deepEqual(s.options, { phase: 'phase1_mvp', mode: 'live_api', scope: 'auto' });
+});
+
+test('a patch response that arrives after a new run started is ignored', async () => {
+  const gate = deferred();
+  const { store, actions } = setup({
+    applyPatch: async () => { await gate.promise; return { ...structuredClone(FINAL), pr_title: '[PATCHED] PR #412', self_healing_patch: { attempt_history: [] } }; },
+  }, { now: ticking() });
+  await actions.loadPrs();
+  await actions.run();
+  const patching = actions.applyPatch();
+  await actions.run();
+  const startedAt = store.getState().run.startedAt;
+  gate.resolve();
+  await patching;
+  const s = store.getState();
+  assert.equal(s.run.startedAt, startedAt);
+  assert.equal(s.run.prTitle, 'PR #412');
+  assert.equal(s.patch.status, 'idle');
 });
