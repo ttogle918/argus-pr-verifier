@@ -1,1 +1,142 @@
-/* run-details.css: owned by a later task */
+/* Run details drawer */
+.rd { display: flex; flex-direction: column; }
+.rd__meta { margin: 0; padding: 10px 24px 0; font-size: var(--fs-sm); color: var(--text-faint); overflow-wrap: anywhere; }
+.rd__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.rd__nav a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  font-size: 14px;
+  color: var(--text-2);
+  text-decoration: none;
+}
+.rd__nav a:hover { background: var(--surface-hover); color: var(--text); }
+.rd__sections { display: flex; flex-direction: column; gap: 28px; padding: 24px; }
+.rd__sections > section { display: flex; flex-direction: column; gap: 10px; }
+.rd__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
+.rd__h { font-size: var(--fs-lg); font-weight: 600; }
+.rd__faint { font-size: var(--fs-sm); color: var(--text-faint); }
+.rd__muted { margin: 0; color: var(--text-muted); }
+.rd__empty { margin: 0; color: var(--text-faint); font-size: 14px; }
+.rd__break { overflow-wrap: anywhere; }
+.rd__diff { max-height: 360px; }
+
+.rd__card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.rd__card-text { flex: 1 1 360px; min-width: 0; color: var(--text-2); }
+.rd__risk { gap: 6px; font-size: var(--fs-sm); font-weight: 600; color: var(--text-2); border-color: var(--border-emphasis); }
+.rd__risk.chip--danger { color: var(--danger-text); border-color: var(--danger-border); }
+.rd__risk.chip--warn { color: var(--warn-text); border-color: var(--warn-border); }
+.rd__threats { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.rd__threats li {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border-subtle);
+}
+.rd__threat-icon { flex: none; margin-top: 3px; color: var(--danger); }
+.rd__threats code { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--danger-trace); overflow-wrap: anywhere; }
+
+.rd__grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--border);
+}
+.rd__cell { padding: 12px 14px; background: var(--surface-2); min-width: 0; }
+.rd__cell dt { font-size: var(--fs-sm); color: var(--text-muted); }
+.rd__cell dd { margin: 0; font-size: 14px; }
+.rd__skipped { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: var(--fs-sm); }
+.rd__struck { color: var(--text-muted); text-decoration: line-through; white-space: normal; }
+
+/* Live DAST */
+.dast {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 6px;
+  padding: 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--bg-sunken);
+}
+.dast__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.dast__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 320px; }
+.dast__h { font-size: var(--fs-md); font-weight: 600; }
+.dast__text .rd__muted { font-size: 14px; }
+.personas { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px; }
+.persona {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.persona--attacker { border-color: var(--danger-border); }
+.persona__role { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+.persona--attacker .persona__role .icon { color: var(--danger); }
+.persona__meta { font-size: var(--fs-xs); color: var(--text-faint); overflow-wrap: anywhere; }
+
+.rd__table-wrap { border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; }
+.rd__table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14px; }
+.rd__table thead tr { text-align: left; background: var(--surface); border-bottom: 1px solid var(--border); }
+.rd__table th[scope="col"] {
+  padding: 10px 12px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+}
+.rd__table th.rd__c, .rd__table td { text-align: center; }
+.rd__table td:last-child, .rd__table th[scope="col"]:last-child { text-align: left; }
+.rd__table tbody { font-family: var(--font-mono); font-size: var(--fs-sm); }
+.rd__table tbody tr { border-bottom: 1px solid var(--border-subtle); }
+.rd__table tbody tr:last-child { border-bottom: 0; }
+.rd__table td { padding: 10px 12px; color: var(--text-muted); }
+.rd__table th[scope="row"] { padding: 10px 12px; text-align: left; font-weight: 500; color: var(--text); }
+.rd__rid { display: block; font-size: var(--fs-xs); font-weight: 400; color: var(--text-faint); }
+.rd__row--bad { background: var(--danger-tint); }
+.rd__allowed { padding: 1px 6px; font-weight: 600; }
+.rd__allowed span { font-weight: 500; }
+.rd__verdict { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); }
+.rd__verdict--bad { font-weight: 600; color: var(--danger-text); }
+.rd__summary { margin: 0; font-size: 14px; color: var(--text-2); }
+
+/* Invariants */
+.rd__invs { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.inv { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 12px 14px; border-bottom: 1px solid var(--border-subtle); background: var(--surface-2); }
+.inv:last-child { border-bottom: 0; }
+.inv__id { flex: 0 0 52px; font-size: var(--fs-sm); font-weight: 600; }
+.inv__body { flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.inv__top { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+.inv__title { font-size: var(--fs-base); font-weight: 500; }
+.inv__assert { font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--text-2); overflow-wrap: anywhere; }
