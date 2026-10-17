@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Argus-PR · Verify</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0F12}
+a{color:#E7E9EC}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="min-height: 1180px; background: #0D0F12; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.5;">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 32px; border-bottom: 1px solid #262C33; background: #0D0F12;">
+<div style="display: flex; align-items: center; gap: 10px;">
+<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" fill="none" stroke="#E7E9EC" stroke-width="1.8" stroke-linejoin="round"><path d="M2 12 Q12 2.5 22 12 Q12 21.5 2 12 Z"></path><circle cx="12" cy="12" r="3.4"></circle></svg>
+<span style="font-size: 17px; font-weight: 600; letter-spacing: 0.01em;">Argus-PR</span>
+</div>
+<nav aria-label="Workflow" style="display: flex; flex-wrap: wrap; gap: 4px;">
+<a href="Main.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid transparent; color: #AAB1BA; text-decoration: none; font-size: 14px; font-weight: 500; box-sizing: border-box;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace;">1</span>Start</a>
+<a href="Run.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid transparent; color: #AAB1BA; text-decoration: none; font-size: 14px; font-weight: 500; box-sizing: border-box;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace;">2</span>Run</a>
+<a href="Verify.dc.html" aria-current="page" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid #343B44; background: #1A1E23; color: #E7E9EC; text-decoration: none; font-size: 14px; font-weight: 500; box-sizing: border-box;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #AAB1BA;">3</span>Verify</a>
+<a href="Decide.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid transparent; color: #AAB1BA; text-decoration: none; font-size: 14px; font-weight: 500; box-sizing: border-box;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace;">4</span>Decide</a>
+</nav>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid #343B44; border-radius: 6px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.04em; color: #D3D8DE;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#D3D8DE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>RECORDED REPLAY</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px dashed #4A525C; border-radius: 6px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.04em; color: #AAB1BA;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#AAB1BA" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>SAMPLE DATA</span>
+</div>
+</header>
+
+<main style="max-width: 1400px; margin: 0 auto; padding: 28px 32px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px;">
+
+<section style="display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch;">
+<div style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 8px; justify-content: center;">
+<h1 style="margin: 0; font-size: 28px; font-weight: 600; line-height: 1.2;">Verification matrix</h1>
+<p style="margin: 0; font-size: 16px; color: #AAB1BA; max-width: 640px;">Every valid attack test was run against each of the eight hidden mutants. A mutant counts as caught only when a test passes on the PR and fails on the mutant.</p>
+<code style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; color: #D3D8DE;">Caught(m) ⇔ ∃ test: Pass(test, PR) ∧ Fail(test, m)</code>
+<p style="margin: 4px 0 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #868E99;">PR #412 · acme-pay/ledger-core · run_c8865081cf17 · completed in 10 s</p>
+</div>
+<div style="flex: 0 1 460px; min-width: 0; display: flex; gap: 24px; align-items: center; padding: 20px 24px; border: 1px solid #262C33; border-radius: 12px; background: #13161A; box-sizing: border-box;">
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; align-items: baseline; gap: 4px; font-family: 'IBM Plex Mono', ui-monospace, monospace;"><span style="font-size: 96px; line-height: 0.95; font-weight: 600; color: #F2F4F6;">7</span><span style="font-size: 44px; line-height: 1; color: #868E99;">/8</span></div>
+<span style="font-size: 14px; color: #AAB1BA;">planted bugs caught</span>
+</div>
+<dl style="margin: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px;">
+<div style="display: flex; gap: 10px; align-items: baseline;"><dt style="color: #AAB1BA; min-width: 92px;">Detection</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #E7E9EC;">87.5%</dd></div>
+<div style="display: flex; gap: 10px; align-items: baseline;"><dt style="color: #AAB1BA; min-width: 92px;">Tests</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #E7E9EC;">10 run · 7 valid</dd></div>
+<div style="display: flex; gap: 10px; align-items: baseline;"><dt style="color: #AAB1BA; min-width: 92px;">Survived</dt><dd style="margin: 0; display: flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #E5C04B;"><svg viewBox="0 0 40 24" width="20" height="12" aria-hidden="true" fill="none" stroke="#E5C04B" stroke-width="2.6" stroke-linecap="round"><path d="M3 9 Q20 19 37 9"></path></svg>M8</dd></div>
+</dl>
+</div>
+</section>
+
+<ul aria-label="Legend" style="margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 24px; font-size: 14px; color: #AAB1BA;">
+<li style="display: flex; align-items: center; gap: 8px;"><span style="width: 28px; height: 22px; border-radius: 4px; border: 1px solid rgba(82,196,140,0.6); background: rgba(82,196,140,0.16); display: inline-flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#52C48C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><strong style="color: #E7E9EC; font-weight: 500;">Caught</strong> passed on PR, failed on mutant</li>
+<li style="display: flex; align-items: center; gap: 8px;"><span style="width: 28px; height: 22px; border-radius: 4px; border: 1px solid #262C33; background: #161A1F; display: inline-flex; align-items: center; justify-content: center;"><span style="width: 8px; height: 2px; background: #5D6570;"></span></span><strong style="color: #E7E9EC; font-weight: 500;">Survived</strong> test passed on mutant too</li>
+<li style="display: flex; align-items: center; gap: 8px;"><span style="width: 28px; height: 22px; border-radius: 4px; border: 1px solid #262C33; background: repeating-linear-gradient(135deg, #1A1E23 0 4px, #13161A 4px 8px); display: inline-flex; align-items: center; justify-content: center;"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none" stroke="#7D858F" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8"></circle><path d="M6.5 17.5l11-11"></path></svg></span><strong style="color: #E7E9EC; font-weight: 500;">Invalid</strong> test failed on the PR, excluded</li>
+</ul>
+
+<section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+<div style="flex: 999 1 820px; min-width: 0; border: 1px solid #262C33; border-radius: 12px; background: #13161A; overflow-x: auto;">
+<div role="table" aria-label="Attack tests by planted mutant" style="min-width: 860px; display: flex; flex-direction: column;">
+<div role="rowgroup">
+<div role="row" style="display: grid; grid-template-columns: minmax(300px, 2.2fr) repeat(8, minmax(60px, 1fr)); border-bottom: 1px solid #262C33;">
+<div role="columnheader" style="padding: 12px 16px; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA; display: flex; align-items: flex-end;">Attack test</div>
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="8">
+<div role="columnheader" style="{{c.thStyle}}">
+<button type="button" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}" style="{{c.btnStyle}}">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; font-weight: 600;">{{c.id}}</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #868E99; letter-spacing: 0.02em;">{{c.cat}}</span>
+<span style="{{c.sevStyle}}">{{c.sev}}</span>
+</button>
+</div>
+</sc-for>
+</div>
+</div>
+<div role="rowgroup">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+<div role="row" style="display: grid; grid-template-columns: 1fr; background: #101317; border-bottom: 1px solid #20252B;">
+<div role="rowheader" style="padding: 8px 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: #AAB1BA;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#AAB1BA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{g.icon}}"></path></svg>{{g.name}}</div>
+</div>
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+<div role="row" style="display: grid; grid-template-columns: minmax(300px, 2.2fr) repeat(8, minmax(60px, 1fr)); border-bottom: 1px solid #20252B;">
+<div role="rowheader" style="padding: 10px 16px; display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+<code style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.35; color: {{r.idColor}}; overflow-wrap: anywhere;">{{r.id}}</code>
+<span style="{{r.metaStyle}}">{{r.meta}}</span>
+</div>
+<sc-for list="{{r.cells}}" as="cell" hint-placeholder-count="8">
+<div role="cell" style="{{cell.wrap}}">
+<div style="{{cell.box}}">
+<sc-if value="{{cell.caught}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#52C48C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+<sc-if value="{{cell.survived}}" hint-placeholder-val="{{ true }}"><span style="{{cell.dash}}"></span></sc-if>
+<sc-if value="{{cell.invalid}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#6B737E" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8"></circle><path d="M6.5 17.5l11-11"></path></svg></sc-if>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{cell.label}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-for>
+</sc-for>
+</div>
+<div role="rowgroup">
+<div role="row" style="display: grid; grid-template-columns: minmax(300px, 2.2fr) repeat(8, minmax(60px, 1fr)); background: #101317;">
+<div role="rowheader" style="padding: 14px 16px; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA; display: flex; align-items: center;">Mutant verdict</div>
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="8">
+<div role="cell" style="{{c.footWrap}}">
+<span style="{{c.verdictStyle}}">
+<sc-if value="{{c.caught}}" hint-placeholder-val="{{ true }}"><svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none" stroke="#52C48C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+<sc-if value="{{c.survivedCol}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 40 24" width="16" height="10" aria-hidden="true" fill="none" stroke="#E5C04B" stroke-width="3" stroke-linecap="round"><path d="M3 9 Q20 19 37 9"></path></svg></sc-if>
+{{c.verdict}}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+
+<aside aria-label="Selected mutant" style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 20px; border: 1px solid #262C33; border-radius: 12px; background: #13161A; box-sizing: border-box;">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 22px; font-weight: 600;">{{sel.id}}</span>
+<span style="{{sel.chipStyle}}">{{sel.verdict}}</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #AAB1BA; padding: 3px 8px; border: 1px solid #343B44; border-radius: 5px;">{{sel.catLong}} · {{sel.sevLong}}</span>
+</div>
+<h2 style="margin: 0; font-size: 18px; font-weight: 600; line-height: 1.35;">{{sel.title}}</h2>
+<p style="margin: 0; color: #AAB1BA;">{{sel.desc}}</p>
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA;">Planted change</span>
+<pre style="margin: 0; padding: 10px 0; border-radius: 8px; background: #0F1215; border: 1px solid #20252B; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.6; overflow-x: auto;"><sc-for list="{{sel.diff}}" as="d" hint-placeholder-count="2"><span style="{{d.style}}">{{d.text}}</span></sc-for></pre>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA;">Caught by</span>
+<p style="{{sel.byStyle}}">{{sel.by}}</p>
+</div>
+<sc-if value="{{sel.hasRisk}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 8px; border: 1px solid rgba(229,192,75,0.4); background: rgba(229,192,75,0.06);">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #EBCF72;"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#E5C04B" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3.5l9.5 17h-19z"></path><path d="M12 10v4.5M12 17.5v.3"></path></svg>Why it survived</span>
+<p style="margin: 0; font-size: 14px; color: #D3D8DE;">{{sel.risk}}</p>
+</div>
+</sc-if>
+<div style="display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 1px solid #262C33;">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA;">3 tests excluded from scoring</span>
+<p style="margin: 0; font-size: 14px; color: #AAB1BA;">They failed on the original PR, so a failure on a mutant proves nothing. Two of them are the PR’s real defects.</p>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px;">
+<li style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;"><span style="padding: 1px 6px; border-radius: 4px; color: #F59A74; border: 1px solid rgba(240,112,63,0.45);">DEFECT 2/2</span><span style="color: #D3D8DE; overflow-wrap: anywhere;">test_sec_negative_refund_wallet_inflation</span></li>
+<li style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;"><span style="padding: 1px 6px; border-radius: 4px; color: #F59A74; border: 1px solid rgba(240,112,63,0.45);">DEFECT 2/2</span><span style="color: #D3D8DE; overflow-wrap: anywhere;">test_state_double_settlement_idempotency_race</span></li>
+<li style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;"><span style="padding: 1px 6px; border-radius: 4px; color: #EBCF72; border: 1px solid rgba(229,192,75,0.45);">FLAKY 1/2</span><span style="color: #D3D8DE; overflow-wrap: anywhere;">test_edge_float_rounding_jitter</span></li>
+</ul>
+</div>
+<a href="Decide.dc.html" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 8px; background: #E7E9EC; color: #0D0F12; text-decoration: none; font-size: 15px; font-weight: 600;">Continue to decision<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#0D0F12" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+</aside>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { sel: 'M8' };
+  }
+  renderVals() {
+    const mono = "font-family: 'IBM Plex Mono', ui-monospace, monospace;";
+    const sel = this.state.sel;
+    const CAT = { security: ['SEC', 'Security'], edge: ['EDGE', 'Edge case'], state: ['STATE', 'State'], regression: ['REG', 'Regression'] };
+    const SEV = { CRITICAL: 'CRIT', HIGH: 'HIGH', MEDIUM: 'MED' };
+    const mutants = [
+      { id: 'M1', cat: 'security', sev: 'CRITICAL', title: 'Removed HMAC signature check on webhook callback', desc: 'Replaced compare_digest with an always-true check, letting unauthenticated callers trigger fake refund callbacks.', diff: ['- if not hmac.compare_digest(expected, signature):', '+ if False:'], by: 'test_sec_webhook_hmac_verification (Security)' },
+      { id: 'M2', cat: 'security', sev: 'CRITICAL', title: 'Cross-tenant account lookup missing owner match', desc: 'Disabled the account.tenant_id guard, exposing cross-tenant account queries.', diff: ['- if account.tenant_id != tenant_id:', '+ if False and account.tenant_id != tenant_id:'], by: 'test_sec_tenant_isolation_guard (Security)' },
+      { id: 'M3', cat: 'edge', sev: 'HIGH', title: 'Off-by-one blocks exact 100% full refunds', desc: 'Replaced > with >= in validate_refund_limits, so full refunds are wrongly rejected.', diff: ['- if refund_amount > max_refundable:', '+ if refund_amount >= max_refundable:'], by: 'test_edge_exact_full_refund_boundary (Edge Case)' },
+      { id: 'M4', cat: 'edge', sev: 'HIGH', title: 'Zero-amount division by zero in fee calculator', desc: 'Removed the amount == 0 guard, causing ZeroDivisionError in the legacy ratio calculation.', diff: ['- if amount == 0:', '-     return 0.0', '+ val = 1.0 / amount'], by: 'test_edge_zero_amount_fee_calc (Edge Case)' },
+      { id: 'M5', cat: 'state', sev: 'HIGH', title: 'Missing rollback of reserved hold on gateway timeout', desc: 'Removed release_hold from the except block, leaking funds in hold state.', diff: ['- self.gateway.release_hold(hold_id)', '+ pass  # hold leaked'], by: 'test_state_gateway_timeout_rollback (State)' },
+      { id: 'M6', cat: 'regression', sev: 'MEDIUM', title: 'Dropped currency_iso from V2 settlement receipt', desc: 'Omitted currency_iso from the receipt dict, breaking the downstream reporting schema.', diff: ["- 'currency_iso': currency_iso,", '+ # dropped currency_iso field'], by: 'test_reg_receipt_schema_backward_compat (Regression)' },
+      { id: 'M7', cat: 'regression', sev: 'MEDIUM', title: 'Fee rounding changed from banker’s rounding to truncation', desc: 'Replaced Decimal quantize (ROUND_HALF_EVEN) with int() truncation, leaking rounding drift.', diff: ["- return val.quantize(Decimal('0.001'), rounding=ROUND_HALF_EVEN)", '+ return Decimal(int(val * 1000)) / Decimal(1000)'], by: 'test_reg_basis_points_bankers_rounding (Regression)' },
+      { id: 'M8', cat: 'state', sev: 'HIGH', title: 'Clock-skew TTL expiry bypass on shard failover', desc: 'Off-by-one millisecond comparison on shard failover cache expiry when now_ms == token_expiry_ms.', diff: ['- if now_ms > token_expiry_ms:', '+ if now_ms >= token_expiry_ms + 1000:  # 1s drift window'], by: '', risk: 'No generated test mocks a cross-shard clock-skew transition. If merged, settlement tokens could be replayed during shard failover inside a 1-second drift window.' }
+    ];
+    const sevColor = { CRITICAL: '#F59A74', HIGH: '#D3D8DE', MEDIUM: '#AAB1BA' };
+
+    const cols = mutants.map((m) => {
+      const isSel = sel === m.id;
+      const survived = !m.by;
+      return {
+        id: m.id, cat: CAT[m.cat][0], sev: SEV[m.sev],
+        pressed: isSel ? 'true' : 'false',
+        pick: () => this.setState({ sel: m.id }),
+        caught: !survived, survivedCol: survived,
+        verdict: survived ? 'Survived' : 'Caught',
+        thStyle: 'padding: 6px 4px; display: flex; justify-content: center;' + (isSel ? ' background: #1C2127;' : ''),
+        btnStyle: 'width: 100%; min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border-radius: 6px; cursor: pointer; background: transparent; color: #E7E9EC; border: 1px solid ' + (isSel ? '#8E96A1' : 'transparent') + ';',
+        sevStyle: mono + ' font-size: 11px; font-weight: 600; color: ' + sevColor[m.sev] + ';',
+        footWrap: 'padding: 10px 4px; display: flex; justify-content: center; align-items: center;' + (isSel ? ' background: #1C2127;' : ''),
+        verdictStyle: mono + ' display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 6px; border-radius: 5px; ' + (survived ? 'color: #EBCF72; border: 1px solid rgba(229,192,75,0.55); background: rgba(229,192,75,0.10);' : 'color: #7FD6AA; border: 1px solid rgba(82,196,140,0.45);')
+      };
+    });
+
+    const ICON = {
+      security: 'M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z',
+      edge: 'M13 2L4 14h7l-1 8 9-12h-7l1-8z',
+      state: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7',
+      regression: 'M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2'
+    };
+    const row = (id, inv, kill, invalid) => {
+      const cells = mutants.map((m) => {
+        const isSel = sel === m.id;
+        const survivedCol = !m.by;
+        let kind = invalid ? 'invalid' : (kill === m.id ? 'caught' : 'survived');
+        const label = id + ' on ' + m.id + ': ' + (kind === 'caught' ? 'caught' : (kind === 'invalid' ? 'invalid, excluded' : 'survived'));
+        let box = 'position: relative; height: 34px; border-radius: 5px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; ';
+        if (kind === 'caught') box += 'border: 1px solid rgba(82,196,140,0.6); background: rgba(82,196,140,0.16);';
+        else if (kind === 'invalid') box += 'border: 1px solid #22272D; background: repeating-linear-gradient(135deg, #1A1E23 0 4px, #13161A 4px 8px);';
+        else box += 'border: 1px solid ' + (survivedCol ? 'rgba(229,192,75,0.35)' : '#22272D') + '; background: ' + (survivedCol ? 'rgba(229,192,75,0.05)' : '#161A1F') + ';';
+        return {
+          caught: kind === 'caught', survived: kind === 'survived', invalid: kind === 'invalid', label,
+          dash: 'width: 10px; height: 2px; border-radius: 1px; background: ' + (survivedCol ? '#B39A45' : '#4A525C') + ';',
+          wrap: 'padding: 6px 5px;' + (isSel ? ' background: #1C2127;' : ''),
+          box
+        };
+      });
+      return {
+        id, cells,
+        idColor: invalid ? '#868E99' : '#E7E9EC',
+        meta: invalid === 'defect' ? inv + ' · defect, failed 2/2 on PR' : (invalid === 'flaky' ? inv + ' · flaky, failed 1/2 on PR' : inv + ' · held 2/2 on PR'),
+        metaStyle: mono + ' font-size: 12px; color: ' + (invalid === 'defect' ? '#F59A74' : (invalid === 'flaky' ? '#EBCF72' : '#868E99')) + ';'
+      };
+    };
+    const groups = [
+      { name: 'Security', icon: ICON.security, rows: [row('test_sec_negative_refund_wallet_inflation', 'INV-1', null, 'defect'), row('test_sec_webhook_hmac_verification', 'INV-2', 'M1'), row('test_sec_tenant_isolation_guard', 'INV-2', 'M2')] },
+      { name: 'Edge Case', icon: ICON.edge, rows: [row('test_edge_float_rounding_jitter', 'INV-4', null, 'flaky'), row('test_edge_exact_full_refund_boundary', 'INV-4', 'M3'), row('test_edge_zero_amount_fee_calc', 'INV-5', 'M4')] },
+      { name: 'State', icon: ICON.state, rows: [row('test_state_double_settlement_idempotency_race', 'INV-3', null, 'defect'), row('test_state_gateway_timeout_rollback', 'INV-6', 'M5')] },
+      { name: 'Regression', icon: ICON.regression, rows: [row('test_reg_receipt_schema_backward_compat', 'INV-7', 'M6'), row('test_reg_basis_points_bankers_rounding', 'INV-8', 'M7')] }
+    ];
+
+    const m = mutants.find((x) => x.id === sel) || mutants[7];
+    const survived = !m.by;
+    const selView = {
+      id: m.id, title: m.title, desc: m.desc,
+      catLong: CAT[m.cat][1], sevLong: m.sev,
+      verdict: survived ? 'Survived' : 'Caught',
+      chipStyle: mono + ' font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 5px; ' + (survived ? 'color: #EBCF72; border: 1px solid rgba(229,192,75,0.55); background: rgba(229,192,75,0.10);' : 'color: #7FD6AA; border: 1px solid rgba(82,196,140,0.5); background: rgba(82,196,140,0.12);'),
+      diff: m.diff.map((t) => ({ text: t + '\n', style: 'display: block; padding: 0 12px; white-space: pre; color: ' + (t.startsWith('+') ? '#E7E9EC' : '#868E99') + '; background: ' + (t.startsWith('+') ? '#1C2127' : 'transparent') + ';' })),
+      by: survived ? 'None. All 7 valid tests passed on this mutant.' : m.by,
+      byStyle: 'margin: 0; font-family: \'IBM Plex Mono\', ui-monospace, monospace; font-size: 13px; overflow-wrap: anywhere; color: ' + (survived ? '#EBCF72' : '#7FD6AA') + ';',
+      hasRisk: survived, risk: m.risk || ''
+    };
+
+    return { cols, groups, sel: selView };
+  }
+}
+</script>
+</body>
+</html>

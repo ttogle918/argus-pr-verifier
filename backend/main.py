@@ -1209,6 +1209,7 @@ async def _stream_verification_events(req: VerifyRequest):
     yield _format_sse({
         "stage": "guardrail_start",
         "model": "gemini-3.5-flash-lite",
+        "execution_mode": "live_api" if is_live else "replay",
         "message": "Initiating Stage 0 Prompt-Injection & Untrusted PR Payload Scan...",
     })
     await asyncio.sleep(0.1)

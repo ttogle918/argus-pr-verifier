@@ -14,11 +14,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import os
 import pathlib
 import sqlite3
 from typing import Any, Dict, List, Optional
 
-DB_PATH = pathlib.Path(__file__).resolve().parent / "argus_pr.db"
+DB_PATH = pathlib.Path(os.environ.get("ARGUS_DB_PATH") or pathlib.Path(__file__).resolve().parent / "argus_pr.db")
 
 
 def get_connection() -> sqlite3.Connection:

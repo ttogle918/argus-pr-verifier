@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Argus-PR · Plant a calibration mutant</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0F12}
+a{color:#E7E9EC}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="min-height: 980px; background: #0D0F12; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.5;">
+<main style="max-width: 1320px; margin: 0 auto; padding: 40px 32px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px;">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #AAB1BA;">Verify · Track B calibration</p>
+<h1 style="margin: 0; font-size: 28px; font-weight: 600;">Plant a calibration mutant</h1>
+<p style="margin: 0; font-size: 16px; color: #AAB1BA; max-width: 760px;">Add a bug of your own and see how the score moves. You choose whether a valid test catches it; no new tests run. It is tagged <strong style="color: #D3D8DE; font-weight: 600;">Calibration</strong> everywhere it appears so it is never mistaken for a swarm result.</p>
+</div>
+
+<section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start;">
+<form style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 22px; border: 1px solid #343B44; border-radius: 12px; background: #13161A; box-sizing: border-box;">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<label for="m-title" style="font-size: 14px; color: #D3D8DE;">Bug title</label>
+<input id="m-title" type="text" value="Negative fee bypass on partial refunds" style="min-height: 44px; padding: 0 12px; border-radius: 8px; border: 1px solid #343B44; background: #0F1215; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; box-sizing: border-box; width: 100%;">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<label for="m-cat" style="font-size: 14px; color: #D3D8DE;">Category</label>
+<select id="m-cat" style="min-height: 44px; padding: 0 10px; border-radius: 8px; border: 1px solid #343B44; background: #0F1215; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px;">
+<option>Security</option>
+<option>Edge case</option>
+<option>State / concurrency</option>
+<option>Regression</option>
+</select>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<label for="m-desc" style="font-size: 14px; color: #D3D8DE;">Description <span style="color: #868E99;">(optional)</span></label>
+<textarea id="m-desc" rows="3" style="padding: 10px 12px; border-radius: 8px; border: 1px solid #343B44; background: #0F1215; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; resize: vertical; box-sizing: border-box; width: 100%;">Custom synthetic mutation planted by human reviewer to test swarm blind spots.</textarea>
+</div>
+<fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px;">
+<legend style="padding: 0; margin-bottom: 8px; font-size: 14px; color: #D3D8DE;">Assumed outcome</legend>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<sc-for list="{{outcomes}}" as="o" hint-placeholder-count="2">
+<label style="{{o.style}}"><input type="radio" name="outcome" checked="{{o.sel}}" onChange="{{o.pick}}" style="width: 16px; height: 16px; margin: 0; accent-color: #E7E9EC;">{{o.label}}</label>
+</sc-for>
+</div>
+</fieldset>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end;">
+<button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #343B44; background: transparent; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer;">Cancel</button>
+<button type="button" style="min-height: 44px; padding: 0 18px; border-radius: 8px; border: 1px solid #E7E9EC; background: #E7E9EC; color: #0D0F12; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer;">Add M9 and recalculate</button>
+</div>
+</form>
+
+<div style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 18px; padding: 22px; border: 1px solid #262C33; border-radius: 12px; background: #13161A; box-sizing: border-box;">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA;">After recalculation</span>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 24px;">
+<div style="display: flex; align-items: baseline; gap: 6px; font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #7D858F;"><span style="font-size: 40px; font-weight: 600; text-decoration: line-through;">7/8</span></div>
+<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="#7D858F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<div style="display: flex; align-items: baseline; gap: 4px; font-family: 'IBM Plex Mono', ui-monospace, monospace;"><span style="font-size: 88px; line-height: 0.95; font-weight: 600; color: #F2F4F6;">{{caughtN}}</span><span style="font-size: 42px; color: #868E99;">/9</span></div>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; color: #AAB1BA;">{{pct}} · was 87.5%</span>
+</div>
+</div>
+<ul aria-label="Mutants after recalculation" style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 6px;">
+<sc-for list="{{segs}}" as="s" hint-placeholder-count="9">
+<li style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="{{s.box}}">
+<sc-if value="{{s.caught}}" hint-placeholder-val="{{ true }}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="#52C48C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+<sc-if value="{{s.survived}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 40 24" width="18" height="11" aria-hidden="true" fill="none" stroke="#E5C04B" stroke-width="3" stroke-linecap="round"><path d="M3 9 Q20 19 37 9"></path></svg></sc-if>
+</div>
+<span style="{{s.labelStyle}}">{{s.id}}</span>
+</li>
+</sc-for>
+</ul>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 14px; border-radius: 8px; border: 1px dashed #4A525C;">
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; padding: 2px 7px; border-radius: 4px; border: 1px dashed #8E96A1; color: #D3D8DE;">CALIBRATION</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; font-weight: 600;">M9</span>
+<span style="flex: 1 1 260px; min-width: 0; color: #D3D8DE;">Negative fee bypass on partial refunds · Security · HIGH</span>
+<span style="{{m9Style}}">{{m9Verdict}}</span>
+</div>
+<p style="margin: 0; font-size: 14px; color: #AAB1BA;">The matrix gains an M9 column with a dashed header. {{m9Note}}</p>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":980}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { outcome: 'survived' };
+  }
+  renderVals() {
+    const mono = "font-family: 'IBM Plex Mono', ui-monospace, monospace;";
+    const caught9 = this.state.outcome === 'caught';
+    const pill = (sel) => 'display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 8px; cursor: pointer; font-size: 14px; box-sizing: border-box; border: 1px solid ' + (sel ? '#8E96A1' : '#343B44') + '; background: ' + (sel ? '#1A1E23' : 'transparent') + '; color: ' + (sel ? '#E7E9EC' : '#AAB1BA') + ';';
+    const outcomes = [
+      { key: 'caught', label: 'Caught by a valid test' },
+      { key: 'survived', label: 'Survived every test' }
+    ].map((o) => ({ ...o, sel: this.state.outcome === o.key, style: pill(this.state.outcome === o.key), pick: () => this.setState({ outcome: o.key }) }));
+    const segs = Array.from({ length: 9 }, (_, i) => {
+      const id = 'M' + (i + 1);
+      const survived = i === 7 || (i === 8 && !caught9);
+      const calib = i === 8;
+      return {
+        id, caught: !survived, survived,
+        box: 'height: 40px; width: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 1px ' + (calib ? 'dashed ' : 'solid ') + (survived ? 'rgba(229,192,75,0.65)' : 'rgba(82,196,140,0.55)') + '; background: ' + (survived ? 'rgba(229,192,75,0.08)' : 'rgba(82,196,140,0.12)') + ';',
+        labelStyle: mono + ' font-size: 12px; font-weight: 500; color: ' + (survived ? '#EBCF72' : '#7FD6AA') + ';'
+      };
+    });
+    return {
+      outcomes, segs,
+      caughtN: caught9 ? 8 : 7,
+      pct: caught9 ? '88.9%' : '77.8%',
+      m9Verdict: caught9 ? '✓ Caught' : 'Survived',
+      m9Style: mono + ' font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 5px; ' + (caught9 ? 'color: #7FD6AA; border: 1px solid rgba(82,196,140,0.5);' : 'color: #EBCF72; border: 1px solid rgba(229,192,75,0.55);'),
+      m9Note: caught9 ? 'The backend marks the first valid test as failing on M9.' : 'Every valid test is recorded as passing on M9.'
+    };
+  }
+}
+</script>
+</body>
+</html>

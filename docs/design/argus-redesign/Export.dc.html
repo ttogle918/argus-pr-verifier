@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Argus-PR · Export bundle</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#08090B}
+a{color:#E7E9EC}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="min-height: 1180px; background: #08090B; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.5; display: flex; justify-content: center; align-items: flex-start; padding: 48px 16px; box-sizing: border-box;">
+<section role="dialog" aria-modal="true" aria-labelledby="ex-h" style="width: 100%; max-width: 980px; display: flex; flex-direction: column; border: 1px solid #343B44; border-radius: 14px; background: #13161A; overflow: hidden;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 20px 24px;">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+<h2 id="ex-h" style="margin: 0; font-size: 22px; font-weight: 600;">Verified PR bundle</h2>
+<p style="margin: 0; font-size: 14px; color: #AAB1BA;">The verified patch, plus regression tests pinned from the two proven exploits, plus a CI gate that runs them on every push.</p>
+</div>
+<button type="button" aria-label="Close" style="width: 44px; height: 44px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid transparent; background: transparent; cursor: pointer;"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="#AAB1BA" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+
+<dl style="margin: 0 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px; border: 1px solid #262C33; border-radius: 10px; overflow: hidden; background: #262C33;">
+<div style="padding: 12px 14px; background: #161A1F;"><dt style="font-size: 13px; color: #AAB1BA;">Branch</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; overflow-wrap: anywhere;">fix/argus-verified-patch-3802-att2</dd></div>
+<div style="padding: 12px 14px; background: #161A1F;"><dt style="font-size: 13px; color: #AAB1BA;">Patch</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">patch_3802_att2 · 4/4 gates · attempt 2/5</dd></div>
+<div style="padding: 12px 14px; background: #161A1F;"><dt style="font-size: 13px; color: #AAB1BA;">Pinned from</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">2 proven exploits (2/2 repro)</dd></div>
+<div style="padding: 12px 14px; background: #161A1F;"><dt style="font-size: 13px; color: #AAB1BA;">After patch</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">0 defects · 8/8 caught</dd></div>
+</dl>
+<p style="margin: 10px 24px 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #D3D8DE; overflow-wrap: anywhere;">fix(security): apply CEGIS verified patch (patch_3802_att2) &amp; pin 2 PROVEN regression tests</p>
+
+<div role="tablist" aria-label="Bundle files" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 16px 24px 0; border-bottom: 1px solid #262C33;">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="{{t.style}}">{{t.label}}</button>
+</sc-for>
+</div>
+
+<div role="tabpanel" style="display: flex; flex-direction: column; gap: 10px; padding: 16px 24px 24px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
+<code style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #D3D8DE; overflow-wrap: anywhere;">{{file.path}}</code>
+<div style="display: flex; gap: 6px; align-items: center;">
+<sc-if value="{{file.proven}}" hint-placeholder-val="{{ true }}"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 5px; border: 1px solid #4A525C; color: #D3D8DE;">TIER: PROVEN</span></sc-if>
+<button type="button" style="display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid #343B44; background: #1A1E23; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; cursor: pointer;"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="#E7E9EC" stroke-width="2" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"></path></svg>Copy</button>
+</div>
+</div>
+<pre style="margin: 0; padding: 12px 0; border-radius: 8px; border: 1px solid #20252B; background: #0F1215; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.6; overflow: auto; max-height: 520px;"><sc-for list="{{file.lines}}" as="l" hint-placeholder-count="16"><span style="{{l.style}}">{{l.text}}</span></sc-for></pre>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 14px 24px; border-top: 1px solid #262C33;">
+<button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #343B44; background: transparent; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer;">Close</button>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'tests' };
+  }
+  renderVals() {
+    const FILES = {
+      tests: {
+        label: 'Regression tests', path: 'tests/security/test_argus_regression_pr_checkout_race.py', proven: true,
+        text: [
+          '"""',
+          'Argus-PR Living Security Regression Suite (Auto-Pinned from 2/2 PROVEN Exploits)',
+          'Target PR: pr-checkout-race (PR #412: AI-Generated Instant Refund & Partial Wallet Settlement)',
+          'Repository: acme-pay/ledger-core',
+          'Linked CEGIS Patch ID: patch_3802_att2 (Verified on Attempt 2/5)',
+          'Evidence Tier: PROVEN',
+          '"""',
+          '',
+          'import concurrent.futures',
+          'import pytest',
+          '',
+          '',
+          'def test_sec_negative_refund_wallet_inflation_pinned_regression():',
+          '    """',
+          '    Pinned from 2/2 PROVEN Red-Team exploit `test_sec_negative_refund_wallet_inflation`.',
+          '    Policy: Exploit Blocked = Test PASS.',
+          '    """',
+          '    exploit_blocked = True',
+          '    assert exploit_blocked is True, "Regression Breach: ... was not blocked by patch_3802_att2!"',
+          '',
+          '',
+          'def test_state_double_settlement_idempotency_race_pinned_regression():',
+          '    ...'
+        ]
+      },
+      patch: {
+        label: 'Patch diff', path: 'services/settlement_engine.py · patch_3802_att2', proven: false,
+        text: [
+          '--- a/services/settlement_engine.py',
+          '+++ b/services/settlement_engine.py',
+          '@@ -14,9 +14,18 @@',
+          '-    # Subtle Bug 1: Missing negative refund_amount validation',
+          '-    # Subtle Bug 2: Non-atomic read-then-write race window',
+          '-    if cache.get(idempotency_key) == "SETTLED":',
+          '-        return cache.get_receipt(idempotency_key)',
+          '-    cache.set(idempotency_key, "PENDING_SETTLEMENT", ttl=30)',
+          '+    # [Argus-PR CEGIS Verified Patch: patch_3802_att2 · Verified on Attempt 2/5]',
+          '+    if not cache.set_nx(f"lock:{idempotency_key}", "LOCKED", ttl=30):',
+          '+        raise ConcurrentSettlementError("Concurrent settlement lock active for idempotency_key")',
+          '   …'
+        ]
+      },
+      ci: {
+        label: 'CI workflow', path: '.github/workflows/argus-security-regression.yml', proven: false,
+        text: [
+          'name: Argus-PR Pinned Security Regression Gate',
+          'on:',
+          '  pull_request:',
+          '  push:',
+          '    branches: [ main ]',
+          'jobs:',
+          '  argus-pinned-regression:',
+          '    runs-on: ubuntu-latest',
+          '    steps:',
+          '      - uses: actions/checkout@v4',
+          '      - uses: actions/setup-python@v5',
+          '        with:',
+          "          python-version: '3.11'",
+          '      - name: Run Pinned PROVEN Regression Suite (patch_3802_att2)',
+          '        run: pytest tests/security/test_argus_regression_pr_checkout_race.py -v'
+        ]
+      }
+    };
+    const tab = this.state.tab;
+    const tabs = ['tests', 'patch', 'ci'].map((k) => {
+      const sel = tab === k;
+      return {
+        label: FILES[k].label,
+        sel: sel ? 'true' : 'false',
+        pick: () => this.setState({ tab: k }),
+        style: "min-height: 44px; padding: 0 14px; margin-bottom: -1px; border: 0; border-bottom: 2px solid " + (sel ? '#E7E9EC' : 'transparent') + "; background: transparent; color: " + (sel ? '#E7E9EC' : '#AAB1BA') + "; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; font-weight: " + (sel ? 600 : 500) + "; cursor: pointer;"
+      };
+    });
+    const f = FILES[tab];
+    const isDiff = tab === 'patch';
+    const lines = f.text.map((t) => ({
+      text: t + '\n',
+      style: 'display: block; padding: 0 14px; white-space: pre; color: ' + (isDiff ? (t.startsWith('+') && !t.startsWith('+++') ? '#E7E9EC' : '#868E99') : (t.trim().startsWith('#') || t.startsWith('"""') ? '#868E99' : '#D3D8DE')) + '; background: ' + (isDiff && t.startsWith('+') && !t.startsWith('+++') ? '#1A1F25' : 'transparent') + ';'
+    }));
+    return { tabs, file: { path: f.path, proven: f.proven, lines } };
+  }
+}
+</script>
+</body>
+</html>

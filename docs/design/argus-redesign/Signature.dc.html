@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Argus-PR · Signature scene</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0F12}
+a{color:#E7E9EC}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="min-height: 2100px; background: #0D0F12; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.5;">
+<main style="max-width: 1360px; margin: 0 auto; padding: 48px 32px 64px; box-sizing: border-box; display: flex; flex-direction: column; gap: 48px;">
+
+<section style="display: flex; flex-wrap: wrap; gap: 32px; align-items: center;">
+<div style="flex: 999 1 720px; min-width: 0; border: 1px solid #262C33; border-radius: 12px; overflow: hidden;">
+<dc-import name="Scene" stage="final" mode="2d" labels="{{yes}}" hint-size="100%,520px"></dc-import>
+</div>
+<div style="flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #AAB1BA;">Final frame · deterministic_scoring</p>
+<h1 style="margin: 0; font-size: 34px; line-height: 1.15; font-weight: 600;">Seven eyes open. One stays shut.</h1>
+<p style="margin: 0; font-size: 16px; color: #AAB1BA;">The core is the PR. The eight lids on its surface are the planted mutants. Each one a test catches opens and glows green. M8 was never caught, so it stays closed and turns yellow: the miss is the part a reviewer should notice.</p>
+<p style="margin: 0; font-size: 16px; color: #AAB1BA;">It is drawn in 2D (SVG) by default; a 3D renderer is optional and takes the same state. It lives on Start in its idle state and docks above the lanes on Run. Every movement is triggered by an event from <code style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; color: #D3D8DE;">/api/verify/stream</code>. Nothing loops on its own.</p>
+</div>
+</section>
+
+<section aria-labelledby="kf-h" style="display: flex; flex-direction: column; gap: 16px;">
+<h2 id="kf-h" style="margin: 0; font-size: 22px; font-weight: 600;">Keyframes, driven by the event stream</h2>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 14px;">
+<li style="flex: 1 1 236px; min-width: 0; display: flex; flex-direction: column; gap: 10px;">
+<div style="border: 1px solid #262C33; border-radius: 10px; overflow: hidden;"><dc-import name="Scene" stage="sealed" mode="2d" labels="{{no}}" hint-size="100%,160px"></dc-import></div>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #9CC2FA;">1 · invariants_extracted</span>
+<span style="font-size: 14px; color: #D3D8DE;">Eight closed lids fade in. The attackers take their orbits.</span>
+</li>
+<li style="flex: 1 1 236px; min-width: 0; display: flex; flex-direction: column; gap: 10px;">
+<div style="border: 1px solid #262C33; border-radius: 10px; overflow: hidden;"><dc-import name="Scene" stage="attacking" mode="2d" labels="{{no}}" hint-size="100%,160px"></dc-import></div>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #9CC2FA;">2 · sandbox_track_a</span>
+<span style="font-size: 14px; color: #D3D8DE;">One beam per test result. Orange = breached the PR, yellow = flaky, gray = held.</span>
+</li>
+<li style="flex: 1 1 236px; min-width: 0; display: flex; flex-direction: column; gap: 10px;">
+<div style="border: 1px solid #262C33; border-radius: 10px; overflow: hidden;"><dc-import name="Scene" stage="revealing" mode="2d" labels="{{no}}" hint-size="100%,160px"></dc-import></div>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #9CC2FA;">3 · sandbox_track_b</span>
+<span style="font-size: 14px; color: #D3D8DE;">A green beam reaches a lid and it opens. Here M6 is mid-open, with 5 of 8 already open.</span>
+</li>
+<li style="flex: 1 1 236px; min-width: 0; display: flex; flex-direction: column; gap: 10px;">
+<div style="border: 1px solid #262C33; border-radius: 10px; overflow: hidden;"><dc-import name="Scene" stage="final" mode="2d" labels="{{no}}" hint-size="100%,160px"></dc-import></div>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #9CC2FA;">4 · deterministic_scoring</span>
+<span style="font-size: 14px; color: #D3D8DE;">Beams clear and attackers stop. The uncaught lid turns yellow and stays shut.</span>
+</li>
+<li style="flex: 1 1 236px; min-width: 0; display: flex; flex-direction: column; gap: 10px;">
+<div style="border: 1px solid #262C33; border-radius: 10px; overflow: hidden;"><dc-import name="Scene" stage="blocked" mode="2d" labels="{{no}}" hint-size="100%,160px"></dc-import></div>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #9CC2FA;">alt · blocked</span>
+<span style="font-size: 14px; color: #D3D8DE;">The guardrail stops the PR at Stage 0: no attackers, no lids, and an orange outline on the core.</span>
+</li>
+</ol>
+</section>
+
+<section aria-labelledby="motion-h" style="display: flex; flex-direction: column; gap: 16px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 12px;">
+<h2 id="motion-h" style="margin: 0; font-size: 22px; font-weight: 600;">Motion spec</h2>
+<p style="margin: 0; font-size: 14px; color: #AAB1BA;">Every motion is about 300 ms and plays once per event. With prefers-reduced-motion, each change snaps to its end state.</p>
+</div>
+<div style="border: 1px solid #262C33; border-radius: 12px; background: #13161A; overflow-x: auto;">
+<table style="width: 100%; min-width: 980px; border-collapse: collapse; font-size: 14px;">
+<thead>
+<tr style="border-bottom: 1px solid #262C33; text-align: left;">
+<th scope="col" style="padding: 12px 16px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA; width: 15%;">Element</th>
+<th scope="col" style="padding: 12px 16px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA; width: 25%;">Trigger (SSE)</th>
+<th scope="col" style="padding: 12px 16px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA;">Motion</th>
+<th scope="col" style="padding: 12px 16px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA; width: 13%;">Timing</th>
+<th scope="col" style="padding: 12px 16px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA; width: 15%;">Reduced motion</th>
+</tr>
+</thead>
+<tbody style="color: #D3D8DE; vertical-align: top;">
+<tr style="border-bottom: 1px solid #20252B;">
+<th scope="row" style="padding: 12px 16px; text-align: left; font-weight: 600; color: #E7E9EC;">Lids appear</th>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">invariants_extracted .sealed_mutants (8)</td>
+<td style="padding: 12px 16px;">Eight closed gray lids fade in on the core surface, staggered by index.</td>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">300 ms ease-out · +40 ms/lid</td>
+<td style="padding: 12px 16px;">Shown at once</td>
+</tr>
+<tr style="border-bottom: 1px solid #20252B;">
+<th scope="row" style="padding: 12px 16px; text-align: left; font-weight: 600; color: #E7E9EC;">Attackers enter</th>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">swarm_attacking_start .active_attackers (3 or 4)</td>
+<td style="padding: 12px 16px;">Each agent slides in from outside the frame onto its own orbit. Phase 1 has three orbits, phase 2 has four.</td>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">300 ms ease-out</td>
+<td style="padding: 12px 16px;">Placed</td>
+</tr>
+<tr style="border-bottom: 1px solid #20252B;">
+<th scope="row" style="padding: 12px 16px; text-align: left; font-weight: 600; color: #E7E9EC;">Beam (one test)</th>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">sandbox_track_a .pr_test_results[i], replayed one per 75 ms</td>
+<td style="padding: 12px 16px;">The attacker that owns the test steps about 20° along its orbit and fires a line at the core, which then fades. Color: orange if it breached the PR (2/2), yellow if flaky, gray if it held. The orbit only advances on a beam.</td>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">300 ms · draw 120 / hold 80 / fade 100</td>
+<td style="padding: 12px 16px;">No beam. The lane row updates.</td>
+</tr>
+<tr style="border-bottom: 1px solid #20252B;">
+<th scope="row" style="padding: 12px 16px; text-align: left; font-weight: 600; color: #E7E9EC;">Lid opens</th>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">sandbox_track_b .mutant_evaluations[i].caught = true, one per 95 ms</td>
+<td style="padding: 12px 16px;">A green beam from the catching attacker. In 3D, the core also turns slightly to face that lid. The lid lifts, the iris scales from 0 to 1, and the glow rises once and then holds. No pulse afterwards.</td>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">300 ms ease-out</td>
+<td style="padding: 12px 16px;">Open state shown at once</td>
+</tr>
+<tr style="border-bottom: 1px solid #20252B;">
+<th scope="row" style="padding: 12px 16px; text-align: left; font-weight: 600; color: #E7E9EC;">Lid stays shut</th>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">… .caught = false</td>
+<td style="padding: 12px 16px;">No beam reaches it. The lid tints from gray to yellow and does not move.</td>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">300 ms color only</td>
+<td style="padding: 12px 16px;">Color swap</td>
+</tr>
+<tr style="border-bottom: 1px solid #20252B;">
+<th scope="row" style="padding: 12px 16px; text-align: left; font-weight: 600; color: #E7E9EC;">Settle</th>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">deterministic_scoring</td>
+<td style="padding: 12px 16px;">Beams clear and attackers stop. In 3D, the camera also eases to the front view so all eight lids are visible. The scene is then still.</td>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">300 ms ease-in-out</td>
+<td style="padding: 12px 16px;">Final frame</td>
+</tr>
+<tr style="border-bottom: 1px solid #20252B;">
+<th scope="row" style="padding: 12px 16px; text-align: left; font-weight: 600; color: #E7E9EC;">Blocked</th>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">blocked</td>
+<td style="padding: 12px 16px;">No attackers enter. The core outline turns orange and a dashed ring appears.</td>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">300 ms</td>
+<td style="padding: 12px 16px;">Static</td>
+</tr>
+<tr>
+<th scope="row" style="padding: 12px 16px; text-align: left; font-weight: 600; color: #E7E9EC;">Stream error</th>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">fetch / read error</td>
+<td style="padding: 12px 16px;">The scene freezes on its last frame and dims to 40%. The run header shows where it stopped and a Retry button.</td>
+<td style="padding: 12px 16px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">200 ms</td>
+<td style="padding: 12px 16px;">Dim only</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section aria-labelledby="fb-h" style="display: flex; flex-wrap: wrap; gap: 32px; align-items: center;">
+<div style="flex: 1 1 520px; min-width: 0; border: 1px solid #262C33; border-radius: 12px; overflow: hidden;">
+<dc-import name="Scene" stage="final" mode="3d" labels="{{yes}}" hint-size="100%,380px"></dc-import>
+</div>
+<div style="flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #AAB1BA;">Optional 3D renderer · same state, same events</p>
+<h2 id="fb-h" style="margin: 0; font-size: 26px; line-height: 1.2; font-weight: 600;">3D is an upgrade, not a dependency.</h2>
+<p style="margin: 0; color: #AAB1BA;">If time allows, a Three.js renderer can draw the same state object as a translucent core with lids on its surface and attackers on tilted orbits. It adds depth, not information, so the 2D ring stays the default and the 3D view drops back to it:</p>
+<ul style="margin: 0; padding: 0 0 0 18px; display: flex; flex-direction: column; gap: 6px; color: #D3D8DE;">
+<li>Switch when WebGL is unavailable, or the median frame time is over 33 ms (under ~30 fps) across the first 60 frames of a run.</li>
+<li><code style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">prefers-reduced-motion</code> shows the 2D version with state changes snapped, no tweening.</li>
+<li>The swap crossfades over 300 ms (instant with reduced motion) and never switches back during a run.</li>
+<li>Pause rendering when the tab is hidden. Cap the pixel ratio at 2.</li>
+</ul>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { yes: true, no: false };
+  }
+}
+</script>
+</body>
+</html>
