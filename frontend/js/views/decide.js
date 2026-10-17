@@ -226,7 +226,7 @@ function patchHtml(state) {
       <div class="patch__titles">
         <p class="eyebrow">${t('Decide · apply fix & re-verify')}</p>
         <h2 class="patch__h" id="patch-h" data-testid="patch-heading" tabindex="-1">${heading}</h2>
-        ${rep ? html`<p class="mono decide-meta">${rep.patch_session_id} &middot; ${t('final patch')} ${rep.final_patch_id}${run.prTitle ? ` · [PATCHED] ${run.prTitle}` : ''}</p>` : ''}
+        ${rep ? html`<p class="mono decide-meta">${rep.patch_session_id} &middot; ${t('final patch')} ${rep.final_patch_id}${run.prTitle ? ` · ${run.prTitle.startsWith('[PATCHED]') ? '' : '[PATCHED] '}${run.prTitle}` : ''}</p>` : ''}
       </div>
       ${rep ? html`<ol class="patch__slots" aria-label="${t('Patch attempts')}">
         ${Array.from({ length: max }, (_, i) => {
