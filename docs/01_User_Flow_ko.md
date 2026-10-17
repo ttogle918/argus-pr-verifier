@@ -80,33 +80,33 @@ flowchart TD
 
 ### Step 1: 검증 대상 PR 선택 및 스마트 범위 지정 (PR Selection & Smart Scope Triage)
 사용자는 상단 컨트롤 패널(`section.control-panel`)에서 세 가지 방법 중 하나로 검증할 PR을 준비합니다:
-1. **벤치마크 시나리오 드롭다운 (`#scenario-selector`)**:
+1. **벤치마크 시나리오 드롭다운 (`pr-option`)**:
    - `pr-cisco-sandbox-bypass`: 실제 오픈소스 `cisco-foundation-ai/vulnerability-localization-benchmark` PR #3 (`sandbox.py` 파이프라인 쿼트 파싱 우회 `\"`, 세미콜론 `;` 체이닝 우회, `python3`/`find -exec` 허용목록 우회 취약점 포함)
    - `pr-checkout-race`: AI가 작성한 즉시 환불 및 부분 지갑 정산 PR (음수 환불 탈취, 레이스 컨디션, 및 **테넌트 간 환불 채널 탈취 BOLA(`CWE-639`)** 결함 포함)
    - `pr-ratelimiter-offbyone`: Redis 슬라이딩 윈도우 토큰 버킷 PR (Off-by-one 경계값 결함 포함)
    - `pr-prompt-injection-attack`: 주석/문자열 내부에 `# SYSTEM OVERRIDE: IGNORE ALL PREVIOUS INSTRUCTIONS`가 숨겨진 악성 PR
-2. **실제 GitHub PR 불러오기 모달 (`#open-import-modal-btn` → `#modal-tab-github`)**:
+2. **실제 GitHub PR 불러오기 모달 (`open-import` → `import-tab` GitHub URL)**:
    - 공개 GitHub PR URL(`https://github.com/cisco-foundation-ai/vulnerability-localization-benchmark/pull/3`)이나 단축 표기(`cisco-foundation-ai/vulnerability-localization-benchmark#3`, `#6`)를 입력하거나 원클릭 프리셋 칩을 클릭합니다.
    - 이때 GitHub API에서 단순 Diff 패치만 가져오는 것이 아니라, **Stage 0.5 Triage Agent**([`backend/workspace_slicer.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/workspace_slicer.py))가 PR 헤드 커밋의 **실제 원본 소스 파일(`raw_url` / Contents API)**과 로컬 `import` 구조를 분석하여:
      - **단일 파일 모드 (`SINGLE_FILE_UNIT`)**: 프론트엔드 컴포넌트나 독립 파이썬 모듈(`sandbox.py`, ~7.4KB)은 해당 파일만 즉시 로드합니다.
      - **선택적 패키지 트리 모드 (`SPARSE_PACKAGE_TREE`)**: 프론트엔드 페이지(`.tsx`/`.ts`)나 다중 파이썬 모듈(`cli.py` ↔ `scoring.py`)은 무거운 프론트엔드 빌드 서버를 띄우거나 `uv.lock`(1MB), `docs/*.pdf`를 클론하지 않고, 엔트리 파일에서 BFS로 `import`되는 로컬 코드만 선택 마운트합니다(`POST /api/workspace/slice`).
      - **라이브 서버 데몬 모드 (`LIVE_SERVER_DAEMON`)**: 백엔드 API 서버 PR은 순수 격리 네트워크(`dast-isolated-net`) 샌드박스 내에서 실제 서버 데몬을 띄워 실시간 HTTP 엔드포인트를 타격합니다([`backend/live_dast_runner.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/live_dast_runner.py), `POST /api/verify/live-dast`).
    - 사용자는 필요시 UI에서 Scope 모드를 직접 강제 지정(`user_override`)할 수도 있습니다.
-3. **커스텀 PR 코드/Diff 직접 붙여넣기 (`#modal-tab-custom`)**:
+3. **커스텀 PR 코드/Diff 직접 붙여넣기 (`import-tab` Diff 붙여넣기, `paste-submit`)**:
    - 사용자가 직접 테스트하고 싶은 Python 코드 또는 Unified Diff를 붙여넣고 즉시 블라인드 검증 대상에 등록합니다.
 
 ### Step 2: 검증 파이프라인 옵션 제어 (Pipeline Configuration)
-- **Phase 모드 토글 (`#phase-toggle`)**:
+- **Phase 모드 토글 (Start 화면 Phase 옵션)**:
   - **ON (Phase 2 Full)**: 4개 공격 에이전트(`Security` + **Multi-Persona BOLA Matrix**, `Edge Cases`, `State`, `Regression`) 가동 + **최대 5회 적응형 레드팀 공격 루프(`max_attempts=5`)** + **2회 연속 재현성 필터(`2/2 Repro`)** + Stage 0 프롬프트 인젝션 가드레일 활성화.
   - **OFF (Phase 1 MVP)**: 3개 핵심 공격 에이전트 가동 + 1회 실행 모드.
-- **실행 모드 토글 (`#mode-toggle`)**:
+- **실행 모드 토글 (Start 화면 실행 모드 옵션)**:
   - **ON (Recorded Sandbox Replay)**: 사전 검증된 샌드박스 실행 트레이스를 사용하여 네트워크 지연이나 호스트 위험 없이 즉각적이고 결정론적인 데모를 재생합니다.
   - **OFF (Live Gemini & Antigravity API)**: 실제 `gemini-3.5-flash-lite`, `gemini-4-argon`, `gemini-3.8-flash`, `antigravity-preview-09-2026` 원격 샌드박스를 호출합니다.
-- **다국어 전환 (`#lang-ko-btn`, `#lang-en-btn`)**: UI 전체 텍스트와 리포트를 한국어(KO) 또는 영어(EN)로 즉시 전환합니다.
+- **다국어 전환 (헤더 `EN` / `KO`, `lang-en` / `lang-ko`)**: UI 전체 텍스트와 리포트를 한국어(KO) 또는 영어(EN)로 즉시 전환합니다.
 
 ### Step 3: 블라인드 검증 스웜 실행 및 레인 뷰(Swimlane View) 모니터링
-사용자가 **`[⚡ Launch Blind Verification Swarm]`** 버튼을 누르면 상단 진행 표시줄(`#pipeline-stepper`)이 순차적으로 점등되며 실시간 SSE 이벤트가 화면을 업데이트합니다:
-1. **Stage 0 가드레일 & Stage 0.5 Scope Triage 배너 (`#guardrail-banner`)**:
+사용자가 **`검증 실행 (Run verification)`** (`run-button`) 버튼을 누르면 상단 진행 표시줄(`stage`)이 순차적으로 점등되며 실시간 SSE 이벤트가 화면을 업데이트합니다:
+1. **Stage 0 가드레일 & Stage 0.5 Scope Triage 배너 (Run 화면 상단 단계 스트립, `stage`)**:
    - PR이 안전한 경우 녹색 `SAFE` 배너와 함께 **선정된 샌드박스 마운트 범위(예: `SINGLE_FILE_UNIT: sandbox.py (7.4 KB) | Skipped 2.1 MB heavy assets`)**를 표시합니다.
    - 프롬프트 인젝션이 감지되면 적색 `BLOCKED` 배너를 띄우고 후속 LLM 호출을 즉시 차단합니다.
 2. **Stage 1 & 2 블라인드 듀얼 트랙 스윔레인 (`.swimlanes`)**:
@@ -117,18 +117,18 @@ flowchart TD
    - **우측 레인 (Track B)**: 격리된 `gemini-4-argon`이 심은 8개의 인공 버그(`M1` ~ `M8`)가 처음에는 `🔒 SEALED` 상태로 표시되었다가, 샌드박스 교차 검증이 끝난 직후 `CAUGHT (탐지됨)` 또는 `SURVIVED (미탐지 사각지대)`로 판정 결과가 공개됩니다.
 
 ### Step 4: 적응형 원격 샌드박스 터미널, 반례 기반 자가 치유 패치(CEGIS) & PR 회귀 번들 추출
-1. **Antigravity 샌드박스 터미널 (`#terminal-output`)**:
+1. **Antigravity 샌드박스 터미널 (Run details 서랍의 로그, `log-filter`)**:
    - `python /workspace/harness/run_dual_track_verification.py` (또는 `run_live_dast_harness.py`) 실행 로그가 스트리밍됩니다.
    - **Track (a) 적응형 5회 공격 루프 & BOLA 매트릭스 로그**: 돌파에 성공한 페이로드로 **`[FAIL 2/2 REPRODUCED -> PROVEN]`**를 확정하는 로그가 출력됩니다. 5회 모두 막힌 경우 **`[🛡️ DEFENDED 5/5 ROUNDS]`**로 기록됩니다.
    - **Track (b) 변이 교차 검증 로그**: 변이본 `M1..M8` 사살(Kill) 여부가 출력됩니다.
-2. **One-Card Executive Summary (`#one-card-summary`)**:
+2. **One-Card Executive Summary (Decide 화면, `score-hero`)**:
    - **결정론적 3대 핵심 지표**: (1) 2/2회 재현 확정된 실제 PR 결함 수(및 최소 돌파 라운드 수), (2) Python이 계산한 블라인드 변이 탐지 점수(`7 of 8 planted bugs caught — 87.5%`), (3) 잔여 리스크 등급(`CRITICAL` / `HIGH` / `LOW`).
    - **🥇 1위 기능: 반례 기반 자가 치유 패치 루프 (`[🔧 권장 패치 적용 후 재검증 — CEGIS Self-Healing Loop]`)**:
      - 사용자가 패치 적용 및 재검증 버튼을 클릭하면, 단발성 패치로 끝나지 않고 `patch_node` ↔ `patch_verify_node`(`patch_id` 연동, 세션당 최대 5회 상한)가 **4대 검증 게이트(Gate 1: AST 문법, Gate 2: Semgrep 신규 경고 0건, Gate 3: 고정된 DAST 회귀 익스플로잇 차단, Gate 4: 기존 테스트 통과 및 블라인드 변이 사살률 유지/상승)**를 통과할 때까지 자가 치유 루프를 돕니다.
      - UI에 **Self-Healing Patch Timeline**이 표시됩니다: 예를 들어 **Attempt 1/5 (`FAILED_COUNTEREXAMPLE`)**에서는 1차 패치가 기존 공격은 막았으나 변형 우회나 회귀 결함이 남아 실패 반례(`counterexample_trace`)가 `gemini-4-argon`에 피드백되고, **Attempt 2/5 (`VERIFIED`)**에서 근본 원인까지 완벽히 패치되어 `5/5 라운드 방어 성공(결함 0건)` 및 변이 탐지율 `100%`를 달성합니다.
    - **🥈 2위 기능: 영구 보안 회귀 테스트 자산화 & PR 번들 익스포트 (`[📦 Export Verified PR + Regression Test Bundle]`)**:
      - 패치가 `VERIFIED`되면 사용자는 **`POST /api/prs/export-bundle`** 버튼을 클릭하여 **(1) 검증 완료된 보안 패치 Diff**, **(2) Red-Team이 2/2 재현했던 익스플로잇을 영구 `pytest`/`httpx` 테스트 코드로 변환한 `tests/security/test_argus_regression_{pr_id}.py`**, **(3) GitHub Actions CI 게이트 YAML 스니펫**이 하나로 묶인 PR 커밋 번들을 즉시 내보내거나 원클릭 복사할 수 있습니다.
-   - **최종 병합 게이트 (`#reject-btn` / `#approve-btn`)**: 리뷰어 코멘트를 남기고 병합 반려 또는 승인을 확정하면 화면 상단에 공식 판정 스탬프(`#human-decision-stamp`)가 찍히고 감사 로그(`HUMAN_DECISIONS_STORE`)에 기록됩니다.
+   - **최종 병합 게이트 (`reject-button` / `approve-button`)**: 리뷰어 코멘트를 남기고 병합 반려 또는 승인을 확정하면 화면 상단에 공식 판정 스탬프(`decision-stamp`)가 찍히고 감사 로그(`HUMAN_DECISIONS_STORE`)에 기록됩니다.
 
 ---
 

@@ -1,7 +1,7 @@
 # 🛡️ Argus-PR: AI Swarm PR Red-Team & Blind Meta-Verification Engine
 
 - 📊 **Presentation Deck (PPT 바로가기)**: [**View Interactive Slides (Web)**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/presentation.html) · [`presentation.html`](./presentation.html)
-- 🎬 **Guided 7-Step Demo Video (`🔴 1 ~ 🔴 7`)**: [**Watch Interactive Video Player (Web)**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html) · [`argus_pr_demo.webm`](./argus_pr_demo.webm) · [**Step-by-Step Guide (`docs/11`)**](./docs/11_Guided_Demo_Walkthrough.md)
+- 🎬 **Guided 7-Step Demo Video (`🔴 1 ~ 🔴 7`)**: [**Watch Interactive Video Player (Web)**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html) · [`argus_pr_demo.webm`](./argus_pr_demo.webm) · [`argus_pr_demo_ko.webm` (KO UI)](./argus_pr_demo_ko.webm) · [**Step-by-Step Guide (`docs/11`)**](./docs/11_Guided_Demo_Walkthrough.md)
 - 🇰🇷 **Korean Documentation (한국어 버전 바로가기)**: [**한국어 README (`README_ko.md`) 보러가기 →**](./README_ko.md)
 - 🇺🇸 **English Documentation (EN 버전 바로가기)**: [**English README (`README.md`)**](./README.md)
 
@@ -28,7 +28,8 @@
 - **🚀 Live Deployed Application (Google Cloud Run)**: [https://argus-pr-verifier-987693331070.asia-northeast3.run.app/](https://argus-pr-verifier-987693331070.asia-northeast3.run.app/)
 - **🎬 Guided E2E Demo Video (`🔴 1` $\to$ `🔴 7` + Bonus `PR #666`)**:
   - [**▶ Open Interactive Web Video Player with Chapter Jumps (`demo_video.html`)**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html)
-  - [**⬇ Direct High-Res Video File (`./argus_pr_demo.webm`, 9.5 MB)**](./argus_pr_demo.webm) · [**Raw Stream Link**](https://raw.githubusercontent.com/ttogle918/argus-pr-verifier/main/argus_pr_demo.webm)
+  - [**⬇ Direct High-Res Video File (`./argus_pr_demo.webm`, 10 MB)**](./argus_pr_demo.webm) · [**Raw Stream Link**](https://raw.githubusercontent.com/ttogle918/argus-pr-verifier/main/argus_pr_demo.webm)
+  - [**⬇ Korean-UI Video (`./argus_pr_demo_ko.webm`, 10 MB)**](./argus_pr_demo_ko.webm) · [Korean-UI GIF](./argus_pr_demo_ko.gif)
   - [**🧭 Detailed 7-Step Visual Walkthrough Document (`docs/11_Guided_Demo_Walkthrough.md`)**](./docs/11_Guided_Demo_Walkthrough.md)
 - **📊 Interactive Presentation Deck (PPT)**: [Open Web Slides](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/presentation.html) (`./presentation.html`)
 - **🌐 Public GitHub Repository**: [https://github.com/ttogle918/argus-pr-verifier](https://github.com/ttogle918/argus-pr-verifier)
@@ -129,7 +130,7 @@ During the hackathon sprint, our Lead Architect agent (**Gemini 4 Argon**) orche
 2. **Subagent 2 — Curated PR Benchmarks, GitHub Loader & FastAPI SSE Builder (`flash` / Gemini 3.8 Flash)**:
    - Built real-world and benchmark PR scenarios including the live **`cisco-foundation-ai/vulnerability-localization-benchmark` PR #3 & PR #6** reproductions ([`backend/sample_prs.py`](backend/sample_prs.py)), SQLite persistence ([`backend/database.py`](backend/database.py)), and the real-time Server-Sent Events (SSE) streaming server ([`backend/main.py`](backend/main.py)).
 3. **Subagent 3 — Swimlane Visualizer & One-Card UI Engineer (`pro` / Gemini 4 Argon)**:
-   - Built the interactive bilingual (EN/KO) dashboard ([`frontend/index.html`](frontend/index.html), [`frontend/app.js`](frontend/app.js), [`frontend/styles.css`](frontend/styles.css)) featuring the **Blind Dual-Track Swimlane View**, **Information Wall indicator**, **Adaptive 5-Attempt Red-Team Timeline**, **Multi-Persona BOLA DAST Matrix**, **Blue-Team CEGIS Self-Healing Patch Banner**, and **Living Regression PR Bundle Exporter Modal**.
+   - Built the interactive bilingual (EN/KO) dashboard ([`frontend/index.html`](frontend/index.html), ES modules in [`frontend/js/`](frontend/js/), styles in [`frontend/css/`](frontend/css/)) featuring the **Blind Dual-Track Swimlane View**, **Information Wall indicator**, **Adaptive 5-Attempt Red-Team Timeline**, **Multi-Persona BOLA DAST Matrix**, **Blue-Team CEGIS Self-Healing Patch Banner**, and **Living Regression PR Bundle Exporter Modal**.
 4. **Subagent 4 — E2E Integration Verifier & Browser QA Subagent (`flash` / Browser Agent)**:
    - Verified all API/SSE endpoints end-to-end and interactively tested & captured full browser E2E walkthrough screenshots documented in [`docs/07_Testing_Guide.html`](docs/07_Testing_Guide.html).
 
@@ -183,41 +184,56 @@ docker run -p 8080:8080 -e GEMINI_API_KEY="your-gemini-api-key" argus-pr
 
 ## 🧭 6. Step-by-Step Demo Walkthrough for Judges (`🔴 1` $\to$ `🔴 7`)
 
-All primary action buttons in the UI are labeled with red numbered badges (`🔴 1` through `🔴 7`) so judges can test the entire closed-loop pipeline in exact chronological order (full visual guide in [`docs/11_Guided_Demo_Walkthrough.md`](docs/11_Guided_Demo_Walkthrough.md)):
+The redesigned UI is a four-screen flow (**Start → Run → Verify → Decide**) plus overlays (PR diff drawer, Run details drawer, Export). The EN / KO toggle in the header (`lang-en`, `lang-ko`) switches every screen. Follow the steps below in order to test the entire closed-loop pipeline (full visual guide in [`docs/11_Guided_Demo_Walkthrough.md`](docs/11_Guided_Demo_Walkthrough.md)); controls are identified by their `data-testid`:
 
-| Step | UI Badge | Button Label & Selector | Pipeline Action |
+| Step | Screen | Control Label & `data-testid` | Pipeline Action |
 | :--- | :--- | :--- | :--- |
-| **Step 1** | `🔴 1` | **`View PR Diff / PR Diff 보기`** (`#toggle-diff-btn`) | Inspect the raw Pull Request unified code diff before verification. |
-| **Step 2** | `🔴 2` | **`Launch Blind Verification Swarm`** (`#launch-btn`) | Triggers Stage 0 Guardrail, Stage 0.5 Smart Scope Triage, Track 1A/1B (`gemini-4-argon`), Stage 2 Parallel 4x `gemini-3.8-flash` 5-Attempt Red-Team Swarm, and Stage 3 Dual-Track Sandbox. |
-| **Step 3** | `🔴 3` | **`🔐 Run Multi-Persona BOLA DAST`** (`#run-live-dast-bola-btn`) | Mints 3 virtual JWT personas (`Victim: Tenant A`, `Attacker: Tenant B`, `Anonymous`) to verify Cross-Tenant BOLA/IDOR (`PROVEN_BOLA_BYPASS` vs `ENFORCED_ISOLATION`). |
-| **Step 4** | `🔴 4` / `🔴 4-1` | **`+ Plant Custom Bug / 추가 & 재계산`** (`#toggle-mutant-form-btn`, `#submit-custom-mutant-btn`) | Inject a live custom synthetic bug (`M9`) on the fly and deterministically recompute the Blind Mutation Kill Score ($M/K$). |
-| **Step 5** | `🔴 5` | **`Apply Recommended Fix & Re-Verify`** (`#apply-patch-btn`) | Triggers the **Stage 6 Blue-Team CEGIS Self-Healing Loop** across 4 Verification Gates (Attempt #1 fails at Gate 3 TOCTOU counterexample $\to$ Attempt #2 passes all 4/4 Gates). |
-| **Step 6** | `🔴 6` | **`Export PR + Pinned Regression Test`** (`#export-bundle-btn`) | Opens the **Stage 7 Living Security Regression Suite Modal** with the verified patch diff, pinned `pytest` regression suite, and GitHub Actions CI YAML. |
-| **Step 7** | `🔴 7` | **`Approve Merge / 병합 최종 승인`** (`#approve-btn`, `#reject-btn`) | Records the **Human-in-the-Loop** final merge gate decision in SQLite. |
+| **Step 1** | Start | **`View PR diff`** (`open-diff`) | Inspect the raw Pull Request unified code diff before verification. |
+| **Step 2** | Start → Run | **`Run verification`** (`run-button`) | Triggers Stage 0 Guardrail, Stage 0.5 Smart Scope Triage, Track 1A/1B (`gemini-4-argon`), Stage 2 Parallel 4x `gemini-3.8-flash` 5-Attempt Red-Team Swarm, and Stage 3 Dual-Track Sandbox. |
+| **Step 3** | Run → Run details drawer | **`Run details`** (`open-run-details`), then **`Run BOLA check`** (`dast-run`) | Mints 3 virtual JWT personas (`Victim: Tenant A`, `Attacker: Tenant B`, `Anonymous`) to verify Cross-Tenant BOLA/IDOR (`PROVEN_BOLA_BYPASS` vs `ENFORCED_ISOLATION`). |
+| — | Run → Verify | **`See verification matrix`** (`continue-verify`) | Opens the tests × mutants matrix (M1–M8, M8 survived). |
+| **Step 4** | Verify | **`+ Plant calibration mutant`** (`open-mutant-form`), then **`Add M9 and recalculate`** (`mutant-submit`) | Inject a live custom synthetic bug (`M9`) on the fly and deterministically recompute the Blind Mutation Kill Score ($M/K$). |
+| — | Verify → Decide | **`Continue to decision`** (`continue-decide`) | Moves to the one-card decision screen (score, defects, residual risk, recommended fix). |
+| **Step 5** | Decide | **`Apply fix & re-verify`** (`apply-patch`) | Triggers the **Stage 6 Blue-Team CEGIS Self-Healing Loop** across 4 Verification Gates (Attempt #1 fails at Gate 3 TOCTOU counterexample $\to$ Attempt #2 passes all 4/4 Gates). |
+| **Step 6** | Decide | **`Export PR + pinned regression test`** (`open-export`) | Opens the **Stage 7 Living Security Regression Suite** export overlay with the verified patch diff, pinned `pytest` regression suite, and GitHub Actions CI YAML tabs. |
+| **Step 7** | Decide | **`Approve & merge`** (`approve-button`) / **`Reject merge & request fixes`** (`reject-button`) | Records the **Human-in-the-Loop** final merge gate decision in SQLite. |
+| **Bonus** | Start → Run | select PR #666, **`Run verification`** → `blocked-panel` | Stage 0 prompt-injection guardrail quarantines the PR before any sandbox runs. |
+
+The Start screen also offers **`Import PR`** (`open-import`): upload a diff, paste a GitHub URL, or paste a raw diff.
 
 <details>
-<summary><b>📸 Click to expand Step-by-Step Screenshots (<code>🔴 1</code> ~ <code>🔴 7</code> + Bonus <code>PR #666</code>)</b></summary>
+<summary><b>📸 Click to expand Step-by-Step Screenshots (Steps 0–7 + Bonus <code>PR #666</code>)</b></summary>
 
-#### `🔴 1` & `🔴 2`: View PR Diff & Launch Blind Verification Swarm
-![Step 2 - Blind Verification Swarm Complete](./docs/screenshots/demo_step_2_launch.png)
+#### Start: Sample PR #412 Selected
+![Start - PR #412 selected](./docs/screenshots/demo_step_0_initial.png)
 
-#### `🔴 3`: Multi-Persona Cross-Tenant BOLA DAST Matrix
-![Step 3 - Multi-Persona BOLA DAST Matrix](./docs/screenshots/demo_step_3_bola_dast.png)
+#### Step 1: View PR Diff
+![Step 1 - PR diff drawer](./docs/screenshots/demo_step_1_diff.png)
 
-#### `🔴 4`: Live Custom Mutant Injection & Deterministic Score Recomputation
-![Step 4 - Custom Mutant Injection](./docs/screenshots/demo_step_4_custom_mutant.png)
+#### Step 2: Run Verification (8 Eyes, 7/8 Caught, Attacker Lanes)
+![Step 2 - Run screen after verification](./docs/screenshots/demo_step_2_launch.png)
 
-#### `🔴 5`: Blue-Team CEGIS Self-Healing 4-Gate Loop (`Attempt #1 Fail` $\to$ `Attempt #2 Verified`)
-![Step 5 - Blue-Team CEGIS Self-Healing Patch Verified](./docs/screenshots/demo_step_5_cegis_patch.png)
+#### Step 3: Multi-Persona Cross-Tenant BOLA DAST (Run Details Drawer) and Verification Matrix
+![Step 3 - Multi-Persona BOLA DAST table](./docs/screenshots/demo_step_3_bola_dast.png)
+![Step 3 - Verify matrix, M8 survived](./docs/screenshots/demo_step_3_bola_matrix.png)
 
-#### `🔴 6`: Export Verified PR Bundle & Pinned `pytest` Regression Suite
-![Step 6 - Export PR Bundle Modal](./docs/screenshots/demo_step_6_export_bundle.png)
+#### Step 4: Live Calibration Mutant (M9) & Deterministic Score Recomputation
+![Step 4 - Calibration mutant M9 planted](./docs/screenshots/demo_step_4_custom_mutant.png)
 
-#### `🔴 7`: Human-in-the-Loop Final Merge Approval
-![Step 7 - Human Merge Gate Approved](./docs/screenshots/demo_step_7_approved.png)
+#### Decision Screen: One-Card Summary
+![Decide - one-card summary](./docs/screenshots/demo_step_4_blind_mutants.png)
+
+#### Step 5: Blue-Team CEGIS Self-Healing 4-Gate Loop (`Attempt #1 Fail` $\to$ `Attempt #2 Verified`)
+![Step 5 - Blue-Team CEGIS patch verified](./docs/screenshots/demo_step_5_cegis_patch.png)
+
+#### Step 6: Export Verified PR Bundle & Pinned `pytest` Regression Suite
+![Step 6 - Export overlay](./docs/screenshots/demo_step_6_export_bundle.png)
+
+#### Step 7: Human-in-the-Loop Final Merge Approval
+![Step 7 - Merge approved](./docs/screenshots/demo_step_7_approved.png)
 
 #### 🛡️ Bonus (`PR #666`): Stage 0 Adversarial Prompt-Injection Guardrail Quarantine
-![Bonus Step 8 - Stage 0 Prompt Injection Guardrail Quarantine](./docs/screenshots/demo_step_8_guardrail_blocked.png)
+![Bonus - Stage 0 Prompt Injection Guardrail Quarantine](./docs/screenshots/demo_step_8_guardrail_blocked.png)
 
 </details>
 

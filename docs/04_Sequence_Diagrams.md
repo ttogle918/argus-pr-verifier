@@ -1,13 +1,13 @@
 # 04. 시퀀스 다이어그램 (Sequence Diagrams & Multi-Agent Interaction)
 
 > **프로젝트**: Argus-PR — PR 레드팀 스웜 및 블라인드 메타 검증 시스템  
-> **기반 소스**: [`backend/main.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/main.py), [`backend/gemini_swarm.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/gemini_swarm.py), [`backend/sandbox_runner.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/sandbox_runner.py), [`frontend/app.js`](file:///c:/Users/ttogl/workspace/google-hack/frontend/app.js)
+> **기반 소스**: [`backend/main.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/main.py), [`backend/gemini_swarm.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/gemini_swarm.py), [`backend/sandbox_runner.py`](file:///c:/Users/ttogl/workspace/google-hack/backend/sandbox_runner.py), [`frontend/js/`](file:///c:/Users/ttogl/workspace/google-hack/frontend/js)
 
 ---
 
 ## 1. 개요 (Overview)
 
-본 문서는 Argus-PR 시스템 내부에서 **프론트엔드 UI(`frontend/app.js`)**, **FastAPI SSE 스트리밍 서버(`backend/main.py`)**, **스마트 범위 분류기(`Scope Triage Agent`)**, **다중 Gemini 모델 오케스트레이터(`backend/gemini_swarm.py`)**, **Antigravity 원격 리눅스 샌드박스(`backend/sandbox_runner.py`)**, 그리고 **결정론적 Python 채점기(`backend/scoring.py`)**가 시간 순서에 따라 어떻게 상호작용하는지 4가지 핵심 시나리오의 시퀀스 다이어그램으로 상세히 기술합니다.
+본 문서는 Argus-PR 시스템 내부에서 **프론트엔드 UI(`frontend/js/` ES 모듈)**, **FastAPI SSE 스트리밍 서버(`backend/main.py`)**, **스마트 범위 분류기(`Scope Triage Agent`)**, **다중 Gemini 모델 오케스트레이터(`backend/gemini_swarm.py`)**, **Antigravity 원격 리눅스 샌드박스(`backend/sandbox_runner.py`)**, 그리고 **결정론적 Python 채점기(`backend/scoring.py`)**가 시간 순서에 따라 어떻게 상호작용하는지 4가지 핵심 시나리오의 시퀀스 다이어그램으로 상세히 기술합니다.
 
 ---
 
@@ -19,7 +19,7 @@
 sequenceDiagram
     autonumber
     actor User as 👤 Human Reviewer
-    participant UI as 🖥️ Frontend UI (app.js)
+    participant UI as 🖥️ Frontend UI (js modules)
     participant API as ⚡ FastAPI Server (main.py)
     participant Guard as 🛡️ Stage 0 Guardrail &<br/>Stage 0.5 Scope Triage
     participant ArgonA as 🧠 Track 1A Planner<br/>(gemini-4-argon, store=False)
@@ -177,7 +177,7 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     actor User as 👤 Human Tech Lead
-    participant UI as 🖥️ Frontend UI (app.js)
+    participant UI as 🖥️ Frontend UI (js modules)
     participant API as ⚡ FastAPI Server (main.py)
     participant PatchNode as 🔧 Patch Synthesizer<br/>(gemini-4-argon / patch_node)
     participant VerifyNode as 🐳 4-Gate Patch Verifier<br/>(patch_verify_node, patch_id wired)
