@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Argus-PR · Patch re-verify</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0F12}
+a{color:#E7E9EC}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="min-height: 1180px; background: #0D0F12; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.5;">
+<main style="max-width: 1320px; margin: 0 auto; padding: 40px 32px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px;">
+
+<section style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0;">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #AAB1BA;">Decide · apply fix &amp; re-verify</p>
+<h1 style="margin: 0; font-size: 28px; font-weight: 600;">Patch verified on attempt 2 of 5</h1>
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #868E99; overflow-wrap: anywhere;">cegis_session_0112c95f · final patch patch_3802_att2 · [PATCHED] PR #412</p>
+</div>
+<ol aria-label="Patch attempts" style="margin: 0; padding: 0; list-style: none; display: flex; gap: 6px;">
+<li style="display: flex; flex-direction: column; align-items: center; gap: 4px;"><span style="width: 44px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(240,112,63,0.6); background: rgba(240,112,63,0.12);"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#F0703F" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></span><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #F59A74;">#1</span></li>
+<li style="display: flex; flex-direction: column; align-items: center; gap: 4px;"><span style="width: 44px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(82,196,140,0.6); background: rgba(82,196,140,0.14);"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#52C48C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #7FD6AA;">#2</span></li>
+<li style="display: flex; flex-direction: column; align-items: center; gap: 4px;"><span style="width: 44px; height: 32px; border-radius: 6px; border: 1px dashed #343B44;"></span><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #7D858F;">#3</span></li>
+<li style="display: flex; flex-direction: column; align-items: center; gap: 4px;"><span style="width: 44px; height: 32px; border-radius: 6px; border: 1px dashed #343B44;"></span><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #7D858F;">#4</span></li>
+<li style="display: flex; flex-direction: column; align-items: center; gap: 4px;"><span style="width: 44px; height: 32px; border-radius: 6px; border: 1px dashed #343B44;"></span><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #7D858F;">#5</span></li>
+</ol>
+</section>
+
+<ul aria-label="Gates" style="margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px;">
+<li style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid #262C33; border-radius: 10px; background: #13161A;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #868E99;">GATE 1</span><span style="font-weight: 600;">AST &amp; types</span><span style="font-size: 13px; color: #AAB1BA;">The patch parses and type-checks.</span></li>
+<li style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid #262C33; border-radius: 10px; background: #13161A;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #868E99;">GATE 2</span><span style="font-weight: 600;">Semgrep</span><span style="font-size: 13px; color: #AAB1BA;">Zero new static-analysis warnings.</span></li>
+<li style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid #262C33; border-radius: 10px; background: #13161A;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #868E99;">GATE 3</span><span style="font-weight: 600;">Proven exploits blocked</span><span style="font-size: 13px; color: #AAB1BA;">Replays the two 2/2 breaches; both must fail now.</span></li>
+<li style="flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid #262C33; border-radius: 10px; background: #13161A;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #868E99;">GATE 4</span><span style="font-weight: 600;">Mutant kill rate kept</span><span style="font-size: 13px; color: #AAB1BA;">Tests still pass and still catch the planted bugs.</span></li>
+</ul>
+
+<section style="display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch;">
+<sc-for list="{{attempts}}" as="a" hint-placeholder-count="2">
+<article style="{{a.cardStyle}}">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
+<h2 style="margin: 0; font-size: 17px; font-weight: 600;">Attempt {{a.n}} <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; font-weight: 500; color: #868E99;">{{a.id}}</span></h2>
+<span style="{{a.statusStyle}}">{{a.status}}</span>
+</div>
+<p style="margin: 0; color: #D3D8DE;">{{a.summary}}</p>
+<ul style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;">
+<sc-for list="{{a.gates}}" as="g" hint-placeholder-count="4">
+<li style="{{g.style}}">
+<sc-if value="{{g.pass}}" hint-placeholder-val="{{ true }}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#52C48C" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+<sc-if value="{{g.fail}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#F0703F" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></sc-if>
+<span>{{g.label}}</span>
+</li>
+</sc-for>
+</ul>
+<sc-if value="{{a.hasCx}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #F59A74;">Counterexample · fed into attempt 2</span>
+<pre style="margin: 0; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(240,112,63,0.35); background: #0F1215; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.55; color: #F2B9A1; white-space: pre-wrap; overflow-wrap: anywhere;">{{a.cx}}</pre>
+</div>
+</sc-if>
+</article>
+</sc-for>
+</section>
+
+<section aria-labelledby="ba-h" style="display: flex; flex-direction: column; gap: 12px;">
+<h2 id="ba-h" style="margin: 0; font-size: 18px; font-weight: 600;">Before and after</h2>
+<div style="border: 1px solid #262C33; border-radius: 12px; background: #13161A; overflow-x: auto;">
+<table style="width: 100%; min-width: 640px; border-collapse: collapse; font-size: 15px;">
+<thead>
+<tr style="border-bottom: 1px solid #262C33; text-align: left;">
+<th scope="col" style="padding: 12px 16px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA;">Measure</th>
+<th scope="col" style="padding: 12px 16px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA;">Original PR</th>
+<th scope="col" style="padding: 12px 16px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA;">With patch_3802_att2</th>
+</tr>
+</thead>
+<tbody style="font-family: 'IBM Plex Mono', ui-monospace, monospace;">
+<tr style="border-bottom: 1px solid #20252B;"><th scope="row" style="padding: 12px 16px; text-align: left; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-weight: 500;">Planted bugs caught</th><td style="padding: 12px 16px; color: #AAB1BA;">7/8 · 87.5%</td><td style="padding: 12px 16px; font-size: 20px; font-weight: 600;">8/8 · 100%</td></tr>
+<tr style="border-bottom: 1px solid #20252B;"><th scope="row" style="padding: 12px 16px; text-align: left; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-weight: 500;">Confirmed defects</th><td style="padding: 12px 16px; color: #F59A74;">2</td><td style="padding: 12px 16px; font-weight: 600;">0</td></tr>
+<tr><th scope="row" style="padding: 12px 16px; text-align: left; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-weight: 500;">Recommendation</th><td style="padding: 12px 16px; color: #F59A74;">Reject · risk HIGH</td><td style="padding: 12px 16px; color: #7FD6AA; font-weight: 600;">Approve · risk LOW</td></tr>
+</tbody>
+</table>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<a href="Export.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 8px; background: #E7E9EC; color: #0D0F12; text-decoration: none; font-size: 15px; font-weight: 600;"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#0D0F12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"></path><path d="M3 8v8l9 5 9-5V8"></path></svg>Export PR + pinned regression test</a>
+<a href="Decide.dc.html" style="display: inline-flex; align-items: center; min-height: 48px; padding: 0 18px; border-radius: 8px; border: 1px solid #343B44; color: #E7E9EC; text-decoration: none; font-size: 15px; font-weight: 500;">Back to decision</a>
+</div>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const mono = "font-family: 'IBM Plex Mono', ui-monospace, monospace;";
+    const names = ['G1 AST', 'G2 Semgrep', 'G3 Exploits', 'G4 Mutants'];
+    const gates = (arr) => arr.map((pass, i) => ({
+      pass, fail: !pass, label: names[i],
+      style: 'display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 6px; font-size: 13px; ' + (pass ? 'color: #D3D8DE; border: 1px solid #343B44;' : 'color: #F59A74; border: 1px solid rgba(240,112,63,0.55); background: rgba(240,112,63,0.08);')
+    }));
+    const attempts = [
+      {
+        n: 1, id: 'patch_3802_att1', status: 'Failed at gate 3', ok: false,
+        summary: 'Added an input guard (if refund_amount <= 0: raise ValueError) but left the PENDING_SETTLEMENT check-then-act transition non-atomic.',
+        gates: gates([true, true, false, true]),
+        hasCx: true,
+        cx: 'Counterexample: 2 concurrent workers entered PENDING_SETTLEMENT before SETTLED commit (test_state_concurrent_idempotency_race reproduced 2/2 times at Gate 3).'
+      },
+      {
+        n: 2, id: 'patch_3802_att2', status: 'Verified · 4/4 gates', ok: true,
+        summary: 'Applied the attempt 1 counterexample: cache.set_nx atomic distributed lock, a strict positive refund_amount guard, and a monotonic TTL check.',
+        gates: gates([true, true, true, true]),
+        hasCx: false, cx: ''
+      }
+    ].map((a) => ({
+      ...a,
+      cardStyle: 'flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 18px 20px; border-radius: 12px; background: #13161A; border: 1px solid ' + (a.ok ? 'rgba(82,196,140,0.45)' : '#262C33') + ';',
+      statusStyle: mono + ' font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 5px; ' + (a.ok ? 'color: #7FD6AA; border: 1px solid rgba(82,196,140,0.5); background: rgba(82,196,140,0.12);' : 'color: #F59A74; border: 1px solid rgba(240,112,63,0.55); background: rgba(240,112,63,0.10);')
+    }));
+    return { attempts };
+  }
+}
+</script>
+</body>
+</html>

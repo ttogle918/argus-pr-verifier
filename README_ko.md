@@ -1,7 +1,7 @@
 # 🛡️ Argus-PR: AI 레드팀 스웜 및 블라인드 메타 검증 시스템
 
 - 📊 **발표 자료 (PPT 바로가기)**: [**인터랙티브 발표 슬라이드 웹에서 바로 보기 →**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/presentation.html) · [`presentation.html`](./presentation.html)
-- 🎬 **번호순(`🔴 1 ~ 🔴 7`) 데모 영상 바로보기**: [**인터랙티브 웹 비디오 플레이어 열기 →**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html) · [`argus_pr_demo.webm`](./argus_pr_demo.webm) · [**단계별 캡처 가이드 (`docs/11_ko`)**](./docs/11_Guided_Demo_Walkthrough_ko.md)
+- 🎬 **번호순(`🔴 1 ~ 🔴 7`) 데모 영상 바로보기**: [**인터랙티브 웹 비디오 플레이어 열기 →**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html) · [`argus_pr_demo_ko.webm`](./argus_pr_demo_ko.webm) · [`argus_pr_demo.webm` (EN UI)](./argus_pr_demo.webm) · [**단계별 캡처 가이드 (`docs/11_ko`)**](./docs/11_Guided_Demo_Walkthrough_ko.md)
 - 🇺🇸 **English Documentation (EN 버전 바로가기)**: [**View English README (`README.md`) →**](./README.md)
 - 🇰🇷 **한국어 문서 (KO 버전 바로가기)**: [**한국어 README (`README_ko.md`)**](./README_ko.md)
 
@@ -23,12 +23,13 @@
 
 ## 🎥 라이브 데모 및 저장소 링크
 
-![Argus-PR Guided Demo GIF (🔴 1 -> 🔴 7)](./argus_pr_demo.gif)
+![Argus-PR Guided Demo GIF (한국어 UI)](./argus_pr_demo_ko.gif)
 
 - **🚀 라이브 배포 데모 (Google Cloud Run)**: [https://argus-pr-verifier-987693331070.asia-northeast3.run.app/](https://argus-pr-verifier-987693331070.asia-northeast3.run.app/)
 - **🎬 번호순(`🔴 1` $\to$ `🔴 7` + 보너스 `PR #666`) E2E 데모 녹화 영상**:
   - [**▶ 챕터 점프 지원 웹 비디오 플레이어 바로 열기 (`demo_video.html`)**](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/demo_video.html)
-  - [**⬇ 고화질 원본 비디오 파일 (`./argus_pr_demo.webm`, 9.5 MB)**](./argus_pr_demo.webm) · [**GitHub Raw 직접 스트리밍/다운로드**](https://raw.githubusercontent.com/ttogle918/argus-pr-verifier/main/argus_pr_demo.webm)
+  - [**⬇ 고화질 원본 비디오 파일 (`./argus_pr_demo_ko.webm`, 한국어 UI, 10 MB)**](./argus_pr_demo_ko.webm) · [**GitHub Raw 직접 스트리밍/다운로드**](https://raw.githubusercontent.com/ttogle918/argus-pr-verifier/main/argus_pr_demo_ko.webm)
+  - [**⬇ 영어 UI 영상 (`./argus_pr_demo.webm`, 10 MB)**](./argus_pr_demo.webm) · [영어 UI GIF](./argus_pr_demo.gif)
   - [**🧭 번호순(`🔴 1 ~ 🔴 7`) 단계별 화면 캡처 및 상세 시연 가이드 (`docs/11_Guided_Demo_Walkthrough_ko.md`)**](./docs/11_Guided_Demo_Walkthrough_ko.md)
 - **📊 인터랙티브 발표 슬라이드 (PPT)**: [웹에서 바로 열기 (HTML Preview)](https://htmlpreview.github.io/?https://github.com/ttogle918/argus-pr-verifier/blob/main/presentation.html) (`./presentation.html`)
 - **🌐 공개 GitHub 저장소 (Public GitHub Repo)**: [https://github.com/ttogle918/argus-pr-verifier](https://github.com/ttogle918/argus-pr-verifier)
@@ -129,7 +130,7 @@ flowchart TD
 2. **서브에이전트 2 — PR Scenarios, GitHub Loader & FastAPI Builder (`flash` / Gemini 3.8 Flash)**:
    - 실제 오픈소스 보안 벤치마크인 **`cisco-foundation-ai/vulnerability-localization-benchmark` PR #3 및 PR #6** 실전 시나리오와 리플레이 트레이스([`backend/sample_prs.py`](backend/sample_prs.py)), SQLite 영속화([`backend/db.py`](backend/db.py)), 실시간 FastAPI SSE 스트리밍 서버([`backend/main.py`](backend/main.py)) 구축.
 3. **서브에이전트 3 — Swimlane Visualizer & One-Card UI Engineer (`pro` / Gemini 4 Argon)**:
-   - 한/영 양방향 전환을 지원하는 프론트엔드([`frontend/index.html`](frontend/index.html), [`frontend/app.js`](frontend/app.js), [`frontend/styles.css`](frontend/styles.css)) 구현: **블라인드 듀얼 트랙 스윔레인 뷰**, **중앙 정보 격리벽(Information Wall)**, **5회 적응형 레드팀 돌파 타임라인**, **터미널 로그 리플레이어**, **커스텀 변이 버그 추가(`+ 커스텀 버그 심기`)**, **권장 패치 원클릭 재검증 루프** 구현.
+   - 한/영 양방향 전환을 지원하는 프론트엔드([`frontend/index.html`](frontend/index.html), [`frontend/js/`](frontend/js/) ES 모듈, [`frontend/css/`](frontend/css/) 스타일) 구현: **블라인드 듀얼 트랙 스윔레인 뷰**, **중앙 정보 격리벽(Information Wall)**, **5회 적응형 레드팀 돌파 타임라인**, **터미널 로그 리플레이어**, **커스텀 변이 버그 추가(`+ 커스텀 버그 심기`)**, **권장 패치 원클릭 재검증 루프** 구현.
 4. **서브에이전트 4 — E2E Integration & Lane-View GIF Recorder (`flash` / Gemini 3.8 Flash)**:
    - 전체 파이프라인 E2E 통합 테스트 수행 및 Playwright 자동화 스크립트([`scripts/record_gif.py`](scripts/record_gif.py))를 통한 데모 애니메이션([`argus_pr_demo.gif`](argus_pr_demo.gif)) 캡처.
 
@@ -183,41 +184,56 @@ docker run -p 8080:8080 -e GEMINI_API_KEY="your-gemini-api-key" argus-pr
 
 ## 🧭 6. 심사위원용 번호순(`🔴 1` $\to$ `🔴 7`) 데모 시연 가이드
 
-UI 화면의 모든 핵심 버튼 앞에 **`🔴 1`부터 `🔴 7`까지 빨간색 순서 배지**가 표시되어 있어, 심사위원이 번호 순서대로 클릭만 하면 전체 폐루프 파이프라인을 즉시 체험할 수 있습니다 (전체 상세 화면은 [`docs/11_Guided_Demo_Walkthrough_ko.md`](docs/11_Guided_Demo_Walkthrough_ko.md) 참조):
+재설계된 UI는 **시작 → 실행 → 검증 → 결정** 4개 화면 흐름과 오버레이(PR diff 드로어, 실행 상세 드로어, 내보내기)로 구성됩니다. 헤더의 EN / KO 토글(`lang-en`, `lang-ko`)로 모든 화면의 언어를 바꿀 수 있습니다. 아래 순서대로 따라가면 전체 폐루프 파이프라인을 즉시 체험할 수 있습니다 (전체 상세 화면은 [`docs/11_Guided_Demo_Walkthrough_ko.md`](docs/11_Guided_Demo_Walkthrough_ko.md) 참조). 각 컨트롤은 `data-testid`로 식별합니다:
 
-| 단계 | 버튼 배지 | UI 버튼 이름 (셀렉터) | 실행되는 파이프라인 단계 및 핵심 검증 동작 |
+| 단계 | 화면 | 컨트롤 이름 (`data-testid`) | 실행되는 파이프라인 단계 및 핵심 검증 동작 |
 | :--- | :--- | :--- | :--- |
-| **1단계** | `🔴 1` | **`PR Diff 보기`** (`#toggle-diff-btn`) | 검증 전 대상 Pull Request의 원본 코드 변경점(Unified Diff)을 펼쳐서 확인합니다. |
-| **2단계** | `🔴 2` | **`블라인드 검증 스웜 실행`** (`#launch-btn`) | Stage 0 가드레일 $\to$ Stage 0.5 스마트 범위 분류 $\to$ Track 1A/1B (`gemini-4-argon` 정보 격리) $\to$ Stage 2 병렬 `4x gemini-3.8-flash` 5회 적응형 공격 루프 $\to$ Stage 3 듀얼 트랙 샌드박스를 실행합니다. |
-| **3단계** | `🔴 3` | **`🔐 Run Multi-Persona BOLA DAST`** (`#run-live-dast-bola-btn`) | 3개의 가상 JWT 페르소나(`Victim: Tenant A`, `Attacker: Tenant B`, `Anonymous`)를 즉석 발급해 테넌트 간 권한 우회(`PROVEN_BOLA_BYPASS` vs `ENFORCED_ISOLATION`)를 실증합니다. |
-| **4단계** | `🔴 4` / `🔴 4-1` | **`+ 커스텀 버그 심기` / `추가 & 재계산`** (`#toggle-mutant-form-btn`, `#submit-custom-mutant-btn`) | 심사위원이 직접 커스텀 인공 버그(`M9`)를 주입하고, `backend/scoring.py`가 블라인드 변이 탐지율($M/K$)을 즉석에서 재계산(`8/9 = 88.9%`)하는 것을 검증합니다. |
-| **5단계** | `🔴 5` | **`권장 패치 적용 후 재검증`** (`#apply-patch-btn`) | **Stage 6 Blue-Team CEGIS 4-Gate 자가 치유 루프**를 가동하여 Attempt #1(Gate 3 TOCTOU 반례 실패) $\to$ Attempt #2(4대 게이트 전원 통과)로 패치를 완성하고 `ALLOW_MERGE` 및 `100% (9/9)` 탐지율을 달성합니다. |
-| **6단계** | `🔴 6` | **`Export PR + Pinned Regression Test`** (`#export-bundle-btn`) | **Stage 7 영구 보안 회귀 테스트 번들 모달**을 열어 검증된 패치 Diff + 고정 `pytest` 회귀 테스트(`tests/test_regression_pr_142.py`) + GitHub Actions CI YAML을 추출합니다. |
-| **7단계** | `🔴 7` | **`병합 최종 승인`** (`#approve-btn`, `#reject-btn`) | **Human-in-the-Loop 최종 병합 게이트**에서 승인 도장을 찍고 SQLite 감사 로그에 영구 기록합니다. |
+| **1단계** | 시작 | **`PR diff 보기`** (`open-diff`) | 검증 전 대상 Pull Request의 원본 코드 변경점(Unified Diff)을 펼쳐서 확인합니다. |
+| **2단계** | 시작 → 실행 | **`검증 실행`** (`run-button`) | Stage 0 가드레일 $\to$ Stage 0.5 스마트 범위 분류 $\to$ Track 1A/1B (`gemini-4-argon` 정보 격리) $\to$ Stage 2 병렬 `4x gemini-3.8-flash` 5회 적응형 공격 루프 $\to$ Stage 3 듀얼 트랙 샌드박스를 실행합니다. |
+| **3단계** | 실행 → 실행 상세 드로어 | **`실행 상세`** (`open-run-details`) 후 **`BOLA 점검 실행`** (`dast-run`) | 3개의 가상 JWT 페르소나(`Victim: Tenant A`, `Attacker: Tenant B`, `Anonymous`)를 즉석 발급해 테넌트 간 권한 우회(`PROVEN_BOLA_BYPASS` vs `ENFORCED_ISOLATION`)를 실증합니다. |
+| — | 실행 → 검증 | **`검증 매트릭스 보기`** (`continue-verify`) | 테스트 × 변이(M1–M8) 매트릭스를 엽니다 (M8 생존). |
+| **4단계** | 검증 | **`+ 보정용 mutant 심기`** (`open-mutant-form`) 후 **`M9 추가 후 재계산`** (`mutant-submit`) | 심사위원이 직접 커스텀 인공 버그(`M9`)를 주입하고, `backend/scoring.py`가 블라인드 변이 탐지율($M/K$)을 즉석에서 재계산(데모에서는 M9를 생존으로 지정해 `7/8 → 7/9 = 77.8%`)하는 것을 검증합니다. |
+| — | 검증 → 결정 | **`결정으로 계속`** (`continue-decide`) | 원카드 결정 화면(점수, 결함, 잔여 위험, 권장 수정)으로 이동합니다. |
+| **5단계** | 결정 | **`수정 적용 & 재검증`** (`apply-patch`) | **Stage 6 Blue-Team CEGIS 4-Gate 자가 치유 루프**를 가동하여 Attempt #1(Gate 3 TOCTOU 반례 실패) $\to$ Attempt #2(4대 게이트 전원 통과)로 패치를 완성하고 `ALLOW_MERGE` 및 `100% (9/9)` 탐지율을 달성합니다. |
+| **6단계** | 결정 | **`PR + 고정 회귀 테스트 내보내기`** (`open-export`) | **Stage 7 영구 보안 회귀 테스트 번들 오버레이**를 열어 검증된 패치 Diff + 고정 `pytest` 회귀 테스트(`tests/test_regression_pr_142.py`) + GitHub Actions CI YAML을 탭으로 추출합니다. |
+| **7단계** | 결정 | **`승인 & 머지`** (`approve-button`) / **`머지 반려 & 수정 요청`** (`reject-button`) | **Human-in-the-Loop 최종 병합 게이트**에서 결정을 내리고 SQLite 감사 로그에 영구 기록합니다. |
+| **보너스** | 시작 → 실행 | PR #666 선택 후 **`검증 실행`** → `blocked-panel` | 샌드박스 실행 전에 Stage 0 프롬프트 인젝션 가드레일이 PR을 격리합니다. |
+
+시작 화면의 **`PR 가져오기`**(`open-import`)로 diff 파일 업로드, GitHub URL, diff 붙여넣기도 지원합니다.
 
 <details>
-<summary><b>📸 클릭하여 단계별 실행 화면 캡처 보기 (<code>🔴 1</code> ~ <code>🔴 7</code> + 보너스 <code>PR #666</code>)</b></summary>
+<summary><b>📸 클릭하여 단계별 실행 화면 캡처 보기 (0~7단계 + 보너스 <code>PR #666</code>)</b></summary>
 
-#### `🔴 1` & `🔴 2`: PR Diff 확인 및 블라인드 검증 스웜 실행 완료
-![Step 2 - 블라인드 검증 스웜 완료](./docs/screenshots/demo_step_2_launch.png)
+#### 시작: 샘플 PR #412 선택
+![시작 - PR #412 선택](./docs/screenshots/ko/demo_step_0_initial.png)
 
-#### `🔴 3`: 멀티 페르소나 교차 테넌트 BOLA DAST 매트릭스
-![Step 3 - 멀티 페르소나 BOLA DAST 매트릭스](./docs/screenshots/demo_step_3_bola_dast.png)
+#### 1단계: PR Diff 확인
+![Step 1 - PR diff 드로어](./docs/screenshots/ko/demo_step_1_diff.png)
 
-#### `🔴 4`: 실시간 커스텀 버그(`M9`) 심기 및 탐지율 재계산
-![Step 4 - 커스텀 버그 심기 및 재계산](./docs/screenshots/demo_step_4_custom_mutant.png)
+#### 2단계: 검증 실행 (8개의 눈, 7/8 탐지, 공격자 레인)
+![Step 2 - 검증 실행 후 실행 화면](./docs/screenshots/ko/demo_step_2_launch.png)
 
-#### `🔴 5`: Blue-Team CEGIS 4-Gate 자가 치유 루프 (`Attempt #1 실패` $\to$ `Attempt #2 통과`)
-![Step 5 - Blue-Team CEGIS 자가 치유 패치 완료](./docs/screenshots/demo_step_5_cegis_patch.png)
+#### 3단계: 멀티 페르소나 교차 테넌트 BOLA DAST (실행 상세 드로어) 및 검증 매트릭스
+![Step 3 - 멀티 페르소나 BOLA DAST 표](./docs/screenshots/ko/demo_step_3_bola_dast.png)
+![Step 3 - 검증 매트릭스, M8 생존](./docs/screenshots/ko/demo_step_3_bola_matrix.png)
 
-#### `🔴 6`: 검증된 PR 패치 + 고정 `pytest` 회귀 테스트 번들 추출 모달
-![Step 6 - PR 번들 및 회귀 테스트 모달](./docs/screenshots/demo_step_6_export_bundle.png)
+#### 4단계: 보정용 mutant(`M9`) 심기 및 탐지율 재계산
+![Step 4 - 보정용 mutant M9 추가](./docs/screenshots/ko/demo_step_4_custom_mutant.png)
 
-#### `🔴 7`: Human-in-the-Loop 최종 병합 승인 완료
-![Step 7 - 병합 최종 승인 완료](./docs/screenshots/demo_step_7_approved.png)
+#### 결정 화면: 원카드 요약
+![결정 - 원카드 요약](./docs/screenshots/ko/demo_step_4_blind_mutants.png)
+
+#### 5단계: Blue-Team CEGIS 4-Gate 자가 치유 루프 (`Attempt #1 실패` $\to$ `Attempt #2 통과`)
+![Step 5 - Blue-Team CEGIS 패치 완료](./docs/screenshots/ko/demo_step_5_cegis_patch.png)
+
+#### 6단계: 검증된 PR 패치 + 고정 `pytest` 회귀 테스트 번들 내보내기
+![Step 6 - 내보내기 오버레이](./docs/screenshots/ko/demo_step_6_export_bundle.png)
+
+#### 7단계: Human-in-the-Loop 최종 병합 승인 완료
+![Step 7 - 머지 승인 완료](./docs/screenshots/ko/demo_step_7_approved.png)
 
 #### 🛡️ 보너스 (`PR #666`): Stage 0 적대적 프롬프트 인젝션 가드레일 즉시 차단
-![Bonus Step 8 - Stage 0 프롬프트 인젝션 차단](./docs/screenshots/demo_step_8_guardrail_blocked.png)
+![보너스 - Stage 0 프롬프트 인젝션 차단](./docs/screenshots/ko/demo_step_8_guardrail_blocked.png)
 
 </details>
 

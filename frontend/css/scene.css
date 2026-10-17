@@ -1,0 +1,108 @@
+/* 2D signature scene. Shared by Run and Start. Motion: eyes opening and beams only, once per event. */
+.scene {
+  position: relative;
+  width: 100%;
+  background: var(--bg-sunken);
+}
+.scene--dimmed { opacity: 0.4; }
+.scene__svg { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; }
+
+.scene__orbit { fill: none; stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 3 5; }
+.scene__ring { fill: none; stroke: var(--border-strong); stroke-width: 1; }
+.scene__block-ring { fill: none; stroke: var(--danger); stroke-width: 1.5; stroke-dasharray: 6 6; opacity: 0; }
+.scene__core { fill: var(--surface-2); stroke: var(--border-emphasis); stroke-width: 1.4; }
+.scene__bar { fill: var(--text-muted); }
+
+.scene__svg[data-stage="idle"] .scene__orbit { opacity: 0.5; }
+.scene__svg[data-stage="blocked"] .scene__core { stroke: var(--danger); }
+.scene__svg[data-stage="blocked"] .scene__block-ring { opacity: 0.9; }
+.scene__svg[data-stage="blocked"] .scene__eyes,
+.scene__svg[data-stage="blocked"] .scene__attackers,
+.scene__svg[data-stage="blocked"] .scene__beams,
+.scene__svg[data-stage="blocked"] .scene__bar { display: none; }
+
+.scene__blocked { display: none; color: var(--danger); }
+.scene__svg[data-stage="blocked"] .scene__blocked { display: block; }
+.scene__blocked-label {
+  fill: var(--danger);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+/* Eyes */
+.eye { color: var(--mark-faint); }
+.eye__lid {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  transition: stroke var(--motion) var(--ease), opacity var(--motion) var(--ease);
+}
+.eye__open {
+  opacity: 0;
+  transform: scale(0.6);
+  transform-box: fill-box;
+  transform-origin: center;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.eye__sclera { fill: var(--ok-tint); stroke: var(--ok); stroke-width: 1.8; }
+.eye__iris { fill: var(--ok); stroke: none; }
+.eye__pupil { fill: var(--bg-sunken); stroke: none; }
+.eye__label {
+  fill: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.eye[data-state="dormant"] { color: var(--mark-faint); }
+.eye[data-state="dormant"] .eye__label { fill: var(--text-dim); }
+.eye[data-state="sealed"] { color: var(--mark); }
+.eye[data-state="testing"] { color: var(--ai); }
+.eye[data-state="testing"] .eye__label { fill: var(--ai-text); }
+.eye[data-state="survived"] { color: var(--warn); }
+.eye[data-state="survived"] .eye__label { fill: var(--warn-text); font-weight: 600; }
+.eye[data-state="caught"] .eye__lid { opacity: 0; }
+.eye[data-state="caught"] .eye__label { fill: var(--ok-text); }
+.eye[data-state="caught"] .eye__open {
+  opacity: 1;
+  transform: none;
+  filter: drop-shadow(0 0 5px var(--ok-glow));
+  transition: opacity var(--motion) var(--ease), transform var(--motion) var(--ease);
+}
+
+/* Attackers */
+.attacker { color: var(--text-2); }
+.attacker__disc { fill: var(--surface-3); stroke: var(--border-emphasis); stroke-width: 1.5; }
+.attacker__label {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+.scene__svg[data-stage="idle"] .scene__attackers { opacity: 0.4; }
+
+/* Beams: draw 120ms, hold 80ms, fade 100ms (total var(--motion)). */
+.beam {
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-dasharray: var(--beam-len);
+  stroke-dashoffset: var(--beam-len);
+  animation: beam var(--motion) linear forwards;
+}
+.beam--danger { stroke: var(--danger); }
+.beam--warn { stroke: var(--warn); }
+.beam--muted { stroke: var(--mark); }
+.beam--ok { stroke: var(--ok); }
+
+@keyframes beam {
+  0% { stroke-dashoffset: var(--beam-len); opacity: 1; }
+  40% { stroke-dashoffset: 0; opacity: 1; }
+  67% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}

@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Argus signature scene</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; aspect-ratio: 16 / 10; background: #0F1215; overflow: hidden; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: #E7E9EC;">
+<p style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); margin: 0;">{{summary}}</p>
+
+<sc-if value="{{is3d}}" hint-placeholder-val="{{ true }}">
+<svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%;">
+<defs>
+<radialGradient id="argusCoreFill" cx="42%" cy="36%" r="68%">
+<stop offset="0" stop-color="#C3CFDC" stop-opacity="0.20"></stop>
+<stop offset="0.55" stop-color="#7F8D9E" stop-opacity="0.08"></stop>
+<stop offset="1" stop-color="#7F8D9E" stop-opacity="0.02"></stop>
+</radialGradient>
+</defs>
+<ellipse cx="320" cy="200" rx="285" ry="62" transform="rotate(-10 320 200)" fill="none" stroke="#2A3038" stroke-width="1" opacity="{{orbitOp}}"></ellipse>
+<ellipse cx="320" cy="200" rx="250" ry="150" transform="rotate(14 320 200)" fill="none" stroke="#2A3038" stroke-width="1" opacity="{{orbitOp}}"></ellipse>
+<circle cx="320" cy="200" r="122" fill="url(#argusCoreFill)" stroke="{{coreStroke}}" stroke-width="1.4"></circle>
+<ellipse cx="320" cy="200" rx="122" ry="22" fill="none" stroke="#2E363F" stroke-width="1"></ellipse>
+<ellipse cx="320" cy="152" rx="111" ry="19" fill="none" stroke="#283038" stroke-width="1"></ellipse>
+<ellipse cx="320" cy="248" rx="111" ry="19" fill="none" stroke="#283038" stroke-width="1"></ellipse>
+<ellipse cx="320" cy="112" rx="76" ry="12" fill="none" stroke="#242B32" stroke-width="1"></ellipse>
+<ellipse cx="320" cy="288" rx="76" ry="12" fill="none" stroke="#242B32" stroke-width="1"></ellipse>
+<ellipse cx="320" cy="200" rx="44" ry="122" fill="none" stroke="#283038" stroke-width="1"></ellipse>
+<ellipse cx="320" cy="200" rx="88" ry="122" fill="none" stroke="#242B32" stroke-width="1"></ellipse>
+<rect x="272" y="160" width="62" height="4" rx="2" fill="#9AA6B4" opacity="0.22"></rect>
+<rect x="284" y="170" width="84" height="4" rx="2" fill="#9AA6B4" opacity="0.18"></rect>
+<rect x="284" y="180" width="48" height="4" rx="2" fill="#9AA6B4" opacity="0.18"></rect>
+<rect x="272" y="214" width="70" height="4" rx="2" fill="#9AA6B4" opacity="0.18"></rect>
+<rect x="284" y="224" width="56" height="4" rx="2" fill="#9AA6B4" opacity="0.22"></rect>
+<circle cx="320" cy="200" r="150" fill="none" stroke="#F0703F" stroke-width="1.5" stroke-dasharray="6 6" opacity="{{blockOp}}"></circle>
+</svg>
+</sc-if>
+
+<sc-if value="{{is2d}}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%;">
+<circle cx="320" cy="200" r="168" fill="none" stroke="#2A3038" stroke-width="1" stroke-dasharray="3 5" opacity="{{orbitOp}}"></circle>
+<circle cx="320" cy="200" r="128" fill="none" stroke="#2E363F" stroke-width="1"></circle>
+<circle cx="320" cy="200" r="72" fill="#161A1F" stroke="{{coreStroke}}" stroke-width="1.4"></circle>
+<rect x="290" y="186" width="44" height="4" rx="2" fill="#9AA6B4" opacity="0.3"></rect>
+<rect x="296" y="196" width="50" height="4" rx="2" fill="#9AA6B4" opacity="0.24"></rect>
+<rect x="290" y="206" width="34" height="4" rx="2" fill="#9AA6B4" opacity="0.24"></rect>
+<circle cx="320" cy="200" r="150" fill="none" stroke="#F0703F" stroke-width="1.5" stroke-dasharray="6 6" opacity="{{blockOp}}"></circle>
+</svg>
+</sc-if>
+
+<svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true" style="position: absolute; inset: 0; width: 100%; height: 100%;">
+<line x1="{{b0.x1}}" y1="{{b0.y1}}" x2="{{b0.x2}}" y2="{{b0.y2}}" stroke="{{b0.color}}" stroke-width="7" stroke-linecap="round" opacity="{{b0.glow}}"></line>
+<line x1="{{b0.x1}}" y1="{{b0.y1}}" x2="{{b0.x2}}" y2="{{b0.y2}}" stroke="{{b0.color}}" stroke-width="1.8" stroke-linecap="round" opacity="{{b0.op}}"></line>
+<circle cx="{{b0.x2}}" cy="{{b0.y2}}" r="3.5" fill="{{b0.color}}" opacity="{{b0.op}}"></circle>
+<line x1="{{b1.x1}}" y1="{{b1.y1}}" x2="{{b1.x2}}" y2="{{b1.y2}}" stroke="{{b1.color}}" stroke-width="7" stroke-linecap="round" opacity="{{b1.glow}}"></line>
+<line x1="{{b1.x1}}" y1="{{b1.y1}}" x2="{{b1.x2}}" y2="{{b1.y2}}" stroke="{{b1.color}}" stroke-width="1.8" stroke-linecap="round" opacity="{{b1.op}}"></line>
+<circle cx="{{b1.x2}}" cy="{{b1.y2}}" r="3.5" fill="{{b1.color}}" opacity="{{b1.op}}"></circle>
+<line x1="{{b2.x1}}" y1="{{b2.y1}}" x2="{{b2.x2}}" y2="{{b2.y2}}" stroke="{{b2.color}}" stroke-width="7" stroke-linecap="round" opacity="{{b2.glow}}"></line>
+<line x1="{{b2.x1}}" y1="{{b2.y1}}" x2="{{b2.x2}}" y2="{{b2.y2}}" stroke="{{b2.color}}" stroke-width="1.8" stroke-linecap="round" opacity="{{b2.op}}"></line>
+<circle cx="{{b2.x2}}" cy="{{b2.y2}}" r="3.5" fill="{{b2.color}}" opacity="{{b2.op}}"></circle>
+<line x1="{{b3.x1}}" y1="{{b3.y1}}" x2="{{b3.x2}}" y2="{{b3.y2}}" stroke="{{b3.color}}" stroke-width="7" stroke-linecap="round" opacity="{{b3.glow}}"></line>
+<line x1="{{b3.x1}}" y1="{{b3.y1}}" x2="{{b3.x2}}" y2="{{b3.y2}}" stroke="{{b3.color}}" stroke-width="1.8" stroke-linecap="round" opacity="{{b3.op}}"></line>
+<circle cx="{{b3.x2}}" cy="{{b3.y2}}" r="3.5" fill="{{b3.color}}" opacity="{{b3.op}}"></circle>
+</svg>
+
+<sc-for list="{{eyes}}" as="e" hint-placeholder-count="8">
+<div style="{{e.style}}">
+<sc-if value="{{e.isOpen}}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 40 24" aria-hidden="true" style="display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 5px rgba(82,196,140,0.65));">
+<path d="M2 12 Q20 -3 38 12 Q20 27 2 12 Z" fill="rgba(82,196,140,0.14)" stroke="#52C48C" stroke-width="1.8" stroke-linejoin="round"></path>
+<circle cx="20" cy="12" r="6.2" fill="#52C48C"></circle>
+<circle cx="20" cy="12" r="2.6" fill="#0F1215"></circle>
+</svg>
+</sc-if>
+<sc-if value="{{e.isOpening}}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 40 24" aria-hidden="true" style="display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 3px rgba(82,196,140,0.45));">
+<path d="M2 12 Q20 5 38 12 Q20 19 2 12 Z" fill="rgba(82,196,140,0.10)" stroke="#52C48C" stroke-width="1.8" stroke-linejoin="round"></path>
+<ellipse cx="20" cy="12" rx="5" ry="3" fill="#52C48C"></ellipse>
+</svg>
+</sc-if>
+<sc-if value="{{e.isClosed}}" hint-placeholder-val="{{ true }}">
+<svg viewBox="0 0 40 24" aria-hidden="true" style="display: block; width: 100%; height: auto; overflow: visible;">
+<path d="M3 11 Q20 21 37 11" fill="none" stroke="{{e.lid}}" stroke-width="2" stroke-linecap="round"></path>
+<path d="M11 16 L9 20 M20 18 L20 22 M29 16 L31 20" fill="none" stroke="{{e.lid}}" stroke-width="1.6" stroke-linecap="round"></path>
+</svg>
+</sc-if>
+<sc-if value="{{showLabels}}" hint-placeholder-val="{{ true }}">
+<div style="{{e.labelStyle}}">{{e.label}}</div>
+</sc-if>
+</div>
+</sc-for>
+
+<sc-for list="{{attackers}}" as="a" hint-placeholder-count="4">
+<div style="{{a.style}}">
+<div style="width: 30px; height: 30px; border-radius: 50%; background: #191D22; border: 1.5px solid #59616C; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" fill="none" stroke="#D3D8DE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{a.icon}}"></path></svg>
+</div>
+<sc-if value="{{showLabels}}" hint-placeholder-val="{{ true }}">
+<div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.04em; color: #AAB1BA; white-space: nowrap;">{{a.label}}</div>
+</sc-if>
+</div>
+</sc-for>
+
+<sc-if value="{{isBlocked}}" hint-placeholder-val="{{ false }}">
+<div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;">
+<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="#F0703F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6l12.8 12.8"></path></svg>
+<div style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: #F0703F;">BLOCKED · STAGE 0</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"stage":{"editor":"enum","options":["idle","sealed","attacking","revealing","final","blocked"],"default":"final"},"mode":{"editor":"enum","options":["3d","2d"],"default":"3d"},"labels":{"editor":"boolean","default":true},"$preview":{"width":640,"height":400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const stage = this.props.stage ?? 'final';
+    const mode = this.props.mode ?? '3d';
+    const showLabels = this.props.labels ?? true;
+    const flat = mode === '2d';
+    const OK = '#52C48C', WARN = '#E5C04B', DANGER = '#F0703F', MUTED = '#6B737E', FAINT = '#3A414A', GRAY = '#8E96A1';
+    const pct = (v, total) => (v / total * 100).toFixed(2) + '%';
+
+    const sphere = [[262,128,0.95],[352,116,1.0],[406,172,0.85],[226,196,0.9],[318,192,1.15],[406,244,0.8],[266,264,0.95],[358,276,1.0]];
+    const ring = Array.from({ length: 8 }, (_, i) => {
+      const a = -Math.PI / 2 + i * Math.PI / 4;
+      return [320 + 128 * Math.cos(a), 200 + 128 * Math.sin(a), 1];
+    });
+    const pos = flat ? ring : sphere;
+
+    const eyeState = (i) => {
+      if (stage === 'blocked') return 'none';
+      if (stage === 'idle') return 'dormant';
+      if (stage === 'sealed' || stage === 'attacking') return 'sealed';
+      if (stage === 'revealing') return i < 5 ? 'open' : (i === 5 ? 'opening' : 'sealed');
+      return i === 7 ? 'survived' : 'open';
+    };
+
+    const eyes = pos.map(([x, y, s], i) => {
+      const st = eyeState(i);
+      const w = (flat ? 6.6 : 6.4) * s;
+      const hidden = st === 'none';
+      const lid = st === 'survived' ? WARN : (st === 'dormant' ? FAINT : MUTED);
+      const labelColor = st === 'open' || st === 'opening' ? OK : (st === 'survived' ? WARN : (st === 'dormant' ? '#4A525C' : GRAY));
+      return {
+        style: 'position: absolute; left: ' + pct(x, 640) + '; top: ' + pct(y, 400) + '; width: ' + w.toFixed(2) + '%; transform: translate(-50%, -50%); display: ' + (hidden ? 'none' : 'flex') + '; flex-direction: column; align-items: center; gap: 2px;',
+        isOpen: st === 'open',
+        isOpening: st === 'opening',
+        isClosed: st === 'sealed' || st === 'dormant' || st === 'survived',
+        lid,
+        label: 'M' + (i + 1) + (st === 'survived' ? ' · survived' : ''),
+        labelStyle: "font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; font-weight: " + (st === 'survived' ? 600 : 500) + '; color: ' + labelColor + '; white-space: nowrap;'
+      };
+    });
+
+    const orbit = (rx, ry, deg, tDeg) => {
+      const th = deg * Math.PI / 180, t = tDeg * Math.PI / 180;
+      return {
+        x: 320 + rx * Math.cos(t) * Math.cos(th) - ry * Math.sin(t) * Math.sin(th),
+        y: 200 + rx * Math.cos(t) * Math.sin(th) + ry * Math.sin(t) * Math.cos(th),
+        front: Math.sin(t) > 0
+      };
+    };
+    const ICON = {
+      security: 'M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z',
+      edge: 'M13 2L4 14h7l-1 8 9-12h-7l1-8z',
+      state: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7',
+      regression: 'M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2'
+    };
+    const placed = flat
+      ? [
+          { key: 'security', label: 'SECURITY', p: { x: 112, y: 120, front: true } },
+          { key: 'edge', label: 'EDGE CASE', p: { x: 528, y: 120, front: true } },
+          { key: 'state', label: 'STATE', p: { x: 528, y: 296, front: true } },
+          { key: 'regression', label: 'REGRESSION', p: { x: 112, y: 296, front: true } }
+        ]
+      : [
+          { key: 'security', label: 'SECURITY', p: orbit(285, 62, -10, 165) },
+          { key: 'edge', label: 'EDGE CASE', p: orbit(250, 150, 14, -60) },
+          { key: 'state', label: 'STATE', p: orbit(285, 62, -10, 25) },
+          { key: 'regression', label: 'REGRESSION', p: orbit(250, 150, 14, 120) }
+        ];
+    const showAttackers = stage !== 'blocked';
+    const parked = stage === 'idle';
+    const attackers = placed.map((a) => ({
+      label: a.label,
+      icon: ICON[a.key],
+      style: 'position: absolute; left: ' + pct(a.p.x, 640) + '; top: ' + pct(a.p.y, 400) + '; transform: translate(-50%, -50%) scale(' + (a.p.front ? 1 : 0.82) + '); display: ' + (showAttackers ? 'flex' : 'none') + '; flex-direction: column; align-items: center; gap: 4px; opacity: ' + (parked ? 0.4 : (a.p.front ? 1 : 0.6)) + ';'
+    }));
+
+    const targets = [pos[1], pos[6], pos[3], pos[5]];
+    const beamSpec = {
+      attacking: [[0, DANGER, 1], [2, DANGER, 1], [1, WARN, 1], [3, GRAY, 1]],
+      revealing: [[3, OK, 1]],
+      final: [],
+      sealed: [],
+      idle: [],
+      blocked: []
+    }[stage] || [];
+    const order = ['security', 'edge', 'state', 'regression'];
+    const beams = [0, 1, 2, 3].map((bi) => {
+      const spec = beamSpec[bi];
+      if (!spec) return { x1: 0, y1: 0, x2: 0, y2: 0, color: GRAY, op: 0, glow: 0 };
+      const [attIdx, color] = spec;
+      const from = placed[attIdx].p;
+      const to = stage === 'revealing' ? pos[5] : targets[attIdx];
+      return { x1: from.x.toFixed(1), y1: from.y.toFixed(1), x2: to[0].toFixed(1), y2: to[1].toFixed(1), color, op: 0.9, glow: 0.16 };
+    });
+
+    const caught = stage === 'final' ? 7 : (stage === 'revealing' ? 5 : 0);
+    const summary = stage === 'blocked'
+      ? 'Scene: the pull request was blocked by the Stage 0 guardrail; no attackers were dispatched.'
+      : stage === 'final'
+        ? 'Scene: 7 of 8 hidden mutants detected. Mutant M8 survived and its eye stays closed.'
+        : 'Scene: ' + caught + ' of 8 hidden mutants detected so far; ' + order.length + ' attacker agents in orbit.';
+
+    return {
+      is3d: !flat,
+      is2d: flat,
+      showLabels,
+      isBlocked: stage === 'blocked',
+      orbitOp: parked ? 0.5 : 1,
+      coreStroke: stage === 'blocked' ? DANGER : '#3B4550',
+      blockOp: stage === 'blocked' ? 0.9 : 0,
+      eyes,
+      attackers,
+      b0: beams[0], b1: beams[1], b2: beams[2], b3: beams[3],
+      summary
+    };
+  }
+}
+</script>
+</body>
+</html>

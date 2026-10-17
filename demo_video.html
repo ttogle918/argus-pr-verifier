@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Argus-PR — Guided E2E Demo Video Player (🔴 1 ~ 🔴 7)</title>
+  <title>Argus-PR — Guided E2E Demo Video Player (Step 1 ~ 7)</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -88,6 +88,21 @@
       border: 1px solid #374151;
       display: block;
     }
+    .lang-switch { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .lang-switch span { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+    .lang-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .lang-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+    .lang-btn.active { background: rgba(239, 68, 68, 0.2); border-color: var(--accent); color: #fca5a5; }
     .chapters-title {
       font-size: 0.95rem;
       font-weight: 700;
@@ -134,66 +149,108 @@
     <div class="header">
       <div class="title">
         🛡️ Argus-PR — Guided E2E Demo Video
-        <span class="badge">🔴 1 ~ 🔴 7 + Stage 0 Guardrail</span>
+        <span class="badge">Step 1 ~ 7 + Stage 0 Guardrail</span>
       </div>
       <div class="links">
         <a class="btn-link" href="https://argus-pr-verifier-987693331070.asia-northeast3.run.app/" target="_blank">🚀 Open Live Cloud Run App</a>
         <a class="btn-link" href="https://github.com/ttogle918/argus-pr-verifier" target="_blank">🌐 GitHub Repository</a>
-        <a class="btn-link" href="https://raw.githubusercontent.com/ttogle918/argus-pr-verifier/main/argus_pr_demo.webm" target="_blank">⬇ Download .webm (9.5 MB)</a>
+        <a class="btn-link" id="download-link" href="https://raw.githubusercontent.com/ttogle918/argus-pr-verifier/main/argus_pr_demo.webm" target="_blank">⬇ Download .webm (10 MB)</a>
       </div>
     </div>
 
     <div class="player-card">
+      <div class="lang-switch">
+        <span>🌐 Video language:</span>
+        <button class="lang-btn active" id="lang-en" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="lang-ko" onclick="setLang('ko')">KO</button>
+      </div>
       <video id="demo-video" controls autoplay loop muted playsinline>
-        <source src="./argus_pr_demo.webm" type="video/webm" />
-        <source src="https://raw.githubusercontent.com/ttogle918/argus-pr-verifier/main/argus_pr_demo.webm" type="video/webm" />
+        <source id="video-src-local" src="./argus_pr_demo.webm" type="video/webm" />
+        <source id="video-src-remote" src="https://raw.githubusercontent.com/ttogle918/argus-pr-verifier/main/argus_pr_demo.webm" type="video/webm" />
         Your browser does not support HTML5 WebM video.
       </video>
 
       <div class="chapters-title">🧭 Click any numbered step below to jump directly to that moment in the video:</div>
-      <div class="chapter-grid">
-        <button class="chapter-btn" onclick="seekTo(0.5)">
-          <div class="chapter-step"><span>🔴 1 PR Diff 보기</span><span>0:01</span></div>
-          <div class="chapter-desc">#toggle-diff-btn — PR #3 (Cisco sandbox.py) 코드 변경점 확인</div>
-        </button>
-        <button class="chapter-btn" onclick="seekTo(2.2)">
-          <div class="chapter-step"><span>🔴 2 블라인드 검증 스웜 실행</span><span>0:02</span></div>
-          <div class="chapter-desc">#launch-btn — Stage 0~3 듀얼 트랙 스웜 & 5회 적응형 레드팀 퍼징</div>
-        </button>
-        <button class="chapter-btn" onclick="seekTo(7.0)">
-          <div class="chapter-step"><span>🔴 3 Multi-Persona BOLA DAST</span><span>0:07</span></div>
-          <div class="chapter-desc">#run-live-dast-bola-btn — Victim vs Attacker vs Anon 권한 우회 검증</div>
-        </button>
-        <button class="chapter-btn" onclick="seekTo(9.0)">
-          <div class="chapter-step"><span>🔴 4 & 4-1 + 커스텀 버그 심기</span><span>0:09</span></div>
-          <div class="chapter-desc">#toggle-mutant-form-btn — 커스텀 인공 버그 주입 및 MSI 실시간 재계산</div>
-        </button>
-        <button class="chapter-btn" onclick="seekTo(12.2)">
-          <div class="chapter-step"><span>🔴 5 권장 패치 적용 후 재검증</span><span>0:12</span></div>
-          <div class="chapter-desc">#apply-patch-btn — Blue-Team CEGIS 4-Gate 루프 (Attempt 1 실패 → Attempt 2 통과)</div>
-        </button>
-        <button class="chapter-btn" onclick="seekTo(14.5)">
-          <div class="chapter-step"><span>🔴 6 Export PR + Regression Test</span><span>0:14</span></div>
-          <div class="chapter-desc">#export-bundle-btn — 검증된 패치 Diff + 고정 pytest 회귀 테스트 추출</div>
-        </button>
-        <button class="chapter-btn" onclick="seekTo(16.8)">
-          <div class="chapter-step"><span>🔴 7 병합 최종 승인</span><span>0:17</span></div>
-          <div class="chapter-desc">#approve-btn — Human-in-the-Loop 최종 승인 및 감사 로그 기록</div>
-        </button>
-        <button class="chapter-btn" onclick="seekTo(18.5)">
-          <div class="chapter-step"><span>🛡️ BONUS: PR #666 인젝션 차단</span><span>0:18</span></div>
-          <div class="chapter-desc">Stage 0 (gemini-3.5-flash-lite) 프롬프트 인젝션 즉시 격리</div>
-        </button>
-      </div>
+      <div class="chapter-grid" id="chapter-grid"></div>
     </div>
   </div>
 
   <script>
+    const RAW = 'https://raw.githubusercontent.com/ttogle918/argus-pr-verifier/main/';
+    const FILES = { en: 'argus_pr_demo.webm', ko: 'argus_pr_demo_ko.webm' };
+    // [start second, title, description] per chapter, in each video's own timeline
+    const CHAPTERS = {
+      en: [
+        [1.5,  'Start · 샘플 PR 선택',               '시작 화면 — 샘플 PR #412 선택'],
+        [2.9,  '1 PR diff 보기',                      'open-diff — PR 코드 변경점(diff) 확인'],
+        [5.0,  '2 검증 실행',                         'run-button — Stage 0~3 듀얼 트랙 스웜 & 5회 적응형 레드팀 퍼징, 8개의 눈 7/8 탐지'],
+        [11.0, '3 Live DAST (BOLA)',                  'open-run-details → dast-run — Victim vs Attacker vs Anon 권한 우회 검증'],
+        [14.9, '검증 매트릭스',                       'continue-verify — 테스트 × 8 mutant 매트릭스, M8 생존'],
+        [19.2, '4 보정용 mutant 심기',                'open-mutant-form → mutant-submit — M9 주입 및 탐지율 실시간 재계산'],
+        [23.5, '5 수정 적용 & 재검증',                'continue-decide → apply-patch — CEGIS 4-Gate 루프 (Attempt 1 실패 → Attempt 2 통과)'],
+        [27.9, '6 PR + 회귀 테스트 내보내기',         'open-export — 패치 diff + 고정 pytest + CI YAML 추출'],
+        [31.1, '7 승인 & 머지',                       'approve-button — Human-in-the-Loop 최종 승인 및 감사 로그 기록'],
+        [34.3, '🛡️ BONUS: PR #666 인젝션 차단',       'blocked-panel — Stage 0 프롬프트 인젝션 즉시 격리']
+      ],
+      ko: [
+        [1.4,  'EN → KO 전환',                        'lang-ko — 헤더 토글로 한국어 UI 전환'],
+        [3.0,  'Start · 샘플 PR 선택',                '시작 화면 — 샘플 PR #412 선택'],
+        [4.3,  '1 PR diff 보기',                      'open-diff — PR 코드 변경점(diff) 확인'],
+        [6.1,  '2 검증 실행',                         'run-button — Stage 0~3 듀얼 트랙 스웜 & 5회 적응형 레드팀 퍼징'],
+        [12.2, '3 Live DAST (BOLA)',                  'open-run-details → dast-run — Victim vs Attacker vs Anon 권한 우회 검증'],
+        [15.3, '검증 매트릭스',                       'continue-verify — 테스트 × 8 mutant 매트릭스, M8 생존'],
+        [19.1, '4 보정용 mutant 심기',                'open-mutant-form → mutant-submit — M9 주입 및 탐지율 실시간 재계산'],
+        [23.2, '5 수정 적용 & 재검증',                'continue-decide → apply-patch — CEGIS 4-Gate 루프 (Attempt 1 실패 → Attempt 2 통과)'],
+        [28.0, '6 PR + 회귀 테스트 내보내기',         'open-export — 패치 diff + 고정 pytest + CI YAML 추출'],
+        [31.2, '7 승인 & 머지',                       'approve-button — Human-in-the-Loop 최종 승인 및 감사 로그 기록'],
+        [34.5, '🛡️ BONUS: PR #666 인젝션 차단',       'blocked-panel — Stage 0 프롬프트 인젝션 즉시 격리']
+      ]
+    };
+
     const video = document.getElementById('demo-video');
+    const grid = document.getElementById('chapter-grid');
+
     function seekTo(sec) {
       video.currentTime = sec;
       video.play();
     }
+
+    function fmt(sec) {
+      const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+      return m + ':' + String(s).padStart(2, '0');
+    }
+
+    function renderChapters(lang) {
+      grid.innerHTML = '';
+      CHAPTERS[lang].forEach(function (c) {
+        const btn = document.createElement('button');
+        btn.className = 'chapter-btn';
+        btn.addEventListener('click', function () { seekTo(c[0]); });
+        const step = document.createElement('div');
+        step.className = 'chapter-step';
+        const t = document.createElement('span'); t.textContent = c[1];
+        const time = document.createElement('span'); time.textContent = fmt(c[0]);
+        step.appendChild(t); step.appendChild(time);
+        const desc = document.createElement('div');
+        desc.className = 'chapter-desc';
+        desc.textContent = c[2];
+        btn.appendChild(step); btn.appendChild(desc);
+        grid.appendChild(btn);
+      });
+    }
+
+    function setLang(lang) {
+      document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+      document.getElementById('lang-ko').classList.toggle('active', lang === 'ko');
+      document.getElementById('video-src-local').src = './' + FILES[lang];
+      document.getElementById('video-src-remote').src = RAW + FILES[lang];
+      document.getElementById('download-link').href = RAW + FILES[lang];
+      video.load();
+      video.play().catch(function () {});
+      renderChapters(lang);
+    }
+
+    renderChapters('en');
   </script>
 </body>
 </html>

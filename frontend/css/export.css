@@ -1,0 +1,21 @@
+/* Export bundle overlay */
+[data-overlay="export"] .overlay__panel { max-width: 980px; }
+.export { display: flex; flex-direction: column; }
+.export-sub { margin: 16px 24px 12px; font-size: 14px; color: var(--text-muted); }
+.export > .status-box { margin: 4px 24px 16px; }
+.export-facts {
+  margin: 0 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1px;
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--border);
+}
+.export-facts__item { padding: 12px 14px; background: var(--surface-2); }
+.export-facts dt { font-size: var(--fs-sm); color: var(--text-muted); }
+.export-facts dd { margin: 0; font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.export-commit { margin: 10px 24px 0; font-size: var(--fs-sm); color: var(--text-2); overflow-wrap: anywhere; }
+.export-tabs { margin: 16px 24px 0; padding: 0; }
+.export-panel { display: flex; flex-direction: column; gap: 10px; padding: 16px 24px 24px; }
+.export-file { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.export-path { font-size: var(--fs-sm); color: var(--text-2); overflow-wrap: anywhere; }
+.export-file__tools { display: flex; gap: 6px; align-items: center; }
+.export-code { max-height: 520px; margin: 0; }
+.export-code:not(:has(.code__line)) { padding: 12px 14px; white-space: pre; }
+.export-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 14px 24px; border-top: 1px solid var(--border); }

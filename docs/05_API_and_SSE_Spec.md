@@ -146,7 +146,7 @@ flowchart LR
 
 ### SSE 이벤트별 JSON 페이로드 구조
 
-| 순서 | `stage` 값 | 주요 포함 필드 | 프론트엔드 UI 반응 (`frontend/app.js`) |
+| 순서 | `stage` 값 | 주요 포함 필드 | 프론트엔드 UI 반응 (`frontend/js/sse.js` + `controller.js` 수신, `run.js`/`playback.js` 반영) |
 | :---: | :--- | :--- | :--- |
 | **1** | `guardrail_start` | `model` (`"gemini-3.5-flash-lite"`), `message` | 상단 Stepper `0. Flash-Lite Guardrail` 활성화 |
 | **2** | `guardrail` | `guardrail` ([`GuardrailResult`](file:///c:/Users/ttogl/workspace/google-hack/backend/models.py#L7-L12)), `scope_triage` (`ScopeTriageResult`), `message` | `#guardrail-banner`에 `SAFE`/`BLOCKED` 및 선정된 Scope 배지(`SINGLE_FILE_UNIT` / `SPARSE_PACKAGE_TREE` / `LIVE_SERVER_DAEMON`) 렌더링 |

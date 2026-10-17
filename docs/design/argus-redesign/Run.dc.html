@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Argus-PR · Run</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D0F12}
+a{color:#E7E9EC}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="min-height: 1320px; background: #0D0F12; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.5;">
+
+<header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 32px; border-bottom: 1px solid #262C33; background: #0D0F12;">
+<div style="display: flex; align-items: center; gap: 10px;">
+<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" fill="none" stroke="#E7E9EC" stroke-width="1.8" stroke-linejoin="round"><path d="M2 12 Q12 2.5 22 12 Q12 21.5 2 12 Z"></path><circle cx="12" cy="12" r="3.4"></circle></svg>
+<span style="font-size: 17px; font-weight: 600; letter-spacing: 0.01em;">Argus-PR</span>
+</div>
+<nav aria-label="Workflow" style="display: flex; flex-wrap: wrap; gap: 4px;">
+<a href="Main.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid transparent; color: #AAB1BA; text-decoration: none; font-size: 14px; font-weight: 500; box-sizing: border-box;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace;">1</span>Start</a>
+<a href="Run.dc.html" aria-current="page" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid #343B44; background: #1A1E23; color: #E7E9EC; text-decoration: none; font-size: 14px; font-weight: 500; box-sizing: border-box;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; color: #AAB1BA;">2</span>Run</a>
+<a href="Verify.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid transparent; color: #AAB1BA; text-decoration: none; font-size: 14px; font-weight: 500; box-sizing: border-box;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace;">3</span>Verify</a>
+<a href="Decide.dc.html" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid transparent; color: #AAB1BA; text-decoration: none; font-size: 14px; font-weight: 500; box-sizing: border-box;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace;">4</span>Decide</a>
+</nav>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid #343B44; border-radius: 6px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.04em; color: #D3D8DE;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#D3D8DE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path></svg>RECORDED REPLAY</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px dashed #4A525C; border-radius: 6px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.04em; color: #AAB1BA;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#AAB1BA" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v6M12 7.5v.5"></path></svg>SAMPLE DATA</span>
+</div>
+</header>
+
+<main style="max-width: 1400px; margin: 0 auto; padding: 24px 32px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px;">
+
+<section style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px;">
+<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+<h1 style="margin: 0; font-size: 24px; font-weight: 600; line-height: 1.25;">PR #412 · Instant refund &amp; partial wallet settlement</h1>
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #868E99; overflow-wrap: anywhere;">acme-pay/ledger-core · devin-bot[ai] · run_c8865081cf17 · phase 2 (4 attackers, 2× repro)</p>
+</div>
+<div role="status" style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+<span style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(106,163,247,0.45); background: rgba(106,163,247,0.10); color: #9CC2FA; font-size: 14px; font-weight: 500;"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#6AA3F7" stroke-width="2.2" stroke-linecap="round"><path d="M12 3a9 9 0 1 1-9 9"></path></svg>Running · sandbox track B · mutant 6 of 8</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; color: #AAB1BA;">00:09</span>
+<button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #343B44; background: transparent; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer;">Stop run</button>
+</div>
+</section>
+
+<ol aria-label="Pipeline stages" style="margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 0; border: 1px solid #262C33; border-radius: 10px; background: #13161A; overflow: hidden;">
+<sc-for list="{{stages}}" as="st" hint-placeholder-count="7">
+<li style="{{st.style}}">
+<div style="display: flex; align-items: center; gap: 8px;">
+<sc-if value="{{st.done}}" hint-placeholder-val="{{ true }}">
+<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#8E96A1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l2.5 2.5L16 9.5"></path></svg>
+</sc-if>
+<sc-if value="{{st.active}}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#6AA3F7" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9" stroke="#2B3B52"></circle><path d="M12 3a9 9 0 0 1 9 9"></path></svg>
+</sc-if>
+<sc-if value="{{st.pending}}" hint-placeholder-val="{{ false }}">
+<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#4A525C" stroke-width="2" stroke-dasharray="3 3"><circle cx="12" cy="12" r="9"></circle></svg>
+</sc-if>
+<span style="{{st.nameStyle}}">{{st.name}}</span>
+</div>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #868E99;">{{st.meta}}</span>
+</li>
+</sc-for>
+</ol>
+
+<section style="display: flex; flex-wrap: wrap; gap: 20px; align-items: stretch;">
+<div style="flex: 999 1 640px; min-width: 0; position: relative; border: 1px solid #262C33; border-radius: 12px; overflow: hidden; background: #0F1215;">
+<dc-import name="Scene" stage="revealing" mode="2d" labels="{{yes}}" hint-size="100%,520px"></dc-import>
+<div style="position: absolute; left: 16px; top: 14px; display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; letter-spacing: 0.04em; color: #AAB1BA;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #6AA3F7;"></span>REGRESSION · test_reg_receipt_schema_backward_compat → M6</div>
+<div style="position: absolute; right: 16px; bottom: 12px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #7D858F;">2D renderer · same state as 3D</div>
+</div>
+
+<div style="flex: 1 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 20px; border: 1px solid #262C33; border-radius: 12px; background: #13161A; box-sizing: border-box;">
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA;">Planted bugs caught so far</span>
+<div style="display: flex; align-items: baseline; gap: 6px; font-family: 'IBM Plex Mono', ui-monospace, monospace;"><span style="font-size: 80px; line-height: 1; font-weight: 600; color: #F2F4F6;">5</span><span style="font-size: 40px; line-height: 1; color: #868E99;">/8</span></div>
+</div>
+<ul aria-label="Mutant status" style="margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px;">
+<sc-for list="{{mutantCells}}" as="m" hint-placeholder-count="8">
+<li style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+<div style="{{m.boxStyle}}" title="{{m.title}}">
+<sc-if value="{{m.caught}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#52C48C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+<sc-if value="{{m.testing}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#6AA3F7" stroke-width="2.6" stroke-linecap="round"><path d="M12 4a8 8 0 1 1-8 8"></path></svg></sc-if>
+<sc-if value="{{m.sealed}}" hint-placeholder-val="{{ true }}"><svg viewBox="0 0 40 24" width="18" height="11" aria-hidden="true" fill="none" stroke="#6B737E" stroke-width="2.6" stroke-linecap="round"><path d="M3 9 Q20 19 37 9"></path></svg></sc-if>
+</div>
+<span style="{{m.labelStyle}}">{{m.id}}</span>
+</li>
+</sc-for>
+</ul>
+<p style="margin: 0; font-size: 13px; color: #868E99;">Caught = passes on the PR and fails on the mutant.</p>
+<dl style="margin: 0; display: flex; flex-direction: column; gap: 0; border-top: 1px solid #262C33;">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #262C33;">
+<dt style="display: flex; align-items: center; gap: 8px; color: #D3D8DE;"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#F0703F" stroke-width="2.2" stroke-linejoin="round"><path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"></path><path d="M9.5 9.5l5 5M14.5 9.5l-5 5" stroke-linecap="round"></path></svg>Confirmed defects (2/2 repro)</dt>
+<dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 22px; font-weight: 600; color: #F0703F;">2</dd>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #262C33;">
+<dt style="display: flex; align-items: center; gap: 8px; color: #D3D8DE;"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#E5C04B" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3.5l9.5 17h-19z"></path><path d="M12 10v4.5M12 17.5v.3"></path></svg>Flaky, filtered out (1/2)</dt>
+<dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 22px; font-weight: 600; color: #E5C04B;">1</dd>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #262C33;">
+<dt style="display: flex; align-items: center; gap: 8px; color: #D3D8DE;"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#8E96A1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l2.5 2.5L16 9.5"></path></svg>Valid baseline tests</dt>
+<dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 22px; font-weight: 600; color: #E7E9EC;">7<span style="font-size: 15px; color: #868E99;"> / 10</span></dd>
+</div>
+</dl>
+<p style="margin: 0; display: flex; gap: 8px; font-size: 13px; color: #868E99;"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#868E99" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 2px;"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Mutants were planted in a separate Argon session (store=False). No attacker saw them.</p>
+</div>
+</section>
+
+<section aria-labelledby="lanes-h" style="display: flex; flex-direction: column; gap: 14px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 12px;">
+<h2 id="lanes-h" style="margin: 0; font-size: 20px; font-weight: 600;">Attacker lanes</h2>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 18px; font-size: 13px; color: #AAB1BA;">
+<li style="display: flex; align-items: center; gap: 6px;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#F0703F" stroke-width="2.4" stroke-linejoin="round"><path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"></path></svg>Breached the PR</li>
+<li style="display: flex; align-items: center; gap: 6px;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#E5C04B" stroke-width="2.4" stroke-linejoin="round"><path d="M12 3.5l9.5 17h-19z"></path></svg>Flaky, filtered</li>
+<li style="display: flex; align-items: center; gap: 6px;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#8E96A1" stroke-width="2.4"><circle cx="12" cy="12" r="9"></circle></svg>Held on PR (valid test)</li>
+<li style="display: flex; align-items: center; gap: 6px;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#52C48C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Caught a mutant</li>
+</ul>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: stretch;">
+<sc-for list="{{lanes}}" as="lane" hint-placeholder-count="4">
+<article style="flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; border: 1px solid #262C33; border-radius: 12px; background: #13161A; overflow: hidden;">
+<header style="display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 12px; border-bottom: 1px solid #262C33;">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+<h3 style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600;"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#D3D8DE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{lane.icon}}"></path></svg>{{lane.name}}</h3>
+<span style="{{lane.statusStyle}}">{{lane.status}}</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+<sc-for list="{{lane.invs}}" as="inv" hint-placeholder-count="2">
+<span style="padding: 2px 7px; border: 1px solid #343B44; border-radius: 5px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #D3D8DE;">{{inv}}</span>
+</sc-for>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #7D858F;">gemini-3.8-flash</span>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.45; color: #AAB1BA;">{{lane.strategy}}</p>
+<div aria-hidden="true" style="height: 3px; border-radius: 2px; background: #262C33; overflow: hidden;"><div style="{{lane.barStyle}}"></div></div>
+</header>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column;">
+<sc-for list="{{lane.tests}}" as="t" hint-placeholder-count="3">
+<li style="display: flex; flex-direction: column; gap: 6px; padding: 12px 16px; border-bottom: 1px solid #20252B;">
+<div style="display: flex; gap: 8px; align-items: flex-start;">
+<sc-if value="{{t.breach}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#F0703F" stroke-width="2.2" stroke-linejoin="round" style="flex: none; margin-top: 2px;"><path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"></path><path d="M9.5 9.5l5 5M14.5 9.5l-5 5" stroke-linecap="round"></path></svg></sc-if>
+<sc-if value="{{t.flaky}}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#E5C04B" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" style="flex: none; margin-top: 2px;"><path d="M12 3.5l9.5 17h-19z"></path><path d="M12 10v4.5M12 17.5v.3"></path></svg></sc-if>
+<sc-if value="{{t.held}}" hint-placeholder-val="{{ true }}"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#8E96A1" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex: none; margin-top: 2px;"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l2.5 2.5L16 9.5"></path></svg></sc-if>
+<code style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.4; color: #E7E9EC; overflow-wrap: anywhere; flex: 1 1 auto; min-width: 0;">{{t.id}}</code>
+<span style="flex: none; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #868E99;">{{t.inv}}</span>
+</div>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-left: 24px;">
+<span style="{{t.resultStyle}}">{{t.result}}</span>
+<sc-if value="{{t.hasPips}}" hint-placeholder-val="{{ false }}">
+<span aria-label="{{t.pipsLabel}}" style="display: inline-flex; gap: 3px;">
+<sc-for list="{{t.pips}}" as="p" hint-placeholder-count="5"><span style="{{p}}"></span></sc-for>
+</span>
+</sc-if>
+<sc-if value="{{t.hasKill}}" hint-placeholder-val="{{ false }}">
+<span style="{{t.killStyle}}">{{t.kill}}</span>
+</sc-if>
+</div>
+</li>
+</sc-for>
+</ul>
+</article>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="log-h" style="display: flex; flex-direction: column; border: 1px solid #262C33; border-radius: 12px; background: #0F1215; overflow: hidden;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #262C33; background: #13161A;">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px;">
+<h2 id="log-h" style="margin: 0; font-size: 16px; font-weight: 600;">Sandbox log</h2>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #7D858F;">antigravity-preview-09-2026 · env_remote_94827 · python /workspace/harness/run_dual_track_verification.py</span>
+</div>
+<div role="group" aria-label="Filter log" style="display: flex; flex-wrap: wrap; gap: 4px;">
+<sc-for list="{{filters}}" as="f" hint-placeholder-count="4">
+<button type="button" aria-pressed="{{f.pressed}}" onClick="{{f.pick}}" style="{{f.style}}">{{f.label}}</button>
+</sc-for>
+</div>
+</div>
+<ol aria-live="polite" style="margin: 0; padding: 12px 0; list-style: none; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.75; max-height: 420px; overflow-y: auto;">
+<sc-for list="{{logLines}}" as="l" hint-placeholder-count="12">
+<li style="{{l.rowStyle}}">
+<span style="flex: none; color: #7D858F;">{{l.ts}}</span>
+<span style="flex: none; width: 26px; color: #7D858F;">{{l.track}}</span>
+<span style="{{l.bodyStyle}}">{{l.body}}</span>
+<sc-if value="{{l.hasStatus}}" hint-placeholder-val="{{ false }}"><span style="{{l.statusStyle}}">{{l.status}}</span></sc-if>
+</li>
+</sc-for>
+</ol>
+</section>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'all' };
+  }
+  renderVals() {
+    const OK = '#52C48C', WARN = '#E5C04B', DANGER = '#F0703F', AI = '#6AA3F7';
+    const mono = "font-family: 'IBM Plex Mono', ui-monospace, monospace;";
+
+    const stageData = [
+      ['Guardrail', 'SAFE · 68 ms', 'done'],
+      ['Scope', 'single file · 9.2 KB', 'done'],
+      ['Blind plan', '8 invariants · 8 sealed', 'done'],
+      ['Swarm', '4 agents · 10 tests', 'done'],
+      ['Sandbox A', '2 breached · 1 flaky', 'done'],
+      ['Sandbox B', 'M6 of 8', 'active'],
+      ['Score & card', 'waiting', 'pending']
+    ];
+    const stages = stageData.map(([name, meta, st], i) => ({
+      name, meta,
+      done: st === 'done', active: st === 'active', pending: st === 'pending',
+      style: 'flex: 1 1 150px; min-width: 0; display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; box-sizing: border-box; border-right: 1px solid #20252B; ' + (st === 'active' ? 'background: rgba(106,163,247,0.08); box-shadow: inset 0 -2px 0 ' + AI + ';' : ''),
+      nameStyle: 'font-size: 14px; font-weight: ' + (st === 'active' ? 600 : 500) + '; color: ' + (st === 'active' ? '#9CC2FA' : (st === 'done' ? '#D3D8DE' : '#7D858F')) + ';'
+    }));
+
+    const cells = ['caught', 'caught', 'caught', 'caught', 'caught', 'testing', 'sealed', 'sealed'];
+    const mutantCells = cells.map((c, i) => ({
+      id: 'M' + (i + 1),
+      caught: c === 'caught', testing: c === 'testing', sealed: c === 'sealed',
+      title: 'M' + (i + 1) + ': ' + (c === 'caught' ? 'caught' : (c === 'testing' ? 'testing now' : 'sealed, not tested yet')),
+      boxStyle: 'height: 40px; width: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: center; box-sizing: border-box; border: 1px solid ' + (c === 'caught' ? 'rgba(82,196,140,0.55)' : (c === 'testing' ? AI : '#343B44')) + '; background: ' + (c === 'caught' ? 'rgba(82,196,140,0.12)' : (c === 'testing' ? 'rgba(106,163,247,0.10)' : 'transparent')) + ';',
+      labelStyle: mono + ' font-size: 12px; color: ' + (c === 'caught' ? OK : (c === 'testing' ? '#9CC2FA' : '#868E99')) + ';'
+    }));
+
+    const ICON = {
+      security: 'M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z',
+      edge: 'M13 2L4 14h7l-1 8 9-12h-7l1-8z',
+      state: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7',
+      regression: 'M3 12a9 9 0 1 0 3-6.7M3 4v5h5M12 7v5l3 2'
+    };
+    const chip = (color, bg, border) => mono + ' display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 5px; font-size: 12px; font-weight: 500; color: ' + color + '; background: ' + bg + '; border: 1px solid ' + border + ';';
+    const pipsFor = (breachAt) => [1, 2, 3, 4, 5].map((n) => 'width: 10px; height: 10px; border-radius: 2px; box-sizing: border-box; ' + (n < breachAt ? 'background: #4A525C;' : (n === breachAt ? 'background: ' + DANGER + ';' : 'border: 1px solid #343B44;')));
+    const test = (id, inv, kind, extra) => {
+      const t = { id, inv, breach: kind === 'breach', flaky: kind === 'flaky', held: kind === 'held', hasPips: false, pips: [], hasKill: false, kill: '', killStyle: '', pipsLabel: '' };
+      if (kind === 'breach') {
+        t.result = 'Breached · 2/2 repro · attempt ' + extra + '/5';
+        t.resultStyle = chip('#F59A74', 'rgba(240,112,63,0.12)', 'rgba(240,112,63,0.45)');
+        t.hasPips = true; t.pips = pipsFor(extra); t.pipsLabel = 'Breached on attempt ' + extra + ' of 5';
+      } else if (kind === 'flaky') {
+        t.result = 'Flaky · failed 1/2 · filtered out';
+        t.resultStyle = chip('#EBCF72', 'rgba(229,192,75,0.10)', 'rgba(229,192,75,0.45)');
+      } else {
+        t.result = 'Held 2/2';
+        t.resultStyle = chip('#AAB1BA', 'transparent', '#343B44');
+        t.hasKill = true;
+        if (extra === 'testing') { t.kill = 'Testing vs M6'; t.killStyle = chip('#9CC2FA', 'rgba(106,163,247,0.10)', 'rgba(106,163,247,0.5)'); }
+        else if (extra === 'wait') { t.kill = 'Waiting for M7, M8'; t.killStyle = chip('#868E99', 'transparent', '#2A3038'); }
+        else { t.kill = '✓ Caught ' + extra; t.killStyle = chip('#7FD6AA', 'rgba(82,196,140,0.12)', 'rgba(82,196,140,0.5)'); }
+      }
+      return t;
+    };
+    const statusChip = (active) => mono + ' font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 5px; ' + (active ? 'color: #9CC2FA; border: 1px solid rgba(106,163,247,0.5); background: rgba(106,163,247,0.10);' : 'color: #AAB1BA; border: 1px solid #343B44;');
+    const bar = (pct, active) => 'height: 100%; width: ' + pct + '%; background: ' + (active ? AI : '#8E96A1') + ';';
+    const lanes = [
+      { name: 'Security', icon: ICON.security, invs: ['INV-1', 'INV-2'], strategy: 'Fuzz refund amounts with negative numbers, forged webhook signatures and cross-tenant account IDs.', status: '3/3 · 2 kills', active: false,
+        tests: [test('test_sec_negative_refund_wallet_inflation', 'INV-1', 'breach', 3), test('test_sec_webhook_hmac_verification', 'INV-2', 'held', 'M1'), test('test_sec_tenant_isolation_guard', 'INV-2', 'held', 'M2')] },
+      { name: 'Edge Case', icon: ICON.edge, invs: ['INV-4', 'INV-5'], strategy: 'Exercise boundaries at the exact max refundable balance, zero amounts and precision limits.', status: '3/3 · 2 kills', active: false,
+        tests: [test('test_edge_float_rounding_jitter', 'INV-4', 'flaky'), test('test_edge_exact_full_refund_boundary', 'INV-4', 'held', 'M3'), test('test_edge_zero_amount_fee_calc', 'INV-5', 'held', 'M4')] },
+      { name: 'State', icon: ICON.state, invs: ['INV-3', 'INV-6'], strategy: 'Fire concurrent retries while status is PENDING_SETTLEMENT and inject gateway timeouts.', status: '2/2 · 1 kill', active: false,
+        tests: [test('test_state_double_settlement_idempotency_race', 'INV-3', 'breach', 2), test('test_state_gateway_timeout_rollback', 'INV-6', 'held', 'M5')] },
+      { name: 'Regression', icon: ICON.regression, invs: ['INV-7', 'INV-8'], strategy: 'Check the V1/V2 receipt schema and banker’s rounding on fractional fee basis points.', status: 'Track B · testing', active: true,
+        tests: [test('test_reg_receipt_schema_backward_compat', 'INV-7', 'held', 'testing'), test('test_reg_basis_points_bankers_rounding', 'INV-8', 'held', 'wait')] }
+    ].map((l) => ({ ...l, statusStyle: statusChip(l.active), barStyle: bar(l.active ? 70 : 100, l.active) }));
+
+    const raw = [
+      ['11:40:01', 'SYS', 'Initializing isolated Linux container env_remote_94827…', '', ''],
+      ['11:40:02', 'SYS', 'Mounting workspace /workspace/acme-pay/ledger-core (commit c8e19a4)…', '', ''],
+      ['11:40:02', 'SYS', 'Information wall active: planner and bug planter ran with isolated context (store=False).', '', ''],
+      ['11:40:03', 'A', 'Executing 10 swarm tests against unmutated PR code…', '', ''],
+      ['11:40:03', 'A', '  test_sec_negative_refund_wallet_inflation', 'FAILED run 1/2', 'danger'],
+      ['11:40:04', 'A', '  retry test_sec_negative_refund_wallet_inflation', 'FAILED run 2/2 · CONFIRMED', 'danger'],
+      ['11:40:04', 'A', '  test_state_double_settlement_idempotency_race', 'FAILED run 1/2', 'danger'],
+      ['11:40:05', 'A', '  retry test_state_double_settlement_idempotency_race', 'FAILED run 2/2 · CONFIRMED', 'danger'],
+      ['11:40:05', 'A', '  test_edge_float_rounding_jitter', 'FAILED run 1/2', 'danger'],
+      ['11:40:06', 'A', '  retry test_edge_float_rounding_jitter', 'PASSED run 2/2 · FLAKY, FILTERED', 'warn'],
+      ['11:40:06', 'A', '  7 baseline invariant tests passed 2/2 runs on original PR code.', '', ''],
+      ['11:40:07', 'B', 'Spawning 8 shadow mutant containers M1..M8…', '', ''],
+      ['11:40:07', 'B', '  M1 hmac_bypass → test_sec_webhook_hmac_verification failed', 'KILLED', 'ok'],
+      ['11:40:08', 'B', '  M2 tenant_lookup → test_sec_tenant_isolation_guard failed', 'KILLED', 'ok'],
+      ['11:40:08', 'B', '  M3 off_by_one_refund → test_edge_exact_full_refund_boundary failed', 'KILLED', 'ok'],
+      ['11:40:09', 'B', '  M4 zero_fee_div0 → test_edge_zero_amount_fee_calc failed', 'KILLED', 'ok'],
+      ['11:40:09', 'B', '  M5 gateway_timeout_leak → test_state_gateway_timeout_rollback failed', 'KILLED', 'ok'],
+      ['11:40:10', 'B', '  M6 receipt_schema_drop → running 7 valid tests', 'RUNNING ▍', 'ai']
+    ];
+    const tone = { danger: ['#F59A74', 'rgba(240,112,63,0.12)'], warn: ['#EBCF72', 'rgba(229,192,75,0.10)'], ok: ['#7FD6AA', 'rgba(82,196,140,0.12)'], ai: ['#9CC2FA', 'rgba(106,163,247,0.12)'] };
+    const f = this.state.filter;
+    const logLines = raw
+      .filter(([, track, , , kind]) => f === 'all' || (f === 'a' && track === 'A') || (f === 'b' && track === 'B') || (f === 'fail' && (kind === 'danger' || kind === 'warn')))
+      .map(([ts, track, body, status, kind]) => ({
+        ts, track, body,
+        hasStatus: !!status, status,
+        rowStyle: 'display: flex; gap: 12px; align-items: baseline; padding: 0 16px;' + (kind === 'ai' ? ' background: rgba(106,163,247,0.06);' : ''),
+        bodyStyle: 'flex: 0 1 auto; min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: ' + (track === 'SYS' ? '#AAB1BA' : '#D3D8DE') + ';',
+        statusStyle: status ? 'flex: none; padding: 0 6px; border-radius: 4px; font-weight: 600; color: ' + tone[kind][0] + '; background: ' + tone[kind][1] + ';' : ''
+      }));
+    const filters = [['all', 'All'], ['a', 'Track A'], ['b', 'Track B'], ['fail', 'Failures only']].map(([key, label]) => ({
+      label, pressed: f === key ? 'true' : 'false',
+      pick: () => this.setState({ filter: key }),
+      style: 'min-height: 36px; padding: 0 12px; border-radius: 6px; cursor: pointer; font-family: \'IBM Plex Sans\', system-ui, sans-serif; font-size: 13px; font-weight: 500; border: 1px solid ' + (f === key ? '#8E96A1' : '#343B44') + '; background: ' + (f === key ? '#1F242A' : 'transparent') + '; color: ' + (f === key ? '#E7E9EC' : '#AAB1BA') + ';'
+    }));
+
+    return { stages, mutantCells, lanes, logLines, filters, yes: true };
+  }
+}
+</script>
+</body>
+</html>

@@ -411,67 +411,67 @@
         <section class="walkthrough-banner" style="border-color:rgba(239,68,68,0.45);">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
                 <div>
-                    <span class="brand-badge" style="margin-bottom:4px;color:#fca5a5;border-color:rgba(239,68,68,0.5);background:rgba(239,68,68,0.14);">RECORDED DEMO WALKTHROUGH • RED NUMBERED BUTTONS (🔴 1 &rarr; 🔴 7)</span>
-                    <h2 style="margin:0;font-size:1.22rem;">&#127916; UI 내 <code>&#128308; 1</code> ~ <code>&#128308; 7</code> 버튼 순서대로 실행한 전체 데모 영상 &amp; 단계별 캡처</h2>
+                    <span class="brand-badge" style="margin-bottom:4px;color:#fca5a5;border-color:rgba(239,68,68,0.5);background:rgba(239,68,68,0.14);">RECORDED DEMO WALKTHROUGH • STEPS 1 &rarr; 7 (START &rarr; RUN &rarr; VERIFY &rarr; DECIDE)</span>
+                    <h2 style="margin:0;font-size:1.22rem;">&#127916; 재설계된 UI(Start &rarr; Run &rarr; Verify &rarr; Decide)에서 1~7단계 순서대로 실행한 전체 데모 영상 &amp; 단계별 캡처</h2>
                 </div>
                 <span style="font-size:0.8rem;color:var(--muted);">영상/이미지를 클릭하면 원본 크기로 확대됩니다</span>
             </div>
 
             <div class="inline-shot" style="margin-top:0;margin-bottom:16px;border-color:rgba(239,68,68,0.45);">
-                <img src="screenshots/argus_pr_demo_walkthrough_1_to_7.webp" alt="Argus-PR Full Demo Walkthrough Steps 1 to 7" onclick="openLightbox(this.src)" />
+                <img src="../argus_pr_demo.gif" alt="Argus-PR Full Demo Walkthrough Steps 1 to 7" onclick="openLightbox(this.src)" />
                 <div class="inline-shot-caption">
-                    <span>&#127909; <strong>자동 재생 데모 녹화본 (Animated WebP / GIF):</strong> <code>&#128308; 1 PR Diff 보기</code> &rarr; <code>&#128308; 2 블라인드 검증 스웜 실행</code> &rarr; <code>&#128308; 3 BOLA DAST</code> &rarr; <code>&#128308; 4 커스텀 버그 심기</code> &rarr; <code>&#128308; 5 CEGIS 패치 재검증</code> &rarr; <code>&#128308; 6 PR 번들 익스포트</code> &rarr; <code>&#128308; 7 최종 병합 승인</code></span>
-                    <code>docs/screenshots/argus_pr_demo_walkthrough_1_to_7.webp</code>
+                    <span>&#127909; <strong>자동 재생 데모 녹화본 (Animated GIF, 약 37초 영상 <code>.webm</code> 병행):</strong> <code>1 View PR diff</code> &rarr; <code>2 Run verification</code> &rarr; <code>3 Run BOLA check</code> &rarr; <code>4 + Plant calibration mutant</code> &rarr; <code>5 Apply fix &amp; re-verify</code> &rarr; <code>6 Export PR + pinned regression test</code> &rarr; <code>7 Approve &amp; merge</code></span>
+                    <code>argus_pr_demo.gif</code> / <code>argus_pr_demo.webm</code> (한국어 UI: <code>argus_pr_demo_ko.gif</code>)
                 </div>
             </div>
 
             <div class="walkthrough-grid">
                 <div class="shot-card">
-                    <img src="screenshots/demo_step_1_2_top_controls.png" alt="Step 1 and 2 Top Controls" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_2_launch.png" alt="Step 2 Run screen after verification" onclick="openLightbox(this.src)" />
                     <div class="shot-meta">
-                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 1 &amp; &#128308; 2 • DIFF &amp; LAUNCH SWARM</span>
-                        <div style="font-weight:700;margin-bottom:4px;">PR Diff 확인 및 블라인드 검증 스웜 실행</div>
-                        <div style="color:var(--muted);"><code>&#128308; 1 PR Diff 보기</code>로 변경 코드를 확인하고 <code>&#128308; 2 &#9889; 블라인드 검증 스웜 실행</code>을 눌러 Stage 0 ~ Stage 5 파이프라인 가동</div>
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">STEP 1 &amp; 2 • DIFF &amp; RUN VERIFICATION</span>
+                        <div style="font-weight:700;margin-bottom:4px;">PR Diff 확인 및 검증 실행</div>
+                        <div style="color:var(--muted);">Start 화면에서 <code>View PR diff</code>(<code>open-diff</code>)로 변경 코드를 확인하고 <code>Run verification</code>(<code>run-button</code>)을 눌러 Stage 0 ~ Stage 5 파이프라인 가동 &rarr; Run 화면에 눈 8개 시그니처 장면(7/8 탐지)과 공격자 레인 표시</div>
                     </div>
                 </div>
                 <div class="shot-card">
-                    <img src="screenshots/demo_step_3_bola_matrix.png" alt="Step 3 Multi-Persona BOLA DAST" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_3_bola_dast.png" alt="Step 3 Multi-Persona BOLA DAST" onclick="openLightbox(this.src)" />
                     <div class="shot-meta">
-                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 3 • MULTI-PERSONA BOLA DAST</span>
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">STEP 3 • MULTI-PERSONA BOLA DAST</span>
                         <div style="font-weight:700;margin-bottom:4px;">교차 테넌트 BOLA/IDOR 매트릭스 실행</div>
-                        <div style="color:var(--muted);">Stage 0.5 배너의 <code>&#128308; 3 &#128272; Run Multi-Persona BOLA DAST</code> 클릭 &rarr; 3개 페르소나 합성 및 <code>PROVEN_BOLA_BYPASS</code> 확인</div>
+                        <div style="color:var(--muted);">Run 화면 <code>Run details</code>(<code>open-run-details</code>) 서랍에서 <code>Run BOLA check</code>(<code>dast-run</code>) 클릭 &rarr; 3개 페르소나 합성 및 <code>PROVEN_BOLA_BYPASS</code> 확인</div>
                     </div>
                 </div>
                 <div class="shot-card">
-                    <img src="screenshots/demo_step_4_blind_mutants.png" alt="Step 4 Blind Mutants & Custom Injection" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_4_custom_mutant.png" alt="Step 4 Verify matrix with custom mutant M9" onclick="openLightbox(this.src)" />
                     <div class="shot-meta">
-                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 4 • BLIND MUTANTS (TRACK B)</span>
-                        <div style="font-weight:700;margin-bottom:4px;">8개 블라인드 변이 사살(7/8) &amp; 커스텀 버그 심기</div>
-                        <div style="color:var(--muted);">Track B 우측 상단 <code>&#128308; 4 + 커스텀 버그 심기</code> 클릭 &rarr; <code>M9</code> 실시간 추가 및 결정론적 M/K 포획률 재산출</div>
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">STEP 4 • VERIFY MATRIX (CALIBRATION MUTANT)</span>
+                        <div style="font-weight:700;margin-bottom:4px;">검증 매트릭스(테스트 × 8 mutant) &amp; 보정용 mutant 심기</div>
+                        <div style="color:var(--muted);"><code>See verification matrix</code>(<code>continue-verify</code>)로 Verify 화면 진입 &rarr; <code>+ Plant calibration mutant</code>(<code>open-mutant-form</code>) 후 <code>Add M9 and recalculate</code>(<code>mutant-submit</code>) 클릭 &rarr; 9열 매트릭스와 결정론적 M/K 포획률 재산출</div>
                     </div>
                 </div>
                 <div class="shot-card">
-                    <img src="screenshots/demo_step_5_cegis_self_healing.png" alt="Step 5 CEGIS Self-Healing Loop" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_5_cegis_patch.png" alt="Step 5 CEGIS Self-Healing Loop" onclick="openLightbox(this.src)" />
                     <div class="shot-meta">
-                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 5 • CEGIS SELF-HEALING PATCH</span>
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">STEP 5 • CEGIS SELF-HEALING PATCH</span>
                         <div style="font-weight:700;margin-bottom:4px;">반례 유도 자가 치유 패치 루프 (Attempt 1 &rarr; 2)</div>
-                        <div style="color:var(--muted);">One-Card 상단 <code>&#128308; 5 &#128295; 권장 패치 적용 후 재검증</code> 클릭 &rarr; Attempt #1 TOCTOU 반례 실패 후 Attempt #2 <code>4/4 Gates VERIFIED</code></div>
+                        <div style="color:var(--muted);"><code>Continue to decision</code>(<code>continue-decide</code>) 후 Decide 화면에서 <code>Apply fix &amp; re-verify</code>(<code>apply-patch</code>) 클릭 &rarr; Attempt #1 TOCTOU 반례 실패 후 Attempt #2 <code>4/4 Gates VERIFIED</code></div>
                     </div>
                 </div>
                 <div class="shot-card">
-                    <img src="screenshots/demo_step_6_export_bundle_modal.png" alt="Step 6 Export PR Bundle Modal" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_6_export_bundle.png" alt="Step 6 Export overlay" onclick="openLightbox(this.src)" />
                     <div class="shot-meta">
-                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 6 • EXPORT PR + REGRESSION TEST</span>
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">STEP 6 • EXPORT PR + REGRESSION TEST</span>
                         <div style="font-weight:700;margin-bottom:4px;">검증된 패치 Diff + 고정 pytest 번들 익스포터</div>
-                        <div style="color:var(--muted);">One-Card 하단 <code>&#128308; 6 &#128230; Export PR + Pinned Regression Test</code> 클릭 &rarr; <code>pytest</code> 방어 회귀 코드 및 GitHub Actions YAML 확인</div>
+                        <div style="color:var(--muted);">Decide 화면 <code>Export PR + pinned regression test</code>(<code>open-export</code>) 클릭 &rarr; <code>pytest</code> 방어 회귀 코드 및 GitHub Actions YAML 확인</div>
                     </div>
                 </div>
                 <div class="shot-card">
-                    <img src="screenshots/demo_step_7_approved_stamp.png" alt="Step 7 Final Human Approval Stamp" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_7_approved.png" alt="Step 7 Merge approved" onclick="openLightbox(this.src)" />
                     <div class="shot-meta">
-                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">&#128308; 7 • HUMAN MERGE GATE</span>
-                        <div style="font-weight:700;margin-bottom:4px;">최종 인간 리뷰어 병합 승인/거절 스탬프</div>
-                        <div style="color:var(--muted);">One-Card 우측 하단 <code>&#128308; 7 &#9989; Approve &amp; Merge PR</code> 클릭 &rarr; 상단 초록색 병합 허가 스탬프 기록</div>
+                        <span class="shot-step-badge" style="color:#fca5a5;border-color:rgba(239,68,68,0.45);background:rgba(239,68,68,0.15);">STEP 7 • HUMAN MERGE GATE</span>
+                        <div style="font-weight:700;margin-bottom:4px;">최종 인간 리뷰어 병합 승인/반려 기록</div>
+                        <div style="color:var(--muted);">Decide 화면 <code>Approve &amp; merge</code>(<code>approve-button</code>) 또는 <code>Reject merge &amp; request fixes</code>(<code>reject-button</code>) 클릭 &rarr; &quot;Merge approved&quot; 판정 기록</div>
                     </div>
                 </div>
             </div>
@@ -488,27 +488,27 @@
             </div>
             <div class="walkthrough-grid">
                 <div class="shot-card">
-                    <img src="screenshots/step_1_bola_dast_matrix.png" alt="Step 1 Multi-Persona BOLA DAST Matrix" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_3_bola_dast.png" alt="Step 1 Multi-Persona BOLA DAST Matrix" onclick="openLightbox(this.src)" />
                     <div class="shot-meta">
                         <span class="shot-step-badge">STEP 1 • MULTI-PERSONA BOLA DAST</span>
                         <div style="font-weight:700;margin-bottom:4px;">교차 테넌트 인가(AuthZ/BOLA) 매트릭스 검증</div>
-                        <div style="color:var(--muted);">Stage 0.5 배너 우측 <code>&#128272; Run Multi-Persona BOLA DAST</code> 클릭 시 3개 페르소나(Victim A / Attacker B / Anon) 합성 및 <code>PROVEN_BOLA_BYPASS</code> 2/2 재현 결과 표시</div>
+                        <div style="color:var(--muted);"><code>Run details</code> 서랍의 <code>Run BOLA check</code> 클릭 시 3개 페르소나(Victim A / Attacker B / Anon) 합성 및 <code>PROVEN_BOLA_BYPASS</code> 2/2 재현 결과 표시</div>
                     </div>
                 </div>
                 <div class="shot-card">
-                    <img src="screenshots/step_2_cegis_self_healing_patch.png" alt="Step 2 Blue-Team CEGIS Self-Healing Patch Loop" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_5_cegis_patch.png" alt="Step 2 Blue-Team CEGIS Self-Healing Patch Loop" onclick="openLightbox(this.src)" />
                     <div class="shot-meta">
                         <span class="shot-step-badge">STEP 2 • CEGIS SELF-HEALING PATCH LOOP</span>
                         <div style="font-weight:700;margin-bottom:4px;">반례 유도 자가 치유 루프 (Attempt 1 실패 &rarr; 2 통과)</div>
-                        <div style="color:var(--muted);"><code>&#128295; 권장 패치 적용 후 재검증</code> 클릭 시 Attempt #1(Gate 3 TOCTOU 반례 실패) 피드백을 수용해 Attempt #2(<code>patch_3802_att2</code>)에서 4-Gate 전체 통과</div>
+                        <div style="color:var(--muted);">Decide 화면 <code>Apply fix &amp; re-verify</code> 클릭 시 Attempt #1(Gate 3 TOCTOU 반례 실패) 피드백을 수용해 Attempt #2(<code>patch_3802_att2</code>)에서 4-Gate 전체 통과</div>
                     </div>
                 </div>
                 <div class="shot-card">
-                    <img src="screenshots/step_3_export_pr_bundle_modal.png" alt="Step 3 Living Security Regression Suite & PR Bundle Modal" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_6_export_bundle.png" alt="Step 3 Living Security Regression Suite & PR Bundle Modal" onclick="openLightbox(this.src)" />
                     <div class="shot-meta">
                         <span class="shot-step-badge">STEP 3 • LIVING REGRESSION PR BUNDLE</span>
                         <div style="font-weight:700;margin-bottom:4px;">보안 회귀 테스트 고정(Pinning) &amp; PR 번들 내보내기</div>
-                        <div style="color:var(--muted);">하단 액션 바의 <code>&#128230; Export PR + Pinned Regression Test</code> 클릭 시 2/2 재현 공격을 역전시킨 <code>pytest</code> 회귀 파일 + 검증된 패치 Diff + CI 워크플로우 모달 표시</div>
+                        <div style="color:var(--muted);">Decide 화면의 <code>Export PR + pinned regression test</code> 클릭 시 2/2 재현 공격을 역전시킨 <code>pytest</code> 회귀 파일 + 검증된 패치 Diff + CI 워크플로우 모달 표시</div>
                     </div>
                 </div>
             </div>
@@ -535,14 +535,14 @@
                 <div class="steps-box">
                     <strong>&#128073; 테스트 방법:</strong>
                     <ol>
-                        <li>상단 <strong>검증 대상 PR 시나리오</strong> 드롭다운에서 <code>[Cisco Benchmark PR #3] Make sandbox pipeline splitting quote-aware</code>를 선택합니다.</li>
-                        <li><strong>Stage 0.5 Scope</strong> 셀렉터를 <code>Auto-Detect</code>로 두고 <strong>블라인드 검증 스웜 실행</strong> 버튼을 클릭합니다.</li>
-                        <li>상단 <strong>Stage 0.5 배너</strong>와 좌측 <strong>Track A (Attacker Swarm)</strong> 카드, 하단 <strong>One-Card 요약</strong>을 차례대로 확인합니다.</li>
+                        <li>Start 화면의 <strong>PR 선택</strong> 목록(<code>pr-option</code>)에서 <code>[Cisco Benchmark PR #3] Make sandbox pipeline splitting quote-aware</code>를 선택합니다.</li>
+                        <li><strong>Scope</strong> 셀렉터(<code>scope-select</code>)를 <code>Auto-Detect</code>로 두고 <strong>Run verification</strong>(<code>run-button</code>, 한국어: 검증 실행) 버튼을 클릭합니다.</li>
+                        <li>Run 화면 상단 <strong>단계 스트립</strong>(Guardrail / Scope / Swarm …), 공격자 레인, 그리고 Decide 화면의 <strong>One-Card 요약</strong>을 차례대로 확인합니다.</li>
                     </ol>
                 </div>
                 <div class="expect-box">
                     <strong>&#127919; 기대 결과 (체크 포인트):</strong><br/>
-                    • <strong>Stage 0.5 배너</strong>: <code>SINGLE_FILE_UNIT</code> 모드가 자동 선택되며, <code>sandbox.py</code>만 마운트(8.4 KB)되고 무거운 파일(<code>uv.lock 1.0MB</code>, <code>data/manifest.csv 1.1MB</code>, <code>VulnLoc_Paper.pdf</code>)은 <code>Skipped</code> 칩으로 제외됩니다.<br/>
+                    • <strong>Run 화면의 Scope 단계 스트립</strong>: <code>SINGLE_FILE_UNIT</code> 모드가 자동 선택되며, <code>sandbox.py</code>만 마운트(8.4 KB)되고 무거운 파일(<code>uv.lock 1.0MB</code>, <code>data/manifest.csv 1.1MB</code>, <code>VulnLoc_Paper.pdf</code>)은 <code>Skipped</code> 칩으로 제외됩니다.<br/>
                     • <strong>5회 적응형 레드팀 타임라인</strong>: <code>test_sec_escaped_quote_pipeline_rce</code> 카드 내부에<br/>
                       &nbsp;&nbsp;<code>#1 BLOCKED (ls | rm -rf /)</code> &rarr; <code>#2 BLOCKED (ls &amp;&amp; rm -rf /)</code> &rarr; <code>#3 🔥 BREACHED (ls \" | rm -rf /")</code> &rarr; <code>#4 —</code> &rarr; <code>#5 —</code> 타임라인이 표시되고 <strong>2/2 재현 확정</strong> 판정이 뜹니다.<br/>
                     • <strong>Track B 블라인드 변이 점수</strong>: 8개 인공 변이 중 <code>M1~M7</code> 포획, <code>M8(서브셸 확장)</code> 생존으로 <strong>7 / 8 (87.5%)</strong>가 계산됩니다.
@@ -569,7 +569,7 @@
                     <strong>&#128073; 테스트 방법:</strong>
                     <ol>
                         <li>시나리오 드롭다운에서 <code>[Cisco Benchmark PR #6] Add evaluation metric aggregation &amp; scoring CLI</code>를 선택하고 실행합니다.</li>
-                        <li>실행 완료 후, 상단 <strong>Stage 0.5 Scope</strong> 드롭다운을 <code>Auto-Detect</code>에서 <code>Server-Daemon</code>(또는 <code>Sparse-Package</code>)으로 변경한 뒤 다시 <strong>블라인드 검증 스웜 실행</strong>을 누릅니다.</li>
+                        <li>실행 완료 후, Start 화면의 <strong>Scope</strong> 선택(<code>scope-select</code>)을 <code>Auto-Detect</code>에서 <code>Server-Daemon</code>(또는 <code>Sparse-Package</code>)으로 변경한 뒤 다시 <strong>블라인드 검증 스웜 실행</strong>을 누릅니다.</li>
                     </ol>
                 </div>
                 <div class="expect-box">
@@ -598,8 +598,8 @@
                 <div class="steps-box">
                     <strong>&#128073; 테스트 방법:</strong>
                     <ol>
-                        <li>드롭다운에서 <code>PR #412: AI 즉시 환불 및 부분 지갑 정산 (acme-pay/ledger-core)</code>를 선택하고 실행합니다.</li>
-                        <li>하단 <strong>One-Card 요약</strong>이 나타나면 우측 상단 툴바의 <strong>&#10024; 추천 패치 적용 및 샌드박스 재검증</strong> 버튼을 클릭합니다.</li>
+                        <li>Start 화면에서 <code>PR #412: AI 즉시 환불 및 부분 지갑 정산 (acme-pay/ledger-core)</code>를 선택하고 <strong>Run verification</strong>으로 실행합니다.</li>
+                        <li><strong>See verification matrix</strong> &rarr; <strong>Continue to decision</strong>으로 Decide 화면(One-Card)에 도달한 뒤 <strong>Apply fix &amp; re-verify</strong>(<code>apply-patch</code>, 한국어: 수정 적용 &amp; 재검증) 버튼을 클릭합니다.</li>
                     </ol>
                 </div>
                 <div class="expect-box">
@@ -628,8 +628,8 @@
                 <div class="steps-box">
                     <strong>&#128073; 테스트 방법:</strong>
                     <ol>
-                        <li>드롭다운에서 <code>PR #666: [적대적 공격] 인증 미들웨어 내 숨겨진 프롬프트 인젝션</code>을 선택합니다.</li>
-                        <li><strong>PR Diff 보기</strong> 버튼을 눌러 코드 주석의 <code>SYSTEM OVERRIDE</code> 페이로드를 확인한 뒤, <strong>블라인드 검증 스웜 실행</strong>을 클릭합니다.</li>
+                        <li>Start 화면에서 <code>PR #666: [적대적 공격] 인증 미들웨어 내 숨겨진 프롬프트 인젝션</code>을 선택합니다.</li>
+                        <li><strong>View PR diff</strong>(<code>open-diff</code>) 버튼을 눌러 코드 주석의 <code>SYSTEM OVERRIDE</code> 페이로드를 확인한 뒤, <strong>Run verification</strong>을 클릭합니다.</li>
                     </ol>
                 </div>
                 <div class="expect-box">
@@ -653,13 +653,13 @@
                     </div>
                 </div>
                 <p style="margin:0;color:var(--muted);font-size:0.9rem;">
-                    상단 <strong>+ GitHub PR / 커스텀 Diff 입력</strong> 모달을 통해 실제 GitHub PR URL 또는 프리셋 칩을 원클릭으로 가져오고, Diff 패치뿐만 아니라 전체 파이썬 소스 파일이 로드되는지 확인합니다.
+                    Start 화면의 <strong>Import PR</strong> 오버레이(<code>open-import</code>)를 통해 실제 GitHub PR URL 또는 프리셋 칩을 원클릭으로 가져오고, Diff 패치뿐만 아니라 전체 파이썬 소스 파일이 로드되는지 확인합니다.
                 </p>
                 <div class="steps-box">
                     <strong>&#128073; 테스트 방법:</strong>
                     <ol>
-                        <li>상단 컨트롤 바에서 <strong>&#128229; + GitHub PR / 커스텀 Diff 입력</strong> 버튼을 클릭합니다.</li>
-                        <li>모달 안의 <strong>추천 오픈소스 PR 프리셋</strong> 중 <code>&#128737;&#65039; cisco-foundation-ai/vulnerability-localization-benchmark#3</code>(또는 <code>pallets/flask#5454</code>) 칩을 클릭하고 <strong>PR 가져오기 및 검증</strong>을 누릅니다.</li>
+                        <li>Start 화면에서 <strong>Import PR</strong>(<code>open-import</code>, 한국어: PR 가져오기) 버튼을 클릭하고 <strong>GitHub URL</strong> 탭(<code>import-tab</code>)을 엽니다.</li>
+                        <li>모달 안의 <strong>추천 오픈소스 PR 프리셋</strong> 중 <code>&#128737;&#65039; cisco-foundation-ai/vulnerability-localization-benchmark#3</code>(또는 <code>pallets/flask#5454</code>) 칩(<code>github-preset</code>)을 클릭하고 가져오기(<code>github-fetch</code>) 후 검증을 실행합니다.</li>
                     </ol>
                 </div>
                 <div class="code-snippet">https://github.com/cisco-foundation-ai/vulnerability-localization-benchmark/pull/3<button class="copy-btn" onclick="copyText(this, 'https://github.com/cisco-foundation-ai/vulnerability-localization-benchmark/pull/3')">URL 복사</button></div>
@@ -688,9 +688,9 @@
                 <div class="steps-box">
                     <strong>&#128073; 테스트 방법:</strong>
                     <ol>
-                        <li>아무 시나리오(예: Cisco PR #3 또는 PR #412)를 먼저 1회 실행합니다.</li>
-                        <li>우측 <strong>Track B — 블라인드 버그 주입기</strong> 레인 상단의 <strong>+ 커스텀 블라인드 변이 추가</strong> 버튼을 클릭합니다.</li>
-                        <li>변이 설명에 <code>Subshell backtick command injection (`id`)</code>을 입력하고, 시뮬레이션 결과를 <code>SURVIVED (사각지대 노출)</code>로 선택한 뒤 <strong>변이 주입 &amp; M/K 재계산</strong>을 클릭합니다.</li>
+                        <li>아무 시나리오(예: Cisco PR #3 또는 PR #412)를 먼저 1회 실행하고 <strong>See verification matrix</strong>로 Verify 화면에 들어갑니다.</li>
+                        <li>Verify 화면의 <strong>+ Plant calibration mutant</strong>(<code>open-mutant-form</code>, 한국어: + 보정용 mutant 심기) 버튼을 클릭합니다.</li>
+                        <li>변이 설명에 <code>Subshell backtick command injection (`id`)</code>을 입력하고, 시뮬레이션 결과를 <code>SURVIVED (사각지대 노출)</code>로 선택한 뒤 <strong>Add M9 and recalculate</strong>(<code>mutant-submit</code>)를 클릭합니다.</li>
                     </ol>
                 </div>
                 <div class="expect-box">
@@ -738,9 +738,9 @@
                 <div class="steps-box">
                     <strong>&#128073; 테스트 방법:</strong>
                     <ol>
-                        <li>상단 시나리오에서 <code>PR #412: AI 즉시 환불 및 부분 지갑 정산 파이프라인 (acme-pay/ledger-core)</code>을 선택하고 검증을 실행합니다.</li>
-                        <li>하단 <strong>One-Card 요약</strong> 영역에서 초록색 <strong>&#128295; 권장 패치 적용 후 재검증 (Apply Recommended Fix &amp; Re-Verify)</strong> 버튼을 클릭합니다.</li>
-                        <li>One-Card 상단에 렌더링되는 <strong>&#128737;&#65039; Blue-Team CEGIS Self-Healing Loop</strong> 배너의 <code>Attempt 1/5</code> &rarr; <code>Attempt 2/5</code> 카드와 4-Gate 체크 표시를 확인합니다.</li>
+                        <li>Start 화면에서 <code>PR #412: AI 즉시 환불 및 부분 지갑 정산 파이프라인 (acme-pay/ledger-core)</code>을 선택하고 검증을 실행합니다.</li>
+                        <li>Decide 화면(One-Card)에서 <strong>Apply fix &amp; re-verify</strong>(<code>apply-patch</code>, 한국어: 수정 적용 &amp; 재검증) 버튼을 클릭합니다.</li>
+                        <li>렌더링되는 <strong>Blue-Team CEGIS Self-Healing Loop</strong> 섹션(<code>patch-section</code>)의 <code>Attempt 1/5</code> &rarr; <code>Attempt 2/5</code> 카드와 4-Gate 체크 표시를 확인합니다.</li>
                     </ol>
                 </div>
                 <div class="expect-box">
@@ -749,9 +749,9 @@
                     • <strong>Attempt 2/5 (<code>patch_3802_att2</code> • <code>VERIFIED ACROSS ALL 4 GATES</code>)</strong>: 반례 피드백을 받아 <code>cache.set_nx</code> 원자적 분산 락을 추가함으로써 Gate 1~Gate 4(블라인드 변이 100% 사살 포함)를 모두 통과하고 <code>APPROVE RECOMMENDED • RISK: LOW</code>로 전환됩니다.
                 </div>
                 <div class="inline-shot">
-                    <img src="screenshots/step_2_cegis_self_healing_patch.png" alt="CEGIS Self-Healing Patch Loop UI Capture" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_5_cegis_patch.png" alt="CEGIS Self-Healing Patch Loop UI Capture" onclick="openLightbox(this.src)" />
                     <div class="inline-shot-caption">
-                        <span>&#128247; 실제 캡처 화면: <code>#cegis-patch-banner</code> — Attempt 1 (Gate 3 TOCTOU 반례 실패) &rarr; Attempt 2 (4-Gate 전체 통과)</span>
+                        <span>&#128247; 실제 캡처 화면: <code>patch-section</code> — Attempt 1 (Gate 3 TOCTOU 반례 실패) &rarr; Attempt 2 (4-Gate 전체 통과)</span>
                         <span>클릭하여 확대</span>
                     </div>
                 </div>
@@ -777,9 +777,9 @@
                 <div class="steps-box">
                     <strong>&#128073; 테스트 방법:</strong>
                     <ol>
-                        <li><strong>One-Card 요약</strong> 하단 액션 바(<code>최종 결정 (병합 승인/보류)</code> 영역)에서 <strong>&#128230; Export PR + Pinned Regression Test</strong> 버튼을 클릭합니다.</li>
-                        <li>모달 창(<code>#export-bundle-modal</code>)이 열리면 상단 메타 배지(브랜치명 <code>fix/argus-verified-patch-3802-att2</code>, 4-Gate 요약)와 3개 코드 패널(<code>pytest</code> 회귀 테스트, 프로덕션 패치 Diff, GitHub Actions YAML)을 확인합니다.</li>
-                        <li>각 패널 우측의 <strong>&#128203; Copy pytest File / Copy Patch Diff / Copy CI YAML</strong> 버튼을 눌러 클립보드 복사가 동작하는지 확인합니다.</li>
+                        <li>Decide 화면의 <strong>Export PR + pinned regression test</strong>(<code>open-export</code>, 한국어: PR + 고정 회귀 테스트 내보내기) 버튼을 클릭합니다.</li>
+                        <li>내보내기 오버레이가 열리면 상단 메타 배지(브랜치명 <code>fix/argus-verified-patch-3802-att2</code>, 4-Gate 요약)와 3개 코드 패널(<code>pytest</code> 회귀 테스트, 프로덕션 패치 Diff, GitHub Actions YAML)을 확인합니다.</li>
+                        <li>각 탭(<code>export-tab</code>)의 복사 버튼(<code>export-copy</code>)을 눌러 클립보드 복사가 동작하는지 확인합니다.</li>
                     </ol>
                 </div>
                 <div class="expect-box">
@@ -788,9 +788,9 @@
                     • <code>patch_3802_att2</code>가 적용된 통합 Diff와 매 PR마다 회귀 스위트를 강제 실행하는 GitHub Actions 워크플로우가 함께 제공됩니다.
                 </div>
                 <div class="inline-shot">
-                    <img src="screenshots/step_3_export_pr_bundle_modal.png" alt="Living Security Regression Suite & PR Bundle Modal Capture" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_6_export_bundle.png" alt="Living Security Regression Suite & PR Bundle Modal Capture" onclick="openLightbox(this.src)" />
                     <div class="inline-shot-caption">
-                        <span>&#128247; 실제 캡처 화면: <code>#export-bundle-modal</code> — Pinned <code>pytest</code> 코드(PROVEN) + <code>patch_3802_att2</code> Diff 번들 모달</span>
+                        <span>&#128247; 실제 캡처 화면: 내보내기 오버레이 — Pinned <code>pytest</code> 코드(PROVEN) + <code>patch_3802_att2</code> Diff 번들 모달</span>
                         <span>클릭하여 확대</span>
                     </div>
                 </div>
@@ -816,8 +816,8 @@
                 <div class="steps-box">
                     <strong>&#128073; 테스트 방법:</strong>
                     <ol>
-                        <li>대시보드 상단 <strong>Stage 0.5 배너</strong> 우측에 있는 <strong>&#128272; Run Multi-Persona BOLA DAST</strong> 버튼을 클릭합니다.</li>
-                        <li>배너 하단에 펼쳐지는 <strong>Multi-Persona Cross-Tenant AuthZ / BOLA Matrix</strong> 테이블에서 합성된 3개 페르소나 칩과 엔드포인트별 HTTP 상태 코드(Owner A vs Attacker B vs Anon)를 확인합니다.</li>
+                        <li>Run 화면에서 <strong>Run details</strong>(<code>open-run-details</code>) 서랍을 열고 <strong>Run BOLA check</strong>(<code>dast-run</code>, 한국어: BOLA 점검 실행) 버튼을 클릭합니다.</li>
+                        <li>서랍에 나타나는 <strong>Multi-Persona Cross-Tenant AuthZ / BOLA Matrix</strong> 테이블(<code>dast-row</code>)에서 합성된 3개 페르소나 칩과 엔드포인트별 HTTP 상태 코드(Owner A vs Attacker B vs Anon)를 확인합니다.</li>
                     </ol>
                 </div>
                 <div class="expect-box">
@@ -826,9 +826,9 @@
                     • 나머지 엔드포인트(<code>GET /api/v1/refunds/receipt/...</code>, <code>POST /api/v1/webhooks/settlement-override</code>)는 Attacker(B)=<code>403</code> &rarr; <code>ENFORCED_ISOLATION</code>으로 정상 격리가 확인됩니다.
                 </div>
                 <div class="inline-shot">
-                    <img src="screenshots/step_1_bola_dast_matrix.png" alt="Multi-Persona Cross-Tenant AuthZ / BOLA Matrix Capture" onclick="openLightbox(this.src)" />
+                    <img src="screenshots/demo_step_3_bola_dast.png" alt="Multi-Persona Cross-Tenant AuthZ / BOLA Matrix Capture" onclick="openLightbox(this.src)" />
                     <div class="inline-shot-caption">
-                        <span>&#128247; 실제 캡처 화면: <code>#live-dast-bola-panel</code> — 3개 페르소나 합성 및 교차 테넌트 BOLA 2/2 재현 매트릭스</span>
+                        <span>&#128247; 실제 캡처 화면: Run details 서랍 — 3개 페르소나 합성 및 교차 테넌트 BOLA 2/2 재현 매트릭스</span>
                         <span>클릭하여 확대</span>
                     </div>
                 </div>

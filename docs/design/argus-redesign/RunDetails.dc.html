@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Argus-PR · Run details</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#08090B}
+a{color:#E7E9EC}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="min-height: 1500px; background: #08090B; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; line-height: 1.5; display: flex; justify-content: flex-end;">
+<aside role="dialog" aria-modal="true" aria-labelledby="rd-h" style="width: 100%; max-width: 980px; min-height: 1500px; box-sizing: border-box; display: flex; flex-direction: column; border-left: 1px solid #343B44; background: #13161A;">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 24px; border-bottom: 1px solid #262C33;">
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+<h2 id="rd-h" style="margin: 0; font-size: 20px; font-weight: 600;">Run details</h2>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #868E99; overflow-wrap: anywhere;">PR #412 · acme-pay/ledger-core · run_c8865081cf17</span>
+</div>
+<button type="button" aria-label="Close run details" style="width: 44px; height: 44px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid transparent; background: transparent; cursor: pointer;"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="#AAB1BA" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+
+<nav aria-label="Sections" style="display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 24px; border-bottom: 1px solid #262C33;">
+<a href="#rd-diff" style="min-height: 36px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 6px; font-size: 14px; color: #D3D8DE; text-decoration: none; border: 1px solid #343B44;">PR diff</a>
+<a href="#rd-guard" style="min-height: 36px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 6px; font-size: 14px; color: #D3D8DE; text-decoration: none; border: 1px solid #343B44;">Guardrail</a>
+<a href="#rd-scope" style="min-height: 36px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 6px; font-size: 14px; color: #D3D8DE; text-decoration: none; border: 1px solid #343B44;">Scope &amp; Live DAST</a>
+<a href="#rd-inv" style="min-height: 36px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 6px; font-size: 14px; color: #D3D8DE; text-decoration: none; border: 1px solid #343B44;">Invariants</a>
+</nav>
+
+<div style="display: flex; flex-direction: column; gap: 28px; padding: 24px;">
+
+<section id="rd-diff" aria-labelledby="rd-diff-h" style="display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px;">
+<h3 id="rd-diff-h" style="margin: 0; font-size: 17px; font-weight: 600;">PR diff</h3>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #868E99;">acme_pay/ledger_core.py · @@ -102,18 +102,46 @@</span>
+</div>
+<pre style="margin: 0; padding: 10px 0; border-radius: 8px; border: 1px solid #20252B; background: #0F1215; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; line-height: 1.6; overflow-x: auto; max-height: 360px;"><sc-for list="{{diff}}" as="d" hint-placeholder-count="12"><span style="{{d.style}}">{{d.text}}</span></sc-for></pre>
+</section>
+
+<section id="rd-guard" aria-labelledby="rd-guard-h" style="display: flex; flex-direction: column; gap: 10px;">
+<h3 id="rd-guard-h" style="margin: 0; font-size: 17px; font-weight: 600;">Stage 0 · Prompt-injection guardrail</h3>
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 14px 16px; border: 1px solid #262C33; border-radius: 10px; background: #161A1F;">
+<span style="display: inline-flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; font-weight: 600; padding: 3px 8px; border-radius: 5px; color: #D3D8DE; border: 1px solid #4A525C;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#D3D8DE" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>SAFE</span>
+<span style="flex: 1 1 360px; min-width: 0; color: #D3D8DE;">No prompt injection, instruction override, or exfiltration payloads detected in diff or comments.</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #868E99;">gemini-3.5-flash-lite · 68 ms</span>
+</div>
+</section>
+
+<section id="rd-scope" aria-labelledby="rd-scope-h" style="display: flex; flex-direction: column; gap: 12px;">
+<h3 id="rd-scope-h" style="margin: 0; font-size: 17px; font-weight: 600;">Stage 0.5 · Sandbox scope</h3>
+<dl style="margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; border: 1px solid #262C33; border-radius: 10px; overflow: hidden; background: #262C33;">
+<div style="padding: 12px 14px; background: #161A1F;"><dt style="font-size: 13px; color: #AAB1BA;">Mode</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px;">SINGLE_FILE_UNIT</dd></div>
+<div style="padding: 12px 14px; background: #161A1F;"><dt style="font-size: 13px; color: #AAB1BA;">Chosen by</dt><dd style="margin: 0; font-size: 14px;">Agent (auto)</dd></div>
+<div style="padding: 12px 14px; background: #161A1F;"><dt style="font-size: 13px; color: #AAB1BA;">Target</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px; overflow-wrap: anywhere;">acme_pay/ledger_core.py</dd></div>
+<div style="padding: 12px 14px; background: #161A1F;"><dt style="font-size: 13px; color: #AAB1BA;">Mounted</dt><dd style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 14px;">1 file · 9.2 KB</dd></div>
+</dl>
+<p style="margin: 0; color: #AAB1BA;">Target module ledger_core.py is self-contained with in-memory mocks for DB, cache and gateway; the full repo tree and static assets were skipped for fast, isolated unit red-teaming.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+<span style="font-size: 13px; color: #AAB1BA; margin-right: 4px;">Skipped</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; padding: 2px 8px; border-radius: 5px; border: 1px solid #343B44; color: #AAB1BA; text-decoration: line-through;">migrations/*.sql · 4.2 MB</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; padding: 2px 8px; border-radius: 5px; border: 1px solid #343B44; color: #AAB1BA; text-decoration: line-through;">frontend/dist/* · 12.8 MB</span>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; padding: 2px 8px; border-radius: 5px; border: 1px solid #343B44; color: #AAB1BA; text-decoration: line-through;">poetry.lock · 1.4 MB</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 14px; margin-top: 6px; padding: 18px; border: 1px solid #343B44; border-radius: 12px; background: #0F1215;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;">
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+<h4 style="margin: 0; font-size: 16px; font-weight: 600;">Live DAST · multi-persona BOLA check</h4>
+<span style="font-size: 14px; color: #AAB1BA;">Boots the server in an isolated network and replays each endpoint as three identities.</span>
+</div>
+<sc-if value="{{dastIdle}}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{runDast}}" style="display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 8px; border: 1px solid #4A525C; background: #1A1E23; color: #E7E9EC; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer;"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="#E7E9EC" stroke-width="2" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Run BOLA check</button>
+</sc-if>
+<sc-if value="{{dastDone}}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{resetDast}}" style="min-height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #343B44; background: transparent; color: #D3D8DE; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; cursor: pointer;">Run again</button>
+</sc-if>
+</div>
+
+<sc-if value="{{dastDone}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 14px;">
+<p style="margin: 0; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #7D858F; overflow-wrap: anywhere;">dast_run_3f37dabda7 · dast-isolated-net (--internal) · GET http://127.0.0.1:18080/health 118 ms</p>
+<ul aria-label="Personas" style="margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 8px;">
+<li style="flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid #262C33; border-radius: 8px; background: #13161A;"><span style="font-size: 14px; font-weight: 600;">A · Owner</span><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #868E99;">tenant_a_prod · Bearer token</span></li>
+<li style="flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid rgba(240,112,63,0.4); border-radius: 8px; background: #13161A;"><span style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#F0703F" stroke-width="2.2" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"></path></svg>B · Cross-tenant attacker</span><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #868E99;">tenant_b_evil · Bearer token</span></li>
+<li style="flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid #262C33; border-radius: 8px; background: #13161A;"><span style="font-size: 14px; font-weight: 600;">Anonymous</span><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #868E99;">no headers</span></li>
+</ul>
+<div style="border: 1px solid #262C33; border-radius: 10px; overflow-x: auto;">
+<table style="width: 100%; min-width: 760px; border-collapse: collapse; font-size: 14px;">
+<thead>
+<tr style="border-bottom: 1px solid #262C33; text-align: left; background: #13161A;">
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA;">Endpoint</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA; text-align: center;">Owner</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA; text-align: center;">Attacker</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA; text-align: center;">Anon</th>
+<th scope="col" style="padding: 10px 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #AAB1BA;">Verdict</th>
+</tr>
+</thead>
+<tbody style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px;">
+<tr style="border-bottom: 1px solid #20252B; background: rgba(240,112,63,0.05);">
+<th scope="row" style="padding: 10px 12px; text-align: left; font-weight: 500; color: #E7E9EC; overflow-wrap: anywhere;">POST /api/v1/refunds/instant<div style="font-size: 12px; color: #868E99; font-weight: 400;">ch_tenantA_901</div></th>
+<td style="padding: 10px 12px; text-align: center; color: #AAB1BA;">200</td>
+<td style="padding: 10px 12px; text-align: center;"><span style="display: inline-flex; align-items: center; gap: 4px; padding: 1px 6px; border-radius: 4px; font-weight: 600; color: #F59A74; border: 1px solid rgba(240,112,63,0.5);">200 <span style="font-weight: 500;">allowed</span></span></td>
+<td style="padding: 10px 12px; text-align: center; color: #AAB1BA;">401</td>
+<td style="padding: 10px 12px;"><span style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: #F59A74;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#F0703F" stroke-width="2.4" stroke-linejoin="round"><path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"></path></svg>BOLA bypass · 2/2</span></td>
+</tr>
+<tr style="border-bottom: 1px solid #20252B;">
+<th scope="row" style="padding: 10px 12px; text-align: left; font-weight: 500; color: #E7E9EC; overflow-wrap: anywhere;">GET /api/v1/refunds/receipt/rcpt_tenantA_901<div style="font-size: 12px; color: #868E99; font-weight: 400;">rcpt_tenantA_901</div></th>
+<td style="padding: 10px 12px; text-align: center; color: #AAB1BA;">200</td>
+<td style="padding: 10px 12px; text-align: center; color: #D3D8DE;">403</td>
+<td style="padding: 10px 12px; text-align: center; color: #AAB1BA;">401</td>
+<td style="padding: 10px 12px;"><span style="display: inline-flex; align-items: center; gap: 6px; color: #AAB1BA;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#8E96A1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Isolated</span></td>
+</tr>
+<tr>
+<th scope="row" style="padding: 10px 12px; text-align: left; font-weight: 500; color: #E7E9EC; overflow-wrap: anywhere;">POST /api/v1/webhooks/settlement-override<div style="font-size: 12px; color: #868E99; font-weight: 400;">wh_tenantA_901</div></th>
+<td style="padding: 10px 12px; text-align: center; color: #AAB1BA;">200</td>
+<td style="padding: 10px 12px; text-align: center; color: #D3D8DE;">403</td>
+<td style="padding: 10px 12px; text-align: center; color: #AAB1BA;">403</td>
+<td style="padding: 10px 12px;"><span style="display: inline-flex; align-items: center; gap: 6px; color: #AAB1BA;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#8E96A1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>Isolated</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p style="margin: 0; font-size: 14px; color: #D3D8DE;">Tenant B refunded tenant A’s charge with a 200. The result reproduced on both runs, so it is evidence, not a guess.</p>
+</div>
+</sc-if>
+
+<div style="display: flex; flex-wrap: wrap; gap: 8px;">
+<div role="status" style="flex: 1 1 300px; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(106,163,247,0.45); background: rgba(106,163,247,0.08); color: #9CC2FA; font-size: 13px;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#6AA3F7" stroke-width="2.4" stroke-linecap="round"><path d="M12 3a9 9 0 1 1-9 9"></path></svg>Loading state: minting 3 personas, replaying endpoints…</div>
+<div style="flex: 1 1 300px; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(240,112,63,0.45); background: rgba(240,112,63,0.06); color: #F59A74; font-size: 13px;"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="#F0703F" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 16.5v.5"></path></svg>Error state: server didn’t pass /health. Retry</div>
+</div>
+</div>
+</section>
+
+<section id="rd-inv" aria-labelledby="rd-inv-h" style="display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px;">
+<h3 id="rd-inv-h" style="margin: 0; font-size: 17px; font-weight: 600;">Invariants · 8</h3>
+<span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #868E99;">gemini-4-argon · store=False</span>
+</div>
+<p style="margin: 0; color: #AAB1BA;">Introduces instant refunds and partial balance settlement to ledger-core. Validates refund amounts, idempotency keys, and updates ledger balances.</p>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; border: 1px solid #262C33; border-radius: 10px; overflow: hidden;">
+<sc-for list="{{invariants}}" as="v" hint-placeholder-count="8">
+<li style="display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 12px 14px; border-bottom: 1px solid #20252B; background: #161A1F;">
+<span style="flex: 0 0 52px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; font-weight: 600;">{{v.id}}</span>
+<div style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline;"><span style="font-size: 15px; font-weight: 500;">{{v.title}}</span><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 12px; color: #868E99;">{{v.cat}} · {{v.fn}}()</span></div>
+<code style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; color: #D3D8DE; overflow-wrap: anywhere;">{{v.assert}}</code>
+</div>
+</li>
+</sc-for>
+</ol>
+</section>
+</div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1500}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dast: 'done' };
+  }
+  renderVals() {
+    const diffText = [
+      '@@ -102,18 +102,46 @@ class LedgerCore:',
+      '-    def settle_refund(self, charge_id: str, amount: float) -> dict:',
+      '-        charge = self.db.get_charge(charge_id)',
+      '-        if amount > charge.amount:',
+      '-            raise ValueError("Refund exceeds charge")',
+      '-        return self.gateway.refund(charge_id, amount)',
+      '+    def settle_refund(self, charge_id: str, refund_amount: float, idempotency_key: str) -> dict:',
+      '+        charge = self.db.get_charge(charge_id)',
+      '+        # AI generated check: Missing validation for negative refund amounts!',
+      '+        if refund_amount > charge.remaining_refundable:',
+      '+            raise ValueError(f"Refund {refund_amount} exceeds maximum refundable {charge.remaining_refundable}")',
+      '+',
+      '+        # Idempotency check with time-of-check to time-of-use (TOCTOU) race condition',
+      '+        cached_state = self.cache.get(f"idempotency:{idempotency_key}")',
+      '+        if cached_state == "SETTLED":',
+      '+            return self.cache.get(f"receipt:{idempotency_key}")',
+      '+',
+      '+        self.cache.set(f"idempotency:{idempotency_key}", "PENDING_SETTLEMENT", ttl=60)'
+    ];
+    const diff = diffText.map((t) => ({
+      text: t + '\n',
+      style: 'display: block; padding: 0 14px; white-space: pre; color: ' + (t.startsWith('@@') ? '#7D858F' : (t.startsWith('+') ? '#E7E9EC' : '#868E99')) + '; background: ' + (t.startsWith('+') ? '#1A1F25' : 'transparent') + ';'
+    }));
+    const CAT = { security: 'security', edge_cases: 'edge case', state: 'state', regression: 'regression' };
+    const invariants = [
+      ['INV-1', 'security', 'Balance conservation & non-negative refund amount', 'settle_refund', 'assert refund_amount > 0 and new_wallet_balance <= original_charge'],
+      ['INV-2', 'security', 'HMAC signature verification & multi-tenant isolation', 'handle_refund_webhook', 'assert verify_hmac(payload, sig) and account.tenant_id == request.tenant_id'],
+      ['INV-3', 'state', 'Idempotency consistency under concurrent settling', 'settle_refund', 'assert ledger_deductions_count == 1 for identical idempotency_key'],
+      ['INV-4', 'edge_cases', 'Exact 100% full refund boundary equivalence', 'validate_refund_limits', 'assert refund_amount <= remaining_refundable and remaining_refundable >= 0'],
+      ['INV-5', 'edge_cases', 'Zero-amount transaction safe fee calculation', 'calculate_settlement_fee', 'assert calculate_settlement_fee(0, rate) == 0 without ZeroDivisionError'],
+      ['INV-6', 'state', 'Atomic rollback of reserved hold on gateway timeout', 'reserve_and_settle', "assert hold_status == 'RELEASED' when gateway.settle_hold() raises TimeoutError"],
+      ['INV-7', 'regression', 'V2 settlement receipt schema backward compatibility', 'generate_receipt', "assert 'currency_iso' in receipt and receipt['status'] == 'SETTLED'"],
+      ['INV-8', 'regression', 'Banker’s rounding preserved on fee basis points', 'compute_basis_points', "assert compute_basis_points(125, 3) == Decimal('0.125') using ROUND_HALF_EVEN"]
+    ].map(([id, cat, title, fn, a]) => ({ id, cat: CAT[cat], title, fn, assert: a }));
+    const dast = this.state.dast;
+    return {
+      diff, invariants,
+      dastIdle: dast === 'idle', dastDone: dast === 'done',
+      runDast: () => this.setState({ dast: 'done' }),
+      resetDast: () => this.setState({ dast: 'idle' })
+    };
+  }
+}
+</script>
+</body>
+</html>

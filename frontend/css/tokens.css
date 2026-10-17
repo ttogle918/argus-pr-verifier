@@ -1,0 +1,85 @@
+:root {
+  color-scheme: dark;
+  --bg: #0D0F12;
+  --bg-sunken: #0F1215;
+  --backdrop: rgba(8, 9, 11, 0.86);
+  --surface: #13161A;
+  --surface-2: #161A1F;
+  --surface-3: #1A1E23;
+  --surface-add: #1A1F25;
+  --surface-hover: #1F242A;
+  --border: #262C33;
+  --border-subtle: #20252B;
+  --border-strong: #343B44;
+  --border-emphasis: #4A525C;
+  --border-selected: #8E96A1;
+
+  --text-strong: #F2F4F6;
+  --text: #E7E9EC;
+  --text-2: #D3D8DE;
+  --text-muted: #AAB1BA;
+  --text-faint: #868E99;
+  --text-dim: #7D858F;
+  --mark: #6B737E;
+  --mark-faint: #3A414A;
+
+  --danger: #F0703F;
+  --danger-text: #F59A74;
+  --danger-trace: #F2B9A1;
+  --danger-tint: rgba(240, 112, 63, 0.12);
+  --danger-border: rgba(240, 112, 63, 0.45);
+  --on-danger: #170B06;
+
+  --ok: #52C48C;
+  --ok-text: #7FD6AA;
+  --ok-tint: rgba(82, 196, 140, 0.12);
+  --ok-border: rgba(82, 196, 140, 0.5);
+  --ok-glow: rgba(82, 196, 140, 0.6);
+
+  --warn: #E5C04B;
+  --warn-text: #EBCF72;
+  --warn-tint: rgba(229, 192, 75, 0.10);
+  --warn-border: rgba(229, 192, 75, 0.5);
+
+  --ai: #6AA3F7;
+  --ai-text: #9CC2FA;
+  --ai-tint: rgba(106, 163, 247, 0.10);
+  --ai-border: rgba(106, 163, 247, 0.45);
+
+  --font-sans: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'IBM Plex Sans KR', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-base: 15px;
+  --fs-md: 16px;
+  --fs-lg: 17px;
+  --fs-xl: 20px;
+  --fs-2xl: 28px;
+  --fs-display: 52px;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+
+  --page-max: 1400px;
+  --gutter: 32px;
+  --control-h: 44px;
+
+  --motion: 300ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (max-width: 720px) {
+  :root { --gutter: 16px; --fs-display: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --motion: 0ms; }
+  *, *::before, *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
+}

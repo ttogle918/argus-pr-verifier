@@ -1,0 +1,3304 @@
+[
+ {
+  "stage": "guardrail_start",
+  "model": "gemini-3.5-flash-lite",
+  "execution_mode": "replay",
+  "message": "Initiating Stage 0 Prompt-Injection & Untrusted PR Payload Scan..."
+ },
+ {
+  "stage": "guardrail",
+  "model": "gemini-3.5-flash-lite",
+  "guardrail": {
+   "is_safe": true,
+   "risk_level": "SAFE",
+   "detected_threats": [],
+   "sanitized_summary": "No prompt injection, instruction override, or exfiltration payloads detected in diff or comments.",
+   "latency_ms": 68
+  },
+  "scope_triage": {
+   "scope_mode": "SINGLE_FILE_UNIT",
+   "selection_source": "agent_auto",
+   "primary_target_file": "acme_pay/ledger_core.py",
+   "mounted_files": [
+    "acme_pay/ledger_core.py"
+   ],
+   "skipped_heavy_paths": [
+    "migrations/*.sql (4.2MB)",
+    "frontend/dist/* (12.8MB)",
+    "poetry.lock (1.4MB)"
+   ],
+   "estimated_mount_size_kb": 9.2,
+   "rationale": "Target module ledger_core.py is self-contained with in-memory mocks for DB/cache/gateway; full repo tree and static assets skipped for fast isolated unit red-teaming."
+  },
+  "message": "Stage 0 complete: Risk level is SAFE (68ms) \u00b7 Scope: SINGLE_FILE_UNIT."
+ },
+ {
+  "stage": "scope_triage",
+  "scope_triage": {
+   "scope_mode": "SINGLE_FILE_UNIT",
+   "selection_source": "agent_auto",
+   "primary_target_file": "acme_pay/ledger_core.py",
+   "mounted_files": [
+    "acme_pay/ledger_core.py"
+   ],
+   "skipped_heavy_paths": [
+    "migrations/*.sql (4.2MB)",
+    "frontend/dist/* (12.8MB)",
+    "poetry.lock (1.4MB)"
+   ],
+   "estimated_mount_size_kb": 9.2,
+   "rationale": "Target module ledger_core.py is self-contained with in-memory mocks for DB/cache/gateway; full repo tree and static assets skipped for fast isolated unit red-teaming."
+  },
+  "message": "Stage 0.5 Scope Triage: SINGLE_FILE_UNIT (agent_auto) \u2014 Mounted 1 file(s) (9.2 KB), skipped 3 heavy path(s)."
+ },
+ {
+  "stage": "blind_dual_track_start",
+  "telemetry": {
+   "information_wall_active": true,
+   "store": false,
+   "isolation_guarantee": "STRICT_SEPARATE_TREES",
+   "track_1a_model": "gemini-4-argon",
+   "track_1b_model": "gemini-4-argon",
+   "max_redteam_attempts": 5
+  },
+  "message": "INFORMATION WALL ACTIVE: Track 1A (Attack Planner) and Track 1B (Blind Bug Planter) running concurrently with zero shared context."
+ },
+ {
+  "stage": "track_1a_complete",
+  "model": "gemini-4-argon",
+  "pr_id": "pr-checkout-race",
+  "repo_name": "acme-pay/ledger-core",
+  "invariant_plan": {
+   "pr_summary": "Introduces instant refunds and partial balance settlement to ledger-core. Validates refund amounts, idempotency keys, and updates ledger balances.",
+   "invariants": [
+    {
+     "id": "INV-1",
+     "category": "security",
+     "title": "Balance Conservation & Non-Negative Refund Amount",
+     "formal_assertion": "assert refund_amount > 0 and new_wallet_balance <= original_charge",
+     "target_function": "settle_refund"
+    },
+    {
+     "id": "INV-2",
+     "category": "security",
+     "title": "HMAC Signature Verification & Multi-Tenant Isolation",
+     "formal_assertion": "assert verify_hmac(payload, sig) and account.tenant_id == request.tenant_id",
+     "target_function": "handle_refund_webhook"
+    },
+    {
+     "id": "INV-3",
+     "category": "state",
+     "title": "Idempotency State Consistency Under Concurrent Settling",
+     "formal_assertion": "assert ledger_deductions_count == 1 for identical idempotency_key",
+     "target_function": "settle_refund"
+    },
+    {
+     "id": "INV-4",
+     "category": "edge_cases",
+     "title": "Exact 100% Full Refund Boundary Equivalence",
+     "formal_assertion": "assert refund_amount <= remaining_refundable and remaining_refundable >= 0",
+     "target_function": "validate_refund_limits"
+    },
+    {
+     "id": "INV-5",
+     "category": "edge_cases",
+     "title": "Zero-Amount Transaction Safe Fee Calculation",
+     "formal_assertion": "assert calculate_settlement_fee(0, rate) == 0 without ZeroDivisionError",
+     "target_function": "calculate_settlement_fee"
+    },
+    {
+     "id": "INV-6",
+     "category": "state",
+     "title": "Atomic Rollback of Reserved Hold on Gateway Timeout",
+     "formal_assertion": "assert hold_status == 'RELEASED' when gateway.settle_hold() raises TimeoutError",
+     "target_function": "reserve_and_settle"
+    },
+    {
+     "id": "INV-7",
+     "category": "regression",
+     "title": "V2 Settlement Receipt Schema Backward Compatibility",
+     "formal_assertion": "assert 'currency_iso' in receipt and receipt['status'] == 'SETTLED'",
+     "target_function": "generate_receipt"
+    },
+    {
+     "id": "INV-8",
+     "category": "regression",
+     "title": "Banker's Rounding Preservation on Fee Basis Points",
+     "formal_assertion": "assert compute_basis_points(125, 3) == Decimal('0.125') using ROUND_HALF_EVEN",
+     "target_function": "compute_basis_points"
+    }
+   ],
+   "attack_plans": [
+    {
+     "attacker_id": "security",
+     "attacker_name": "Security & Invariant Attacker (gemini-3.8-flash)",
+     "focus_invariants": [
+      "INV-1",
+      "INV-2"
+     ],
+     "strategy": "Fuzz refund amounts with negative numbers and forged webhook signatures / cross-tenant account IDs."
+    },
+    {
+     "attacker_id": "edge_cases",
+     "attacker_name": "Edge-Case Boundary Attacker (gemini-3.8-flash)",
+     "focus_invariants": [
+      "INV-4",
+      "INV-5"
+     ],
+     "strategy": "Exercise boundary conditions at exact max refundable balance, zero amounts, and precision limits."
+    },
+    {
+     "attacker_id": "state",
+     "attacker_name": "State & Concurrency Attacker (gemini-3.8-flash)",
+     "focus_invariants": [
+      "INV-3",
+      "INV-6"
+     ],
+     "strategy": "Simulate concurrent retries while state is PENDING_SETTLEMENT and inject gateway timeout exceptions."
+    },
+    {
+     "attacker_id": "regression",
+     "attacker_name": "Regression & Contract Attacker (gemini-3.8-flash)",
+     "focus_invariants": [
+      "INV-7",
+      "INV-8"
+     ],
+     "strategy": "Verify V1/V2 settlement receipt dict schema and Banker's rounding on fractional fee basis points."
+    }
+   ]
+  },
+  "invariants_count": 8,
+  "message": "Track 1A complete: Extracted 8 formal invariants."
+ },
+ {
+  "stage": "swarm_attacking_start",
+  "model": "gemini-3.8-flash",
+  "active_attackers": [
+   "security",
+   "edge_cases",
+   "state",
+   "regression"
+  ],
+  "max_attempts": 5,
+  "message": "Dispatching 4 parallel Gemini 3.8 Flash attackers (Adaptive Observe-Mutate-Attack Loop, max_attempts=5)..."
+ },
+ {
+  "stage": "invariants_extracted",
+  "model": "gemini-4-argon",
+  "pr_id": "pr-checkout-race",
+  "pr_summary": "Introduces instant refunds and partial balance settlement to ledger-core. Validates refund amounts, idempotency keys, and updates ledger balances.",
+  "invariant_plan": {
+   "pr_summary": "Introduces instant refunds and partial balance settlement to ledger-core. Validates refund amounts, idempotency keys, and updates ledger balances.",
+   "invariants": [
+    {
+     "id": "INV-1",
+     "category": "security",
+     "title": "Balance Conservation & Non-Negative Refund Amount",
+     "formal_assertion": "assert refund_amount > 0 and new_wallet_balance <= original_charge",
+     "target_function": "settle_refund"
+    },
+    {
+     "id": "INV-2",
+     "category": "security",
+     "title": "HMAC Signature Verification & Multi-Tenant Isolation",
+     "formal_assertion": "assert verify_hmac(payload, sig) and account.tenant_id == request.tenant_id",
+     "target_function": "handle_refund_webhook"
+    },
+    {
+     "id": "INV-3",
+     "category": "state",
+     "title": "Idempotency State Consistency Under Concurrent Settling",
+     "formal_assertion": "assert ledger_deductions_count == 1 for identical idempotency_key",
+     "target_function": "settle_refund"
+    },
+    {
+     "id": "INV-4",
+     "category": "edge_cases",
+     "title": "Exact 100% Full Refund Boundary Equivalence",
+     "formal_assertion": "assert refund_amount <= remaining_refundable and remaining_refundable >= 0",
+     "target_function": "validate_refund_limits"
+    },
+    {
+     "id": "INV-5",
+     "category": "edge_cases",
+     "title": "Zero-Amount Transaction Safe Fee Calculation",
+     "formal_assertion": "assert calculate_settlement_fee(0, rate) == 0 without ZeroDivisionError",
+     "target_function": "calculate_settlement_fee"
+    },
+    {
+     "id": "INV-6",
+     "category": "state",
+     "title": "Atomic Rollback of Reserved Hold on Gateway Timeout",
+     "formal_assertion": "assert hold_status == 'RELEASED' when gateway.settle_hold() raises TimeoutError",
+     "target_function": "reserve_and_settle"
+    },
+    {
+     "id": "INV-7",
+     "category": "regression",
+     "title": "V2 Settlement Receipt Schema Backward Compatibility",
+     "formal_assertion": "assert 'currency_iso' in receipt and receipt['status'] == 'SETTLED'",
+     "target_function": "generate_receipt"
+    },
+    {
+     "id": "INV-8",
+     "category": "regression",
+     "title": "Banker's Rounding Preservation on Fee Basis Points",
+     "formal_assertion": "assert compute_basis_points(125, 3) == Decimal('0.125') using ROUND_HALF_EVEN",
+     "target_function": "compute_basis_points"
+    }
+   ],
+   "attack_plans": [
+    {
+     "attacker_id": "security",
+     "attacker_name": "Security & Invariant Attacker (gemini-3.8-flash)",
+     "focus_invariants": [
+      "INV-1",
+      "INV-2"
+     ],
+     "strategy": "Fuzz refund amounts with negative numbers and forged webhook signatures / cross-tenant account IDs."
+    },
+    {
+     "attacker_id": "edge_cases",
+     "attacker_name": "Edge-Case Boundary Attacker (gemini-3.8-flash)",
+     "focus_invariants": [
+      "INV-4",
+      "INV-5"
+     ],
+     "strategy": "Exercise boundary conditions at exact max refundable balance, zero amounts, and precision limits."
+    },
+    {
+     "attacker_id": "state",
+     "attacker_name": "State & Concurrency Attacker (gemini-3.8-flash)",
+     "focus_invariants": [
+      "INV-3",
+      "INV-6"
+     ],
+     "strategy": "Simulate concurrent retries while state is PENDING_SETTLEMENT and inject gateway timeout exceptions."
+    },
+    {
+     "attacker_id": "regression",
+     "attacker_name": "Regression & Contract Attacker (gemini-3.8-flash)",
+     "focus_invariants": [
+      "INV-7",
+      "INV-8"
+     ],
+     "strategy": "Verify V1/V2 settlement receipt dict schema and Banker's rounding on fractional fee basis points."
+    }
+   ]
+  },
+  "invariants_count": 8,
+  "invariants": [
+   {
+    "id": "INV-1",
+    "category": "security",
+    "title": "Balance Conservation & Non-Negative Refund Amount",
+    "formal_assertion": "assert refund_amount > 0 and new_wallet_balance <= original_charge",
+    "target_function": "settle_refund"
+   },
+   {
+    "id": "INV-2",
+    "category": "security",
+    "title": "HMAC Signature Verification & Multi-Tenant Isolation",
+    "formal_assertion": "assert verify_hmac(payload, sig) and account.tenant_id == request.tenant_id",
+    "target_function": "handle_refund_webhook"
+   },
+   {
+    "id": "INV-3",
+    "category": "state",
+    "title": "Idempotency State Consistency Under Concurrent Settling",
+    "formal_assertion": "assert ledger_deductions_count == 1 for identical idempotency_key",
+    "target_function": "settle_refund"
+   },
+   {
+    "id": "INV-4",
+    "category": "edge_cases",
+    "title": "Exact 100% Full Refund Boundary Equivalence",
+    "formal_assertion": "assert refund_amount <= remaining_refundable and remaining_refundable >= 0",
+    "target_function": "validate_refund_limits"
+   },
+   {
+    "id": "INV-5",
+    "category": "edge_cases",
+    "title": "Zero-Amount Transaction Safe Fee Calculation",
+    "formal_assertion": "assert calculate_settlement_fee(0, rate) == 0 without ZeroDivisionError",
+    "target_function": "calculate_settlement_fee"
+   },
+   {
+    "id": "INV-6",
+    "category": "state",
+    "title": "Atomic Rollback of Reserved Hold on Gateway Timeout",
+    "formal_assertion": "assert hold_status == 'RELEASED' when gateway.settle_hold() raises TimeoutError",
+    "target_function": "reserve_and_settle"
+   },
+   {
+    "id": "INV-7",
+    "category": "regression",
+    "title": "V2 Settlement Receipt Schema Backward Compatibility",
+    "formal_assertion": "assert 'currency_iso' in receipt and receipt['status'] == 'SETTLED'",
+    "target_function": "generate_receipt"
+   },
+   {
+    "id": "INV-8",
+    "category": "regression",
+    "title": "Banker's Rounding Preservation on Fee Basis Points",
+    "formal_assertion": "assert compute_basis_points(125, 3) == Decimal('0.125') using ROUND_HALF_EVEN",
+    "target_function": "compute_basis_points"
+   }
+  ],
+  "attack_plans": [
+   {
+    "attacker_id": "security",
+    "attacker_name": "Security & Invariant Attacker (gemini-3.8-flash)",
+    "focus_invariants": [
+     "INV-1",
+     "INV-2"
+    ],
+    "strategy": "Fuzz refund amounts with negative numbers and forged webhook signatures / cross-tenant account IDs."
+   },
+   {
+    "attacker_id": "edge_cases",
+    "attacker_name": "Edge-Case Boundary Attacker (gemini-3.8-flash)",
+    "focus_invariants": [
+     "INV-4",
+     "INV-5"
+    ],
+    "strategy": "Exercise boundary conditions at exact max refundable balance, zero amounts, and precision limits."
+   },
+   {
+    "attacker_id": "state",
+    "attacker_name": "State & Concurrency Attacker (gemini-3.8-flash)",
+    "focus_invariants": [
+     "INV-3",
+     "INV-6"
+    ],
+    "strategy": "Simulate concurrent retries while state is PENDING_SETTLEMENT and inject gateway timeout exceptions."
+   },
+   {
+    "attacker_id": "regression",
+    "attacker_name": "Regression & Contract Attacker (gemini-3.8-flash)",
+    "focus_invariants": [
+     "INV-7",
+     "INV-8"
+    ],
+    "strategy": "Verify V1/V2 settlement receipt dict schema and Banker's rounding on fractional fee basis points."
+   }
+  ],
+  "sealed_mutants_count": 8,
+  "sealed_mutants": [
+   {
+    "mutant_id": "M1",
+    "category": "security",
+    "title": "Removed HMAC signature check on webhook callback",
+    "description": "Replaced compare_digest with always-true check, allowing unauthenticated attackers to trigger fake refund callbacks.",
+    "diff_snippet": "- if not hmac.compare_digest(expected, signature):\n+ if False:",
+    "severity": "CRITICAL",
+    "caught": false,
+    "caught_by_test_ids": []
+   },
+   {
+    "mutant_id": "M2",
+    "category": "security",
+    "title": "Cross-tenant account_id lookup missing owner match",
+    "description": "Commented out account.tenant_id == tenant_id guard, exposing cross-tenant account queries.",
+    "diff_snippet": "- if account.tenant_id != tenant_id:\n+ if False and account.tenant_id != tenant_id:",
+    "severity": "CRITICAL",
+    "caught": false,
+    "caught_by_test_ids": []
+   },
+   {
+    "mutant_id": "M3",
+    "category": "edge_cases",
+    "title": "Off-by-one >= max_refundable blocking exact 100% full refunds",
+    "description": "Replaced > with >= in validate_refund_limits, causing full refunds to be erroneously rejected.",
+    "diff_snippet": "- if refund_amount > max_refundable:\n+ if refund_amount >= max_refundable:",
+    "severity": "HIGH",
+    "caught": false,
+    "caught_by_test_ids": []
+   },
+   {
+    "mutant_id": "M4",
+    "category": "edge_cases",
+    "title": "Zero-amount transaction division by zero in fee calculator",
+    "description": "Removed amount == 0 guard, causing ZeroDivisionError in legacy ratio calculation.",
+    "diff_snippet": "- if amount == 0:\n-     return 0.0\n+ val = 1.0 / amount",
+    "severity": "HIGH",
+    "caught": false,
+    "caught_by_test_ids": []
+   },
+   {
+    "mutant_id": "M5",
+    "category": "state",
+    "title": "Missing rollback of reserved hold when gateway throws timeout",
+    "description": "Removed release_hold call inside except block, leaking unreleased funds in hold state.",
+    "diff_snippet": "- self.gateway.release_hold(hold_id)\n+ pass # hold leaked",
+    "severity": "HIGH",
+    "caught": false,
+    "caught_by_test_ids": []
+   },
+   {
+    "mutant_id": "M6",
+    "category": "regression",
+    "title": "Dropped currency_iso field from V2 settlement receipt dict",
+    "description": "Omitted currency_iso from receipt dict, breaking downstream reporting schema.",
+    "diff_snippet": "- 'currency_iso': currency_iso,\n+ # dropped currency_iso field",
+    "severity": "MEDIUM",
+    "caught": false,
+    "caught_by_test_ids": []
+   },
+   {
+    "mutant_id": "M7",
+    "category": "regression",
+    "title": "Changed fee basis points rounding from ROUND_HALF_EVEN to int truncation",
+    "description": "Replaced Decimal quantize Banker's rounding with int() floor truncation, leaking rounding drift.",
+    "diff_snippet": "- return val.quantize(Decimal('0.001'), rounding=ROUND_HALF_EVEN)\n+ return Decimal(int(val * 1000)) / Decimal(1000)",
+    "severity": "MEDIUM",
+    "caught": false,
+    "caught_by_test_ids": []
+   },
+   {
+    "mutant_id": "M8",
+    "category": "state",
+    "title": "Subtle clock-skew TTL expiration bypass on distributed shard failover",
+    "description": "Off-by-one millisecond comparison on shard failover cache expiry when now_ms == token_expiry_ms.",
+    "diff_snippet": "- if now_ms > token_expiry_ms:\n+ if now_ms >= token_expiry_ms + 1000: # 1s drift window",
+    "severity": "HIGH",
+    "caught": false,
+    "caught_by_test_ids": []
+   }
+  ],
+  "sealed_status": "SEALED (Concealed from Attacker Swarm)",
+  "message": "Extracted 8 formal invariants. Sealed 8 blind planted bugs behind information wall."
+ },
+ {
+  "stage": "swarm_attacking",
+  "model": "gemini-3.8-flash",
+  "total_tests_generated": 8,
+  "swarm_outputs": [
+   {
+    "attacker_id": "security",
+    "tests": [
+     {
+      "test_id": "test_sec_negative_refund_wallet_inflation",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-1",
+      "description": "Passes negative refund amount (-50.00). Verifies whether wallet balance is incorrectly inflated.",
+      "pytest_code": "def test_sec_negative_refund_wallet_inflation(ledger_core):\n    # Attempt refund of -50.00\n    res = ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')\n    user = ledger_core.db.get_user('usr_1')\n    assert user.balance <= 100.0, f\"Balance inflated to {user.balance} via negative refund!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 3,
+      "breached_on_attempt": 3,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Probe direct over-refund above original charge (refund_amount=250.0 > 100.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 250.0, 'ik_over_1')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 250.0 exceeds maximum refundable 100.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Probe cumulative two-step partial refund exceeding ceiling (60.0 + 60.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 60.0, 'ik_p1'); ledger_core.settle_refund('ch_123', 60.0, 'ik_p2')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 60.0 exceeds maximum refundable 40.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 3,
+        "attack_hypothesis": "Invert sign to negative refund (-50.0) to bypass upper-bound '>' check and credit wallet",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')",
+        "sandbox_observation": "BREACHED: -50.0 <= 100.0 bypassed guard! User wallet inflated from 100.0 -> 150.0 (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_sec_webhook_hmac_verification",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-2",
+      "description": "Sends webhook with forged signature. Must reject with False.",
+      "pytest_code": "def test_sec_webhook_hmac_verification(ledger_core):\n    ok = ledger_core.handle_refund_webhook(b'{\"refund_id\": \"r1\"}', 'forged_sig', 'tenant_a', 'acc_1')\n    assert ok is False, \"Forged HMAC signature was accepted!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_sec_tenant_isolation_guard",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-2",
+      "description": "Attempts cross-tenant refund access with account belonging to tenant_b from tenant_a.",
+      "pytest_code": "def test_sec_tenant_isolation_guard(ledger_core):\n    ok = ledger_core.handle_refund_webhook(b'{}', valid_sig, 'tenant_a', 'acc_belonging_to_b')\n    assert ok is False, \"Cross-tenant access allowed!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     }
+    ]
+   },
+   {
+    "attacker_id": "edge_cases",
+    "tests": [
+     {
+      "test_id": "test_edge_float_rounding_jitter",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-4",
+      "description": "Checks float division precision jitter under microsecond timestamp interleaving.",
+      "pytest_code": "def test_edge_float_rounding_jitter(ledger_core):\n    # Microsecond float jitter test\n    assert float_math(0.1 + 0.2) == 0.3\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_edge_exact_full_refund_boundary",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-4",
+      "description": "Executes exact 100% full refund (refund_amount == max_refundable). Must be allowed.",
+      "pytest_code": "def test_edge_exact_full_refund_boundary(ledger_core):\n    allowed = ledger_core.validate_refund_limits(100.0, 100.0)\n    assert allowed is True, \"Exact 100% full refund was rejected!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_edge_zero_amount_fee_calc",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-5",
+      "description": "Calls calculate_settlement_fee with amount=0.0. Must return 0.0 without ZeroDivisionError.",
+      "pytest_code": "def test_edge_zero_amount_fee_calc(ledger_core):\n    fee = ledger_core.calculate_settlement_fee(0.0, 0.029)\n    assert fee == 0.0, f\"Expected 0.0 fee for zero amount, got {fee}\"\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     }
+    ]
+   },
+   {
+    "attacker_id": "state",
+    "tests": [
+     {
+      "test_id": "test_state_double_settlement_idempotency_race",
+      "attacker_id": "state",
+      "target_invariant_id": "INV-3",
+      "description": "Sends concurrent duplicate settlements while status is PENDING_SETTLEMENT. Must not double-deduct.",
+      "pytest_code": "def test_state_double_settlement_idempotency_race(ledger_core):\n    # Simulate concurrent retry while first call is in flight\n    ledger_core.cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT')\n    res = ledger_core.settle_refund('ch_123', 50.0, 'ik_race')\n    assert ledger_core.db.deductions_count == 1, \"Double deduction occurred during PENDING state!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 2,
+      "breached_on_attempt": 2,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Replay identical idempotency_key sequentially after status reaches SETTLED",
+        "payload_snippet": "settle_refund('ch_123', 50.0, 'ik_seq'); settle_refund('ch_123', 50.0, 'ik_seq')",
+        "sandbox_observation": "BLOCKED: Cached SETTLED receipt returned without second ledger deduction",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Inject concurrent retry while status is in-flight ('PENDING_SETTLEMENT') before commit",
+        "payload_snippet": "cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT'); settle_refund('ch_123', 50.0, 'ik_race')",
+        "sandbox_observation": "BREACHED: Guard only checks status == 'SETTLED'! Second ledger deduction executed during PENDING window (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_state_gateway_timeout_rollback",
+      "attacker_id": "state",
+      "target_invariant_id": "INV-6",
+      "description": "Simulates upstream payment gateway TimeoutError and verifies held funds are released.",
+      "pytest_code": "def test_state_gateway_timeout_rollback(ledger_core):\n    try:\n        ledger_core.reserve_and_settle('ch_timeout', 100.0)\n    except TimeoutError:\n        pass\n    assert ledger_core.gateway.hold_status == 'RELEASED', \"Gateway hold was not released upon timeout!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     }
+    ]
+   }
+  ],
+  "message": "Attacker Swarm completed: Generated 8 multi-turn red-team and invariant tests (up to 5 attempts per vector)."
+ },
+ {
+  "stage": "sandbox_start",
+  "agent": "antigravity-preview-09-2026",
+  "scope_mode": "SINGLE_FILE_UNIT",
+  "message": "Connecting to remote Antigravity Linux sandbox container [SINGLE_FILE_UNIT]..."
+ },
+ {
+  "stage": "sandbox_track_a",
+  "agent": "antigravity-preview-09-2026",
+  "sandbox_agent_id": "antigravity-preview-09-2026",
+  "track": "Track (a): Adaptive Red-Team Loop (Max 5 Attempts) & 2x Repro Filter",
+  "terminal_logs": [
+   "[antigravity-sandbox:2026-10-16T11:40:01Z] Initializing isolated Linux container env_remote_94827...",
+   "[antigravity-sandbox:2026-10-16T11:40:02Z] Mounting workspace /workspace/acme-pay/ledger-core (commit c8e19a4)...",
+   "[antigravity-sandbox:2026-10-16T11:40:02Z] Information Wall Active: Planner and Bug Planter ran with isolated context (store=False).",
+   "[antigravity-sandbox:2026-10-16T11:40:03Z] TRACK (a): Executing 10 swarm tests against unmutated PR code...",
+   "[antigravity-sandbox:2026-10-16T11:40:03Z]   test_sec_negative_refund_wallet_inflation ... FAILED (run 1/2)",
+   "[antigravity-sandbox:2026-10-16T11:40:04Z]   REPRO RETRY: test_sec_negative_refund_wallet_inflation ... FAILED (run 2/2) [CONFIRMED REPRODUCIBLE 2/2]",
+   "[antigravity-sandbox:2026-10-16T11:40:04Z]   test_state_double_settlement_idempotency_race ... FAILED (run 1/2)",
+   "[antigravity-sandbox:2026-10-16T11:40:05Z]   REPRO RETRY: test_state_double_settlement_idempotency_race ... FAILED (run 2/2) [CONFIRMED REPRODUCIBLE 2/2]",
+   "[antigravity-sandbox:2026-10-16T11:40:05Z]   test_edge_float_rounding_jitter ... FAILED (run 1/2)",
+   "[antigravity-sandbox:2026-10-16T11:40:06Z]   REPRO RETRY: test_edge_float_rounding_jitter ... PASSED (run 2/2) [FLAKY FILTERED OUT]",
+   "[antigravity-sandbox:2026-10-16T11:40:06Z]   7 baseline invariant tests PASSED 2/2 runs on original PR code.",
+   "[antigravity-sandbox:2026-10-16T11:40:07Z]   Running against M1 (hmac_bypass) -> test_sec_webhook_hmac_verification FAILED -> KILLED",
+   "[antigravity-sandbox:2026-10-16T11:40:08Z]   Running against M2 (tenant_lookup) -> test_sec_tenant_isolation_guard FAILED -> KILLED",
+   "[antigravity-sandbox:2026-10-16T11:40:08Z]   Running against M3 (off_by_one_refund) -> test_edge_exact_full_refund_boundary FAILED -> KILLED",
+   "[antigravity-sandbox:2026-10-16T11:40:09Z]   Running against M4 (zero_fee_div0) -> test_edge_zero_amount_fee_calc FAILED -> KILLED",
+   "[antigravity-sandbox:2026-10-16T11:40:09Z]   Running against M5 (gateway_timeout_leak) -> test_state_gateway_timeout_rollback FAILED -> KILLED",
+   "[antigravity-sandbox:2026-10-16T11:40:10Z]   Running against M6 (receipt_schema_drop) -> test_reg_receipt_schema_backward_compat FAILED -> KILLED",
+   "[antigravity-sandbox:2026-10-16T11:40:10Z]   Running against M7 (fee_truncation) -> test_reg_basis_points_bankers_rounding FAILED -> KILLED",
+   "[antigravity-sandbox:2026-10-16T11:40:11Z]   Running against M8 (clock_skew_ttl) -> all 7 tests passed -> SURVIVED (UNCAUGHT)",
+   "[antigravity-sandbox:2026-10-16T11:40:11Z] Python Deterministic Scoring: 7 of 8 planted bugs caught (87.5%)."
+  ],
+  "pr_test_results": [
+   {
+    "test_id": "test_sec_negative_refund_wallet_inflation",
+    "attacker_id": "security",
+    "target_invariant_id": "INV-1",
+    "run_1_passed": false,
+    "run_2_passed": false,
+    "reproduced_twice": true,
+    "passed_on_original": false,
+    "error_trace": "AssertionError: Balance inflated to 150.0 via negative refund! settle_refund(-50.0) bypassed remaining_refundable check and credited wallet.",
+    "duration_ms": 45,
+    "max_attempts": 5,
+    "attempts_used": 3,
+    "breached_on_attempt": 3,
+    "attempt_history": [
+     {
+      "attempt_num": 1,
+      "attack_hypothesis": "Probe direct over-refund above original charge (refund_amount=250.0 > 100.0)",
+      "payload_snippet": "ledger_core.settle_refund('ch_123', 250.0, 'ik_over_1')",
+      "sandbox_observation": "BLOCKED: ValueError('Refund 250.0 exceeds maximum refundable 100.0')",
+      "status": "BLOCKED"
+     },
+     {
+      "attempt_num": 2,
+      "attack_hypothesis": "Probe cumulative two-step partial refund exceeding ceiling (60.0 + 60.0)",
+      "payload_snippet": "ledger_core.settle_refund('ch_123', 60.0, 'ik_p1'); ledger_core.settle_refund('ch_123', 60.0, 'ik_p2')",
+      "sandbox_observation": "BLOCKED: ValueError('Refund 60.0 exceeds maximum refundable 40.0')",
+      "status": "BLOCKED"
+     },
+     {
+      "attempt_num": 3,
+      "attack_hypothesis": "Invert sign to negative refund (-50.0) to bypass upper-bound '>' check and credit wallet",
+      "payload_snippet": "ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')",
+      "sandbox_observation": "BREACHED: -50.0 <= 100.0 bypassed guard! User wallet inflated from 100.0 -> 150.0 (2/2 Repro Confirmed)",
+      "status": "BREACHED"
+     }
+    ]
+   },
+   {
+    "test_id": "test_state_double_settlement_idempotency_race",
+    "attacker_id": "state",
+    "target_invariant_id": "INV-3",
+    "run_1_passed": false,
+    "run_2_passed": false,
+    "reproduced_twice": true,
+    "passed_on_original": false,
+    "error_trace": "AssertionError: Double deduction occurred during PENDING state! Retry with same idempotency_key executed second ledger deduction before SETTLED status.",
+    "duration_ms": 52,
+    "max_attempts": 5,
+    "attempts_used": 2,
+    "breached_on_attempt": 2,
+    "attempt_history": [
+     {
+      "attempt_num": 1,
+      "attack_hypothesis": "Replay identical idempotency_key sequentially after status reaches SETTLED",
+      "payload_snippet": "settle_refund('ch_123', 50.0, 'ik_seq'); settle_refund('ch_123', 50.0, 'ik_seq')",
+      "sandbox_observation": "BLOCKED: Cached SETTLED receipt returned without second ledger deduction",
+      "status": "BLOCKED"
+     },
+     {
+      "attempt_num": 2,
+      "attack_hypothesis": "Inject concurrent retry while status is in-flight ('PENDING_SETTLEMENT') before commit",
+      "payload_snippet": "cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT'); settle_refund('ch_123', 50.0, 'ik_race')",
+      "sandbox_observation": "BREACHED: Guard only checks status == 'SETTLED'! Second ledger deduction executed during PENDING window (2/2 Repro Confirmed)",
+      "status": "BREACHED"
+     }
+    ]
+   },
+   {
+    "test_id": "test_edge_float_rounding_jitter",
+    "attacker_id": "edge_cases",
+    "target_invariant_id": "INV-4",
+    "run_1_passed": false,
+    "run_2_passed": true,
+    "reproduced_twice": false,
+    "passed_on_original": false,
+    "error_trace": "AssertionError: Microsecond float jitter (0.30000000000000004 != 0.3) on run 1; passed cleanly on rerun 2. [FILTERED AS FLAKY]",
+    "duration_ms": 28,
+    "max_attempts": 5,
+    "attempts_used": 1,
+    "breached_on_attempt": null,
+    "attempt_history": []
+   },
+   {
+    "test_id": "test_sec_webhook_hmac_verification",
+    "attacker_id": "security",
+    "target_invariant_id": "INV-2",
+    "run_1_passed": true,
+    "run_2_passed": true,
+    "reproduced_twice": false,
+    "passed_on_original": true,
+    "error_trace": null,
+    "duration_ms": 31,
+    "max_attempts": 5,
+    "attempts_used": 1,
+    "breached_on_attempt": null,
+    "attempt_history": []
+   },
+   {
+    "test_id": "test_sec_tenant_isolation_guard",
+    "attacker_id": "security",
+    "target_invariant_id": "INV-2",
+    "run_1_passed": true,
+    "run_2_passed": true,
+    "reproduced_twice": false,
+    "passed_on_original": true,
+    "error_trace": null,
+    "duration_ms": 34,
+    "max_attempts": 5,
+    "attempts_used": 1,
+    "breached_on_attempt": null,
+    "attempt_history": []
+   },
+   {
+    "test_id": "test_edge_exact_full_refund_boundary",
+    "attacker_id": "edge_cases",
+    "target_invariant_id": "INV-4",
+    "run_1_passed": true,
+    "run_2_passed": true,
+    "reproduced_twice": false,
+    "passed_on_original": true,
+    "error_trace": null,
+    "duration_ms": 29,
+    "max_attempts": 5,
+    "attempts_used": 1,
+    "breached_on_attempt": null,
+    "attempt_history": []
+   },
+   {
+    "test_id": "test_edge_zero_amount_fee_calc",
+    "attacker_id": "edge_cases",
+    "target_invariant_id": "INV-5",
+    "run_1_passed": true,
+    "run_2_passed": true,
+    "reproduced_twice": false,
+    "passed_on_original": true,
+    "error_trace": null,
+    "duration_ms": 26,
+    "max_attempts": 5,
+    "attempts_used": 1,
+    "breached_on_attempt": null,
+    "attempt_history": []
+   },
+   {
+    "test_id": "test_state_gateway_timeout_rollback",
+    "attacker_id": "state",
+    "target_invariant_id": "INV-6",
+    "run_1_passed": true,
+    "run_2_passed": true,
+    "reproduced_twice": false,
+    "passed_on_original": true,
+    "error_trace": null,
+    "duration_ms": 48,
+    "max_attempts": 5,
+    "attempts_used": 1,
+    "breached_on_attempt": null,
+    "attempt_history": []
+   },
+   {
+    "test_id": "test_reg_receipt_schema_backward_compat",
+    "attacker_id": "regression",
+    "target_invariant_id": "INV-7",
+    "run_1_passed": true,
+    "run_2_passed": true,
+    "reproduced_twice": false,
+    "passed_on_original": true,
+    "error_trace": null,
+    "duration_ms": 25,
+    "max_attempts": 5,
+    "attempts_used": 1,
+    "breached_on_attempt": null,
+    "attempt_history": []
+   },
+   {
+    "test_id": "test_reg_basis_points_bankers_rounding",
+    "attacker_id": "regression",
+    "target_invariant_id": "INV-8",
+    "run_1_passed": true,
+    "run_2_passed": true,
+    "reproduced_twice": false,
+    "passed_on_original": true,
+    "error_trace": null,
+    "duration_ms": 27,
+    "max_attempts": 5,
+    "attempts_used": 1,
+    "breached_on_attempt": null,
+    "attempt_history": []
+   }
+  ],
+  "swarm_outputs": [
+   {
+    "attacker_id": "security",
+    "tests": [
+     {
+      "test_id": "test_sec_negative_refund_wallet_inflation",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-1",
+      "description": "Passes negative refund amount (-50.00). Verifies whether wallet balance is incorrectly inflated.",
+      "pytest_code": "def test_sec_negative_refund_wallet_inflation(ledger_core):\n    # Attempt refund of -50.00\n    res = ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')\n    user = ledger_core.db.get_user('usr_1')\n    assert user.balance <= 100.0, f\"Balance inflated to {user.balance} via negative refund!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 3,
+      "breached_on_attempt": 3,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Probe direct over-refund above original charge (refund_amount=250.0 > 100.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 250.0, 'ik_over_1')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 250.0 exceeds maximum refundable 100.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Probe cumulative two-step partial refund exceeding ceiling (60.0 + 60.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 60.0, 'ik_p1'); ledger_core.settle_refund('ch_123', 60.0, 'ik_p2')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 60.0 exceeds maximum refundable 40.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 3,
+        "attack_hypothesis": "Invert sign to negative refund (-50.0) to bypass upper-bound '>' check and credit wallet",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')",
+        "sandbox_observation": "BREACHED: -50.0 <= 100.0 bypassed guard! User wallet inflated from 100.0 -> 150.0 (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_sec_webhook_hmac_verification",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-2",
+      "description": "Sends webhook with forged signature. Must reject with False.",
+      "pytest_code": "def test_sec_webhook_hmac_verification(ledger_core):\n    ok = ledger_core.handle_refund_webhook(b'{\"refund_id\": \"r1\"}', 'forged_sig', 'tenant_a', 'acc_1')\n    assert ok is False, \"Forged HMAC signature was accepted!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_sec_tenant_isolation_guard",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-2",
+      "description": "Attempts cross-tenant refund access with account belonging to tenant_b from tenant_a.",
+      "pytest_code": "def test_sec_tenant_isolation_guard(ledger_core):\n    ok = ledger_core.handle_refund_webhook(b'{}', valid_sig, 'tenant_a', 'acc_belonging_to_b')\n    assert ok is False, \"Cross-tenant access allowed!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     }
+    ]
+   },
+   {
+    "attacker_id": "edge_cases",
+    "tests": [
+     {
+      "test_id": "test_edge_float_rounding_jitter",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-4",
+      "description": "Checks float division precision jitter under microsecond timestamp interleaving.",
+      "pytest_code": "def test_edge_float_rounding_jitter(ledger_core):\n    # Microsecond float jitter test\n    assert float_math(0.1 + 0.2) == 0.3\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_edge_exact_full_refund_boundary",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-4",
+      "description": "Executes exact 100% full refund (refund_amount == max_refundable). Must be allowed.",
+      "pytest_code": "def test_edge_exact_full_refund_boundary(ledger_core):\n    allowed = ledger_core.validate_refund_limits(100.0, 100.0)\n    assert allowed is True, \"Exact 100% full refund was rejected!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_edge_zero_amount_fee_calc",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-5",
+      "description": "Calls calculate_settlement_fee with amount=0.0. Must return 0.0 without ZeroDivisionError.",
+      "pytest_code": "def test_edge_zero_amount_fee_calc(ledger_core):\n    fee = ledger_core.calculate_settlement_fee(0.0, 0.029)\n    assert fee == 0.0, f\"Expected 0.0 fee for zero amount, got {fee}\"\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     }
+    ]
+   },
+   {
+    "attacker_id": "state",
+    "tests": [
+     {
+      "test_id": "test_state_double_settlement_idempotency_race",
+      "attacker_id": "state",
+      "target_invariant_id": "INV-3",
+      "description": "Sends concurrent duplicate settlements while status is PENDING_SETTLEMENT. Must not double-deduct.",
+      "pytest_code": "def test_state_double_settlement_idempotency_race(ledger_core):\n    # Simulate concurrent retry while first call is in flight\n    ledger_core.cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT')\n    res = ledger_core.settle_refund('ch_123', 50.0, 'ik_race')\n    assert ledger_core.db.deductions_count == 1, \"Double deduction occurred during PENDING state!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 2,
+      "breached_on_attempt": 2,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Replay identical idempotency_key sequentially after status reaches SETTLED",
+        "payload_snippet": "settle_refund('ch_123', 50.0, 'ik_seq'); settle_refund('ch_123', 50.0, 'ik_seq')",
+        "sandbox_observation": "BLOCKED: Cached SETTLED receipt returned without second ledger deduction",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Inject concurrent retry while status is in-flight ('PENDING_SETTLEMENT') before commit",
+        "payload_snippet": "cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT'); settle_refund('ch_123', 50.0, 'ik_race')",
+        "sandbox_observation": "BREACHED: Guard only checks status == 'SETTLED'! Second ledger deduction executed during PENDING window (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_state_gateway_timeout_rollback",
+      "attacker_id": "state",
+      "target_invariant_id": "INV-6",
+      "description": "Simulates upstream payment gateway TimeoutError and verifies held funds are released.",
+      "pytest_code": "def test_state_gateway_timeout_rollback(ledger_core):\n    try:\n        ledger_core.reserve_and_settle('ch_timeout', 100.0)\n    except TimeoutError:\n        pass\n    assert ledger_core.gateway.hold_status == 'RELEASED', \"Gateway hold was not released upon timeout!\"\n",
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     }
+    ]
+   }
+  ],
+  "confirmed_failures_count": 2,
+  "flaky_filtered_count": 1,
+  "message": "Track (a) complete: Adaptive 5-attempt red-team payloads executed against PR code with 2x reproducibility check."
+ },
+ {
+  "stage": "sandbox_track_b",
+  "pr_id": "pr-checkout-race",
+  "agent": "antigravity-preview-09-2026",
+  "track": "Track (b): 8 Blind Mutants Differential Execution",
+  "terminal_logs": [
+   "[antigravity-sandbox:2026-10-16T11:40:07Z] TRACK (b): Spawning 8 shadow mutant containers M1..M8...",
+   "[antigravity-sandbox:2026-10-16T11:40:11Z] Python Deterministic Scoring: 7 of 8 planted bugs caught (87.5%)."
+  ],
+  "mutant_matrix": {
+   "M1": {
+    "test_sec_webhook_hmac_verification": false,
+    "test_sec_negative_refund_wallet_inflation": false,
+    "test_sec_tenant_isolation_guard": true,
+    "test_edge_float_rounding_jitter": true,
+    "test_edge_exact_full_refund_boundary": true,
+    "test_edge_zero_amount_fee_calc": true,
+    "test_state_double_settlement_idempotency_race": false,
+    "test_state_gateway_timeout_rollback": true,
+    "test_reg_receipt_schema_backward_compat": true,
+    "test_reg_basis_points_bankers_rounding": true
+   },
+   "M2": {
+    "test_sec_tenant_isolation_guard": false,
+    "test_sec_negative_refund_wallet_inflation": false,
+    "test_sec_webhook_hmac_verification": true,
+    "test_edge_float_rounding_jitter": true,
+    "test_edge_exact_full_refund_boundary": true,
+    "test_edge_zero_amount_fee_calc": true,
+    "test_state_double_settlement_idempotency_race": false,
+    "test_state_gateway_timeout_rollback": true,
+    "test_reg_receipt_schema_backward_compat": true,
+    "test_reg_basis_points_bankers_rounding": true
+   },
+   "M3": {
+    "test_edge_exact_full_refund_boundary": false,
+    "test_sec_negative_refund_wallet_inflation": false,
+    "test_sec_webhook_hmac_verification": true,
+    "test_sec_tenant_isolation_guard": true,
+    "test_edge_float_rounding_jitter": true,
+    "test_edge_zero_amount_fee_calc": true,
+    "test_state_double_settlement_idempotency_race": false,
+    "test_state_gateway_timeout_rollback": true,
+    "test_reg_receipt_schema_backward_compat": true,
+    "test_reg_basis_points_bankers_rounding": true
+   },
+   "M4": {
+    "test_edge_zero_amount_fee_calc": false,
+    "test_sec_negative_refund_wallet_inflation": false,
+    "test_sec_webhook_hmac_verification": true,
+    "test_sec_tenant_isolation_guard": true,
+    "test_edge_float_rounding_jitter": true,
+    "test_edge_exact_full_refund_boundary": true,
+    "test_state_double_settlement_idempotency_race": false,
+    "test_state_gateway_timeout_rollback": true,
+    "test_reg_receipt_schema_backward_compat": true,
+    "test_reg_basis_points_bankers_rounding": true
+   },
+   "M5": {
+    "test_state_gateway_timeout_rollback": false,
+    "test_sec_negative_refund_wallet_inflation": false,
+    "test_sec_webhook_hmac_verification": true,
+    "test_sec_tenant_isolation_guard": true,
+    "test_edge_float_rounding_jitter": true,
+    "test_edge_exact_full_refund_boundary": true,
+    "test_edge_zero_amount_fee_calc": true,
+    "test_state_double_settlement_idempotency_race": false,
+    "test_reg_receipt_schema_backward_compat": true,
+    "test_reg_basis_points_bankers_rounding": true
+   },
+   "M6": {
+    "test_reg_receipt_schema_backward_compat": false,
+    "test_sec_negative_refund_wallet_inflation": false,
+    "test_sec_webhook_hmac_verification": true,
+    "test_sec_tenant_isolation_guard": true,
+    "test_edge_float_rounding_jitter": true,
+    "test_edge_exact_full_refund_boundary": true,
+    "test_edge_zero_amount_fee_calc": true,
+    "test_state_double_settlement_idempotency_race": false,
+    "test_state_gateway_timeout_rollback": true,
+    "test_reg_basis_points_bankers_rounding": true
+   },
+   "M7": {
+    "test_reg_basis_points_bankers_rounding": false,
+    "test_sec_negative_refund_wallet_inflation": false,
+    "test_sec_webhook_hmac_verification": true,
+    "test_sec_tenant_isolation_guard": true,
+    "test_edge_float_rounding_jitter": true,
+    "test_edge_exact_full_refund_boundary": true,
+    "test_edge_zero_amount_fee_calc": true,
+    "test_state_double_settlement_idempotency_race": false,
+    "test_state_gateway_timeout_rollback": true,
+    "test_reg_receipt_schema_backward_compat": true
+   },
+   "M8": {
+    "test_sec_webhook_hmac_verification": true,
+    "test_sec_tenant_isolation_guard": true,
+    "test_edge_exact_full_refund_boundary": true,
+    "test_edge_zero_amount_fee_calc": true,
+    "test_state_gateway_timeout_rollback": true,
+    "test_reg_receipt_schema_backward_compat": true,
+    "test_reg_basis_points_bankers_rounding": true,
+    "test_sec_negative_refund_wallet_inflation": false,
+    "test_edge_float_rounding_jitter": true,
+    "test_state_double_settlement_idempotency_race": false
+   }
+  },
+  "mutant_ids": [
+   "M1",
+   "M2",
+   "M3",
+   "M4",
+   "M5",
+   "M6",
+   "M7",
+   "M8"
+  ],
+  "planted_bugs_total": 8,
+  "mutant_evaluations": [
+   {
+    "mutant_id": "M1",
+    "title": "Removed HMAC signature check on webhook callback",
+    "category": "security",
+    "description": "Replaced compare_digest with always-true check, allowing unauthenticated attackers to trigger fake refund callbacks.",
+    "diff_snippet": "- if not hmac.compare_digest(expected, signature):\n+ if False:",
+    "severity": "CRITICAL",
+    "caught": true,
+    "caught_by_test_ids": [
+     "test_sec_webhook_hmac_verification"
+    ],
+    "caught_by_attackers": [
+     "security"
+    ],
+    "raw_failed_test_ids": [
+     "test_sec_webhook_hmac_verification",
+     "test_sec_negative_refund_wallet_inflation",
+     "test_state_double_settlement_idempotency_race"
+    ]
+   },
+   {
+    "mutant_id": "M2",
+    "title": "Cross-tenant account_id lookup missing owner match",
+    "category": "security",
+    "description": "Commented out account.tenant_id == tenant_id guard, exposing cross-tenant account queries.",
+    "diff_snippet": "- if account.tenant_id != tenant_id:\n+ if False and account.tenant_id != tenant_id:",
+    "severity": "CRITICAL",
+    "caught": true,
+    "caught_by_test_ids": [
+     "test_sec_tenant_isolation_guard"
+    ],
+    "caught_by_attackers": [
+     "security"
+    ],
+    "raw_failed_test_ids": [
+     "test_sec_tenant_isolation_guard",
+     "test_sec_negative_refund_wallet_inflation",
+     "test_state_double_settlement_idempotency_race"
+    ]
+   },
+   {
+    "mutant_id": "M3",
+    "title": "Off-by-one >= max_refundable blocking exact 100% full refunds",
+    "category": "edge_cases",
+    "description": "Replaced > with >= in validate_refund_limits, causing full refunds to be erroneously rejected.",
+    "diff_snippet": "- if refund_amount > max_refundable:\n+ if refund_amount >= max_refundable:",
+    "severity": "HIGH",
+    "caught": true,
+    "caught_by_test_ids": [
+     "test_edge_exact_full_refund_boundary"
+    ],
+    "caught_by_attackers": [
+     "edge_cases"
+    ],
+    "raw_failed_test_ids": [
+     "test_edge_exact_full_refund_boundary",
+     "test_sec_negative_refund_wallet_inflation",
+     "test_state_double_settlement_idempotency_race"
+    ]
+   },
+   {
+    "mutant_id": "M4",
+    "title": "Zero-amount transaction division by zero in fee calculator",
+    "category": "edge_cases",
+    "description": "Removed amount == 0 guard, causing ZeroDivisionError in legacy ratio calculation.",
+    "diff_snippet": "- if amount == 0:\n-     return 0.0\n+ val = 1.0 / amount",
+    "severity": "HIGH",
+    "caught": true,
+    "caught_by_test_ids": [
+     "test_edge_zero_amount_fee_calc"
+    ],
+    "caught_by_attackers": [
+     "edge_cases"
+    ],
+    "raw_failed_test_ids": [
+     "test_edge_zero_amount_fee_calc",
+     "test_sec_negative_refund_wallet_inflation",
+     "test_state_double_settlement_idempotency_race"
+    ]
+   },
+   {
+    "mutant_id": "M5",
+    "title": "Missing rollback of reserved hold when gateway throws timeout",
+    "category": "state",
+    "description": "Removed release_hold call inside except block, leaking unreleased funds in hold state.",
+    "diff_snippet": "- self.gateway.release_hold(hold_id)\n+ pass # hold leaked",
+    "severity": "HIGH",
+    "caught": true,
+    "caught_by_test_ids": [
+     "test_state_gateway_timeout_rollback"
+    ],
+    "caught_by_attackers": [
+     "state"
+    ],
+    "raw_failed_test_ids": [
+     "test_state_gateway_timeout_rollback",
+     "test_sec_negative_refund_wallet_inflation",
+     "test_state_double_settlement_idempotency_race"
+    ]
+   },
+   {
+    "mutant_id": "M6",
+    "title": "Dropped currency_iso field from V2 settlement receipt dict",
+    "category": "regression",
+    "description": "Omitted currency_iso from receipt dict, breaking downstream reporting schema.",
+    "diff_snippet": "- 'currency_iso': currency_iso,\n+ # dropped currency_iso field",
+    "severity": "MEDIUM",
+    "caught": true,
+    "caught_by_test_ids": [
+     "test_reg_receipt_schema_backward_compat"
+    ],
+    "caught_by_attackers": [
+     "unknown"
+    ],
+    "raw_failed_test_ids": [
+     "test_reg_receipt_schema_backward_compat",
+     "test_sec_negative_refund_wallet_inflation",
+     "test_state_double_settlement_idempotency_race"
+    ]
+   },
+   {
+    "mutant_id": "M7",
+    "title": "Changed fee basis points rounding from ROUND_HALF_EVEN to int truncation",
+    "category": "regression",
+    "description": "Replaced Decimal quantize Banker's rounding with int() floor truncation, leaking rounding drift.",
+    "diff_snippet": "- return val.quantize(Decimal('0.001'), rounding=ROUND_HALF_EVEN)\n+ return Decimal(int(val * 1000)) / Decimal(1000)",
+    "severity": "MEDIUM",
+    "caught": true,
+    "caught_by_test_ids": [
+     "test_reg_basis_points_bankers_rounding"
+    ],
+    "caught_by_attackers": [
+     "unknown"
+    ],
+    "raw_failed_test_ids": [
+     "test_reg_basis_points_bankers_rounding",
+     "test_sec_negative_refund_wallet_inflation",
+     "test_state_double_settlement_idempotency_race"
+    ]
+   },
+   {
+    "mutant_id": "M8",
+    "title": "Subtle clock-skew TTL expiration bypass on distributed shard failover",
+    "category": "state",
+    "description": "Off-by-one millisecond comparison on shard failover cache expiry when now_ms == token_expiry_ms.",
+    "diff_snippet": "- if now_ms > token_expiry_ms:\n+ if now_ms >= token_expiry_ms + 1000: # 1s drift window",
+    "severity": "HIGH",
+    "caught": false,
+    "caught_by_test_ids": [],
+    "caught_by_attackers": [],
+    "raw_failed_test_ids": [
+     "test_sec_negative_refund_wallet_inflation",
+     "test_state_double_settlement_idempotency_race"
+    ]
+   }
+  ],
+  "message": "Track (b) complete: 8 Blind Mutants evaluated under strict Pass(PR_orig) \u2227 Fail(Mutant) rule."
+ },
+ {
+  "stage": "deterministic_scoring",
+  "engine": "backend.scoring (100% Deterministic Python, Never LLM Estimated)",
+  "deterministic_score": {
+   "total_tests_generated": 10,
+   "valid_baseline_tests": 7,
+   "confirmed_pr_failures_count": 3,
+   "flaky_filtered_count": 0,
+   "confirmed_pr_failures": [
+    {
+     "test_id": "test_sec_negative_refund_wallet_inflation",
+     "attacker_id": "security",
+     "target_invariant_id": "INV-1",
+     "run_1_passed": false,
+     "run_2_passed": false,
+     "reproduced_twice": true,
+     "passed_on_original": false,
+     "error_trace": "AssertionError: Balance inflated to 150.0 via negative refund! settle_refund(-50.0) bypassed remaining_refundable check and credited wallet.",
+     "duration_ms": 45,
+     "max_attempts": 5,
+     "attempts_used": 3,
+     "breached_on_attempt": 3,
+     "attempt_history": [
+      {
+       "attempt_num": 1,
+       "attack_hypothesis": "Probe direct over-refund above original charge (refund_amount=250.0 > 100.0)",
+       "payload_snippet": "ledger_core.settle_refund('ch_123', 250.0, 'ik_over_1')",
+       "sandbox_observation": "BLOCKED: ValueError('Refund 250.0 exceeds maximum refundable 100.0')",
+       "status": "BLOCKED"
+      },
+      {
+       "attempt_num": 2,
+       "attack_hypothesis": "Probe cumulative two-step partial refund exceeding ceiling (60.0 + 60.0)",
+       "payload_snippet": "ledger_core.settle_refund('ch_123', 60.0, 'ik_p1'); ledger_core.settle_refund('ch_123', 60.0, 'ik_p2')",
+       "sandbox_observation": "BLOCKED: ValueError('Refund 60.0 exceeds maximum refundable 40.0')",
+       "status": "BLOCKED"
+      },
+      {
+       "attempt_num": 3,
+       "attack_hypothesis": "Invert sign to negative refund (-50.0) to bypass upper-bound '>' check and credit wallet",
+       "payload_snippet": "ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')",
+       "sandbox_observation": "BREACHED: -50.0 <= 100.0 bypassed guard! User wallet inflated from 100.0 -> 150.0 (2/2 Repro Confirmed)",
+       "status": "BREACHED"
+      }
+     ]
+    },
+    {
+     "test_id": "test_state_double_settlement_idempotency_race",
+     "attacker_id": "state",
+     "target_invariant_id": "INV-3",
+     "run_1_passed": false,
+     "run_2_passed": false,
+     "reproduced_twice": true,
+     "passed_on_original": false,
+     "error_trace": "AssertionError: Double deduction occurred during PENDING state! Retry with same idempotency_key executed second ledger deduction before SETTLED status.",
+     "duration_ms": 52,
+     "max_attempts": 5,
+     "attempts_used": 2,
+     "breached_on_attempt": 2,
+     "attempt_history": [
+      {
+       "attempt_num": 1,
+       "attack_hypothesis": "Replay identical idempotency_key sequentially after status reaches SETTLED",
+       "payload_snippet": "settle_refund('ch_123', 50.0, 'ik_seq'); settle_refund('ch_123', 50.0, 'ik_seq')",
+       "sandbox_observation": "BLOCKED: Cached SETTLED receipt returned without second ledger deduction",
+       "status": "BLOCKED"
+      },
+      {
+       "attempt_num": 2,
+       "attack_hypothesis": "Inject concurrent retry while status is in-flight ('PENDING_SETTLEMENT') before commit",
+       "payload_snippet": "cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT'); settle_refund('ch_123', 50.0, 'ik_race')",
+       "sandbox_observation": "BREACHED: Guard only checks status == 'SETTLED'! Second ledger deduction executed during PENDING window (2/2 Repro Confirmed)",
+       "status": "BREACHED"
+      }
+     ]
+    },
+    {
+     "test_id": "test_edge_float_rounding_jitter",
+     "attacker_id": "edge_cases",
+     "target_invariant_id": "INV-4",
+     "run_1_passed": false,
+     "run_2_passed": true,
+     "reproduced_twice": false,
+     "passed_on_original": false,
+     "error_trace": "AssertionError: Microsecond float jitter (0.30000000000000004 != 0.3) on run 1; passed cleanly on rerun 2. [FILTERED AS FLAKY]",
+     "duration_ms": 28,
+     "max_attempts": 5,
+     "attempts_used": 1,
+     "breached_on_attempt": null,
+     "attempt_history": []
+    }
+   ],
+   "planted_bugs_total": 8,
+   "planted_bugs_caught": 7,
+   "detection_score_pct": 87.5,
+   "detection_score_label": "7 of 8 planted bugs caught (87.5%)",
+   "mutant_evaluations": [
+    {
+     "mutant_id": "M1",
+     "title": "Removed HMAC signature check on webhook callback",
+     "category": "security",
+     "description": "Replaced compare_digest with always-true check, allowing unauthenticated attackers to trigger fake refund callbacks.",
+     "diff_snippet": "- if not hmac.compare_digest(expected, signature):\n+ if False:",
+     "severity": "CRITICAL",
+     "caught": true,
+     "caught_by_test_ids": [
+      "test_sec_webhook_hmac_verification"
+     ],
+     "caught_by_attackers": [
+      "security"
+     ],
+     "raw_failed_test_ids": [
+      "test_sec_webhook_hmac_verification",
+      "test_sec_negative_refund_wallet_inflation",
+      "test_state_double_settlement_idempotency_race"
+     ]
+    },
+    {
+     "mutant_id": "M2",
+     "title": "Cross-tenant account_id lookup missing owner match",
+     "category": "security",
+     "description": "Commented out account.tenant_id == tenant_id guard, exposing cross-tenant account queries.",
+     "diff_snippet": "- if account.tenant_id != tenant_id:\n+ if False and account.tenant_id != tenant_id:",
+     "severity": "CRITICAL",
+     "caught": true,
+     "caught_by_test_ids": [
+      "test_sec_tenant_isolation_guard"
+     ],
+     "caught_by_attackers": [
+      "security"
+     ],
+     "raw_failed_test_ids": [
+      "test_sec_tenant_isolation_guard",
+      "test_sec_negative_refund_wallet_inflation",
+      "test_state_double_settlement_idempotency_race"
+     ]
+    },
+    {
+     "mutant_id": "M3",
+     "title": "Off-by-one >= max_refundable blocking exact 100% full refunds",
+     "category": "edge_cases",
+     "description": "Replaced > with >= in validate_refund_limits, causing full refunds to be erroneously rejected.",
+     "diff_snippet": "- if refund_amount > max_refundable:\n+ if refund_amount >= max_refundable:",
+     "severity": "HIGH",
+     "caught": true,
+     "caught_by_test_ids": [
+      "test_edge_exact_full_refund_boundary"
+     ],
+     "caught_by_attackers": [
+      "edge_cases"
+     ],
+     "raw_failed_test_ids": [
+      "test_edge_exact_full_refund_boundary",
+      "test_sec_negative_refund_wallet_inflation",
+      "test_state_double_settlement_idempotency_race"
+     ]
+    },
+    {
+     "mutant_id": "M4",
+     "title": "Zero-amount transaction division by zero in fee calculator",
+     "category": "edge_cases",
+     "description": "Removed amount == 0 guard, causing ZeroDivisionError in legacy ratio calculation.",
+     "diff_snippet": "- if amount == 0:\n-     return 0.0\n+ val = 1.0 / amount",
+     "severity": "HIGH",
+     "caught": true,
+     "caught_by_test_ids": [
+      "test_edge_zero_amount_fee_calc"
+     ],
+     "caught_by_attackers": [
+      "edge_cases"
+     ],
+     "raw_failed_test_ids": [
+      "test_edge_zero_amount_fee_calc",
+      "test_sec_negative_refund_wallet_inflation",
+      "test_state_double_settlement_idempotency_race"
+     ]
+    },
+    {
+     "mutant_id": "M5",
+     "title": "Missing rollback of reserved hold when gateway throws timeout",
+     "category": "state",
+     "description": "Removed release_hold call inside except block, leaking unreleased funds in hold state.",
+     "diff_snippet": "- self.gateway.release_hold(hold_id)\n+ pass # hold leaked",
+     "severity": "HIGH",
+     "caught": true,
+     "caught_by_test_ids": [
+      "test_state_gateway_timeout_rollback"
+     ],
+     "caught_by_attackers": [
+      "state"
+     ],
+     "raw_failed_test_ids": [
+      "test_state_gateway_timeout_rollback",
+      "test_sec_negative_refund_wallet_inflation",
+      "test_state_double_settlement_idempotency_race"
+     ]
+    },
+    {
+     "mutant_id": "M6",
+     "title": "Dropped currency_iso field from V2 settlement receipt dict",
+     "category": "regression",
+     "description": "Omitted currency_iso from receipt dict, breaking downstream reporting schema.",
+     "diff_snippet": "- 'currency_iso': currency_iso,\n+ # dropped currency_iso field",
+     "severity": "MEDIUM",
+     "caught": true,
+     "caught_by_test_ids": [
+      "test_reg_receipt_schema_backward_compat"
+     ],
+     "caught_by_attackers": [
+      "unknown"
+     ],
+     "raw_failed_test_ids": [
+      "test_reg_receipt_schema_backward_compat",
+      "test_sec_negative_refund_wallet_inflation",
+      "test_state_double_settlement_idempotency_race"
+     ]
+    },
+    {
+     "mutant_id": "M7",
+     "title": "Changed fee basis points rounding from ROUND_HALF_EVEN to int truncation",
+     "category": "regression",
+     "description": "Replaced Decimal quantize Banker's rounding with int() floor truncation, leaking rounding drift.",
+     "diff_snippet": "- return val.quantize(Decimal('0.001'), rounding=ROUND_HALF_EVEN)\n+ return Decimal(int(val * 1000)) / Decimal(1000)",
+     "severity": "MEDIUM",
+     "caught": true,
+     "caught_by_test_ids": [
+      "test_reg_basis_points_bankers_rounding"
+     ],
+     "caught_by_attackers": [
+      "unknown"
+     ],
+     "raw_failed_test_ids": [
+      "test_reg_basis_points_bankers_rounding",
+      "test_sec_negative_refund_wallet_inflation",
+      "test_state_double_settlement_idempotency_race"
+     ]
+    },
+    {
+     "mutant_id": "M8",
+     "title": "Subtle clock-skew TTL expiration bypass on distributed shard failover",
+     "category": "state",
+     "description": "Off-by-one millisecond comparison on shard failover cache expiry when now_ms == token_expiry_ms.",
+     "diff_snippet": "- if now_ms > token_expiry_ms:\n+ if now_ms >= token_expiry_ms + 1000: # 1s drift window",
+     "severity": "HIGH",
+     "caught": false,
+     "caught_by_test_ids": [],
+     "caught_by_attackers": [],
+     "raw_failed_test_ids": [
+      "test_sec_negative_refund_wallet_inflation",
+      "test_state_double_settlement_idempotency_race"
+     ]
+    }
+   ],
+   "surviving_mutants": [
+    {
+     "mutant_id": "M8",
+     "title": "Subtle clock-skew TTL expiration bypass on distributed shard failover",
+     "category": "state",
+     "description": "Off-by-one millisecond comparison on shard failover cache expiry when now_ms == token_expiry_ms.",
+     "diff_snippet": "- if now_ms > token_expiry_ms:\n+ if now_ms >= token_expiry_ms + 1000: # 1s drift window",
+     "severity": "HIGH",
+     "caught": false,
+     "caught_by_test_ids": [],
+     "caught_by_attackers": [],
+     "raw_failed_test_ids": [
+      "test_sec_negative_refund_wallet_inflation",
+      "test_state_double_settlement_idempotency_race"
+     ]
+    }
+   ]
+  },
+  "message": "Deterministic Score: 7 of 8 planted bugs caught (87.5%) (Confirmed PR Defects: 3)."
+ },
+ {
+  "stage": "one_card_start",
+  "model": "gemini-4-argon",
+  "message": "Synthesizing One-Card Executive Summary grounded in deterministic verification scores..."
+ },
+ {
+  "stage": "one_card_synthesis",
+  "model": "gemini-4-argon",
+  "one_card_summary": {
+   "headline_verdict": "REJECT_RECOMMENDED",
+   "residual_risk_level": "HIGH",
+   "one_line_takeaway": "PR introduces two critical vulnerabilities (negative refund wallet balance inflation and double settlement idempotency race) and leaves a distributed clock-skew race untested.",
+   "finding_highlights": [
+    "CRITICAL: Negative refund amounts bypass remaining_refundable upper-bound check, inflating user wallet balances and debiting merchant accounts.",
+    "HIGH: TOCTOU race condition during PENDING_SETTLEMENT state allows concurrent retries with identical idempotency keys to execute double ledger deductions.",
+    "VERIFICATION BENCHMARK: 7 of 8 planted bugs caught (87.5%) \u2014 verifier demonstrated high sensitivity across security, edge-case, and schema regression mutants.",
+    "UNCAUGHT MUTANT (M8): Shard failover clock-skew TTL expiration escaped test coverage; review distributed Redis token synchronization."
+   ],
+   "blind_spot_explanation": "Mutant M8 (distributed shard failover TTL boundary when now_ms == token_expiry_ms) survived because the generated test suite does not mock cross-shard clock-skew transitions. If merged, an attacker could potentially replay settlement tokens during shard failover within a 1-second drift window.",
+   "recommended_fix_snippet": "# Recommended Fix in acme_pay/ledger_core.py:\ndef settle_refund(self, charge_id: str, refund_amount: float, idempotency_key: str) -> dict:\n    charge = self.db.get_charge(charge_id)\n    # FIX 1: Explicitly validate positive non-zero refund amount\n    if refund_amount <= 0:\n        raise ValueError(f\"Refund amount must be strictly positive, got {refund_amount}\")\n    if refund_amount > charge.remaining_refundable:\n        raise ValueError(f\"Refund {refund_amount} exceeds maximum refundable {charge.remaining_refundable}\")\n\n    # FIX 2: Use atomic SETNX/distributed lock for idempotency transition\n    with self.cache.distributed_lock(f\"lock:{idempotency_key}\", timeout=10):\n        cached_state = self.cache.get(f\"idempotency:{idempotency_key}\")\n        if cached_state in (\"PENDING_SETTLEMENT\", \"SETTLED\"):\n            return self.cache.get(f\"receipt:{idempotency_key}\")\n        self.cache.set(f\"idempotency:{idempotency_key}\", \"PENDING_SETTLEMENT\", ttl=60)\n        self.db.adjust_wallet_balance(charge.user_id, +refund_amount)\n        self.db.adjust_merchant_balance(charge.merchant_id, -refund_amount)\n"
+  },
+  "final_response": {
+   "run_id": "run_6110034a2bb5",
+   "pr_id": "pr-checkout-race",
+   "pr_title": "PR #412: AI-Generated Instant Refund & Partial Wallet Settlement",
+   "repo_name": "acme-pay/ledger-core",
+   "author": "devin-bot[ai]",
+   "phase_mode": "phase1_mvp",
+   "guardrail": {
+    "is_safe": true,
+    "risk_level": "SAFE",
+    "detected_threats": [],
+    "sanitized_summary": "No prompt injection, instruction override, or exfiltration payloads detected in diff or comments.",
+    "latency_ms": 68
+   },
+   "scope_triage": {
+    "scope_mode": "SINGLE_FILE_UNIT",
+    "selection_source": "agent_auto",
+    "primary_target_file": "acme_pay/ledger_core.py",
+    "mounted_files": [
+     "acme_pay/ledger_core.py"
+    ],
+    "skipped_heavy_paths": [
+     "migrations/*.sql (4.2MB)",
+     "frontend/dist/* (12.8MB)",
+     "poetry.lock (1.4MB)"
+    ],
+    "estimated_mount_size_kb": 9.2,
+    "rationale": "Target module ledger_core.py is self-contained with in-memory mocks for DB/cache/gateway; full repo tree and static assets skipped for fast isolated unit red-teaming."
+   },
+   "invariant_plan": {
+    "pr_summary": "Introduces instant refunds and partial balance settlement to ledger-core. Validates refund amounts, idempotency keys, and updates ledger balances.",
+    "invariants": [
+     {
+      "id": "INV-1",
+      "category": "security",
+      "title": "Balance Conservation & Non-Negative Refund Amount",
+      "formal_assertion": "assert refund_amount > 0 and new_wallet_balance <= original_charge",
+      "target_function": "settle_refund"
+     },
+     {
+      "id": "INV-2",
+      "category": "security",
+      "title": "HMAC Signature Verification & Multi-Tenant Isolation",
+      "formal_assertion": "assert verify_hmac(payload, sig) and account.tenant_id == request.tenant_id",
+      "target_function": "handle_refund_webhook"
+     },
+     {
+      "id": "INV-3",
+      "category": "state",
+      "title": "Idempotency State Consistency Under Concurrent Settling",
+      "formal_assertion": "assert ledger_deductions_count == 1 for identical idempotency_key",
+      "target_function": "settle_refund"
+     },
+     {
+      "id": "INV-4",
+      "category": "edge_cases",
+      "title": "Exact 100% Full Refund Boundary Equivalence",
+      "formal_assertion": "assert refund_amount <= remaining_refundable and remaining_refundable >= 0",
+      "target_function": "validate_refund_limits"
+     },
+     {
+      "id": "INV-5",
+      "category": "edge_cases",
+      "title": "Zero-Amount Transaction Safe Fee Calculation",
+      "formal_assertion": "assert calculate_settlement_fee(0, rate) == 0 without ZeroDivisionError",
+      "target_function": "calculate_settlement_fee"
+     },
+     {
+      "id": "INV-6",
+      "category": "state",
+      "title": "Atomic Rollback of Reserved Hold on Gateway Timeout",
+      "formal_assertion": "assert hold_status == 'RELEASED' when gateway.settle_hold() raises TimeoutError",
+      "target_function": "reserve_and_settle"
+     },
+     {
+      "id": "INV-7",
+      "category": "regression",
+      "title": "V2 Settlement Receipt Schema Backward Compatibility",
+      "formal_assertion": "assert 'currency_iso' in receipt and receipt['status'] == 'SETTLED'",
+      "target_function": "generate_receipt"
+     },
+     {
+      "id": "INV-8",
+      "category": "regression",
+      "title": "Banker's Rounding Preservation on Fee Basis Points",
+      "formal_assertion": "assert compute_basis_points(125, 3) == Decimal('0.125') using ROUND_HALF_EVEN",
+      "target_function": "compute_basis_points"
+     }
+    ],
+    "attack_plans": [
+     {
+      "attacker_id": "security",
+      "attacker_name": "Security & Invariant Attacker (gemini-3.8-flash)",
+      "focus_invariants": [
+       "INV-1",
+       "INV-2"
+      ],
+      "strategy": "Fuzz refund amounts with negative numbers and forged webhook signatures / cross-tenant account IDs."
+     },
+     {
+      "attacker_id": "edge_cases",
+      "attacker_name": "Edge-Case Boundary Attacker (gemini-3.8-flash)",
+      "focus_invariants": [
+       "INV-4",
+       "INV-5"
+      ],
+      "strategy": "Exercise boundary conditions at exact max refundable balance, zero amounts, and precision limits."
+     },
+     {
+      "attacker_id": "state",
+      "attacker_name": "State & Concurrency Attacker (gemini-3.8-flash)",
+      "focus_invariants": [
+       "INV-3",
+       "INV-6"
+      ],
+      "strategy": "Simulate concurrent retries while state is PENDING_SETTLEMENT and inject gateway timeout exceptions."
+     },
+     {
+      "attacker_id": "regression",
+      "attacker_name": "Regression & Contract Attacker (gemini-3.8-flash)",
+      "focus_invariants": [
+       "INV-7",
+       "INV-8"
+      ],
+      "strategy": "Verify V1/V2 settlement receipt dict schema and Banker's rounding on fractional fee basis points."
+     }
+    ]
+   },
+   "swarm_outputs": [
+    {
+     "attacker_id": "security",
+     "tests": [
+      {
+       "test_id": "test_sec_negative_refund_wallet_inflation",
+       "attacker_id": "security",
+       "target_invariant_id": "INV-1",
+       "description": "Passes negative refund amount (-50.00). Verifies whether wallet balance is incorrectly inflated.",
+       "pytest_code": "def test_sec_negative_refund_wallet_inflation(ledger_core):\n    # Attempt refund of -50.00\n    res = ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')\n    user = ledger_core.db.get_user('usr_1')\n    assert user.balance <= 100.0, f\"Balance inflated to {user.balance} via negative refund!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 3,
+       "breached_on_attempt": 3,
+       "attempt_history": [
+        {
+         "attempt_num": 1,
+         "attack_hypothesis": "Probe direct over-refund above original charge (refund_amount=250.0 > 100.0)",
+         "payload_snippet": "ledger_core.settle_refund('ch_123', 250.0, 'ik_over_1')",
+         "sandbox_observation": "BLOCKED: ValueError('Refund 250.0 exceeds maximum refundable 100.0')",
+         "status": "BLOCKED"
+        },
+        {
+         "attempt_num": 2,
+         "attack_hypothesis": "Probe cumulative two-step partial refund exceeding ceiling (60.0 + 60.0)",
+         "payload_snippet": "ledger_core.settle_refund('ch_123', 60.0, 'ik_p1'); ledger_core.settle_refund('ch_123', 60.0, 'ik_p2')",
+         "sandbox_observation": "BLOCKED: ValueError('Refund 60.0 exceeds maximum refundable 40.0')",
+         "status": "BLOCKED"
+        },
+        {
+         "attempt_num": 3,
+         "attack_hypothesis": "Invert sign to negative refund (-50.0) to bypass upper-bound '>' check and credit wallet",
+         "payload_snippet": "ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')",
+         "sandbox_observation": "BREACHED: -50.0 <= 100.0 bypassed guard! User wallet inflated from 100.0 -> 150.0 (2/2 Repro Confirmed)",
+         "status": "BREACHED"
+        }
+       ]
+      },
+      {
+       "test_id": "test_sec_webhook_hmac_verification",
+       "attacker_id": "security",
+       "target_invariant_id": "INV-2",
+       "description": "Sends webhook with forged signature. Must reject with False.",
+       "pytest_code": "def test_sec_webhook_hmac_verification(ledger_core):\n    ok = ledger_core.handle_refund_webhook(b'{\"refund_id\": \"r1\"}', 'forged_sig', 'tenant_a', 'acc_1')\n    assert ok is False, \"Forged HMAC signature was accepted!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      },
+      {
+       "test_id": "test_sec_tenant_isolation_guard",
+       "attacker_id": "security",
+       "target_invariant_id": "INV-2",
+       "description": "Attempts cross-tenant refund access with account belonging to tenant_b from tenant_a.",
+       "pytest_code": "def test_sec_tenant_isolation_guard(ledger_core):\n    ok = ledger_core.handle_refund_webhook(b'{}', valid_sig, 'tenant_a', 'acc_belonging_to_b')\n    assert ok is False, \"Cross-tenant access allowed!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      }
+     ]
+    },
+    {
+     "attacker_id": "edge_cases",
+     "tests": [
+      {
+       "test_id": "test_edge_float_rounding_jitter",
+       "attacker_id": "edge_cases",
+       "target_invariant_id": "INV-4",
+       "description": "Checks float division precision jitter under microsecond timestamp interleaving.",
+       "pytest_code": "def test_edge_float_rounding_jitter(ledger_core):\n    # Microsecond float jitter test\n    assert float_math(0.1 + 0.2) == 0.3\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      },
+      {
+       "test_id": "test_edge_exact_full_refund_boundary",
+       "attacker_id": "edge_cases",
+       "target_invariant_id": "INV-4",
+       "description": "Executes exact 100% full refund (refund_amount == max_refundable). Must be allowed.",
+       "pytest_code": "def test_edge_exact_full_refund_boundary(ledger_core):\n    allowed = ledger_core.validate_refund_limits(100.0, 100.0)\n    assert allowed is True, \"Exact 100% full refund was rejected!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      },
+      {
+       "test_id": "test_edge_zero_amount_fee_calc",
+       "attacker_id": "edge_cases",
+       "target_invariant_id": "INV-5",
+       "description": "Calls calculate_settlement_fee with amount=0.0. Must return 0.0 without ZeroDivisionError.",
+       "pytest_code": "def test_edge_zero_amount_fee_calc(ledger_core):\n    fee = ledger_core.calculate_settlement_fee(0.0, 0.029)\n    assert fee == 0.0, f\"Expected 0.0 fee for zero amount, got {fee}\"\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      }
+     ]
+    },
+    {
+     "attacker_id": "state",
+     "tests": [
+      {
+       "test_id": "test_state_double_settlement_idempotency_race",
+       "attacker_id": "state",
+       "target_invariant_id": "INV-3",
+       "description": "Sends concurrent duplicate settlements while status is PENDING_SETTLEMENT. Must not double-deduct.",
+       "pytest_code": "def test_state_double_settlement_idempotency_race(ledger_core):\n    # Simulate concurrent retry while first call is in flight\n    ledger_core.cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT')\n    res = ledger_core.settle_refund('ch_123', 50.0, 'ik_race')\n    assert ledger_core.db.deductions_count == 1, \"Double deduction occurred during PENDING state!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 2,
+       "breached_on_attempt": 2,
+       "attempt_history": [
+        {
+         "attempt_num": 1,
+         "attack_hypothesis": "Replay identical idempotency_key sequentially after status reaches SETTLED",
+         "payload_snippet": "settle_refund('ch_123', 50.0, 'ik_seq'); settle_refund('ch_123', 50.0, 'ik_seq')",
+         "sandbox_observation": "BLOCKED: Cached SETTLED receipt returned without second ledger deduction",
+         "status": "BLOCKED"
+        },
+        {
+         "attempt_num": 2,
+         "attack_hypothesis": "Inject concurrent retry while status is in-flight ('PENDING_SETTLEMENT') before commit",
+         "payload_snippet": "cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT'); settle_refund('ch_123', 50.0, 'ik_race')",
+         "sandbox_observation": "BREACHED: Guard only checks status == 'SETTLED'! Second ledger deduction executed during PENDING window (2/2 Repro Confirmed)",
+         "status": "BREACHED"
+        }
+       ]
+      },
+      {
+       "test_id": "test_state_gateway_timeout_rollback",
+       "attacker_id": "state",
+       "target_invariant_id": "INV-6",
+       "description": "Simulates upstream payment gateway TimeoutError and verifies held funds are released.",
+       "pytest_code": "def test_state_gateway_timeout_rollback(ledger_core):\n    try:\n        ledger_core.reserve_and_settle('ch_timeout', 100.0)\n    except TimeoutError:\n        pass\n    assert ledger_core.gateway.hold_status == 'RELEASED', \"Gateway hold was not released upon timeout!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      }
+     ]
+    }
+   ],
+   "sandbox_report": {
+    "sandbox_agent": "antigravity-preview-09-2026",
+    "environment_id": "env_remote_94827",
+    "execution_mode": "recorded_sandbox_replay",
+    "script_command": "python /workspace/harness/run_dual_track_verification.py --phase phase2_full",
+    "pr_test_results": [
+     {
+      "test_id": "test_sec_negative_refund_wallet_inflation",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-1",
+      "run_1_passed": false,
+      "run_2_passed": false,
+      "reproduced_twice": true,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Balance inflated to 150.0 via negative refund! settle_refund(-50.0) bypassed remaining_refundable check and credited wallet.",
+      "duration_ms": 45,
+      "max_attempts": 5,
+      "attempts_used": 3,
+      "breached_on_attempt": 3,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Probe direct over-refund above original charge (refund_amount=250.0 > 100.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 250.0, 'ik_over_1')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 250.0 exceeds maximum refundable 100.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Probe cumulative two-step partial refund exceeding ceiling (60.0 + 60.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 60.0, 'ik_p1'); ledger_core.settle_refund('ch_123', 60.0, 'ik_p2')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 60.0 exceeds maximum refundable 40.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 3,
+        "attack_hypothesis": "Invert sign to negative refund (-50.0) to bypass upper-bound '>' check and credit wallet",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')",
+        "sandbox_observation": "BREACHED: -50.0 <= 100.0 bypassed guard! User wallet inflated from 100.0 -> 150.0 (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_state_double_settlement_idempotency_race",
+      "attacker_id": "state",
+      "target_invariant_id": "INV-3",
+      "run_1_passed": false,
+      "run_2_passed": false,
+      "reproduced_twice": true,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Double deduction occurred during PENDING state! Retry with same idempotency_key executed second ledger deduction before SETTLED status.",
+      "duration_ms": 52,
+      "max_attempts": 5,
+      "attempts_used": 2,
+      "breached_on_attempt": 2,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Replay identical idempotency_key sequentially after status reaches SETTLED",
+        "payload_snippet": "settle_refund('ch_123', 50.0, 'ik_seq'); settle_refund('ch_123', 50.0, 'ik_seq')",
+        "sandbox_observation": "BLOCKED: Cached SETTLED receipt returned without second ledger deduction",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Inject concurrent retry while status is in-flight ('PENDING_SETTLEMENT') before commit",
+        "payload_snippet": "cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT'); settle_refund('ch_123', 50.0, 'ik_race')",
+        "sandbox_observation": "BREACHED: Guard only checks status == 'SETTLED'! Second ledger deduction executed during PENDING window (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_edge_float_rounding_jitter",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-4",
+      "run_1_passed": false,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Microsecond float jitter (0.30000000000000004 != 0.3) on run 1; passed cleanly on rerun 2. [FILTERED AS FLAKY]",
+      "duration_ms": 28,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_sec_webhook_hmac_verification",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-2",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 31,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_sec_tenant_isolation_guard",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-2",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 34,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_edge_exact_full_refund_boundary",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-4",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 29,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_edge_zero_amount_fee_calc",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-5",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 26,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_state_gateway_timeout_rollback",
+      "attacker_id": "state",
+      "target_invariant_id": "INV-6",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 48,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_reg_receipt_schema_backward_compat",
+      "attacker_id": "regression",
+      "target_invariant_id": "INV-7",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 25,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_reg_basis_points_bankers_rounding",
+      "attacker_id": "regression",
+      "target_invariant_id": "INV-8",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 27,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     }
+    ],
+    "mutant_matrix": {
+     "M1": {
+      "test_sec_webhook_hmac_verification": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M2": {
+      "test_sec_tenant_isolation_guard": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M3": {
+      "test_edge_exact_full_refund_boundary": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M4": {
+      "test_edge_zero_amount_fee_calc": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M5": {
+      "test_state_gateway_timeout_rollback": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M6": {
+      "test_reg_receipt_schema_backward_compat": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M7": {
+      "test_reg_basis_points_bankers_rounding": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true
+     },
+     "M8": {
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_edge_float_rounding_jitter": true,
+      "test_state_double_settlement_idempotency_race": false
+     }
+    },
+    "sandbox_stdout_logs": [
+     "[antigravity-sandbox:2026-10-16T11:40:01Z] Initializing isolated Linux container env_remote_94827...",
+     "[antigravity-sandbox:2026-10-16T11:40:02Z] Mounting workspace /workspace/acme-pay/ledger-core (commit c8e19a4)...",
+     "[antigravity-sandbox:2026-10-16T11:40:02Z] Information Wall Active: Planner and Bug Planter ran with isolated context (store=False).",
+     "[antigravity-sandbox:2026-10-16T11:40:03Z] TRACK (a): Executing 10 swarm tests against unmutated PR code...",
+     "[antigravity-sandbox:2026-10-16T11:40:03Z]   test_sec_negative_refund_wallet_inflation ... FAILED (run 1/2)",
+     "[antigravity-sandbox:2026-10-16T11:40:04Z]   REPRO RETRY: test_sec_negative_refund_wallet_inflation ... FAILED (run 2/2) [CONFIRMED REPRODUCIBLE 2/2]",
+     "[antigravity-sandbox:2026-10-16T11:40:04Z]   test_state_double_settlement_idempotency_race ... FAILED (run 1/2)",
+     "[antigravity-sandbox:2026-10-16T11:40:05Z]   REPRO RETRY: test_state_double_settlement_idempotency_race ... FAILED (run 2/2) [CONFIRMED REPRODUCIBLE 2/2]",
+     "[antigravity-sandbox:2026-10-16T11:40:05Z]   test_edge_float_rounding_jitter ... FAILED (run 1/2)",
+     "[antigravity-sandbox:2026-10-16T11:40:06Z]   REPRO RETRY: test_edge_float_rounding_jitter ... PASSED (run 2/2) [FLAKY FILTERED OUT]",
+     "[antigravity-sandbox:2026-10-16T11:40:06Z]   7 baseline invariant tests PASSED 2/2 runs on original PR code.",
+     "[antigravity-sandbox:2026-10-16T11:40:07Z] TRACK (b): Spawning 8 shadow mutant containers M1..M8...",
+     "[antigravity-sandbox:2026-10-16T11:40:07Z]   Running against M1 (hmac_bypass) -> test_sec_webhook_hmac_verification FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:08Z]   Running against M2 (tenant_lookup) -> test_sec_tenant_isolation_guard FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:08Z]   Running against M3 (off_by_one_refund) -> test_edge_exact_full_refund_boundary FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:09Z]   Running against M4 (zero_fee_div0) -> test_edge_zero_amount_fee_calc FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:09Z]   Running against M5 (gateway_timeout_leak) -> test_state_gateway_timeout_rollback FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:10Z]   Running against M6 (receipt_schema_drop) -> test_reg_receipt_schema_backward_compat FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:10Z]   Running against M7 (fee_truncation) -> test_reg_basis_points_bankers_rounding FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:11Z]   Running against M8 (clock_skew_ttl) -> all 7 tests passed -> SURVIVED (UNCAUGHT)",
+     "[antigravity-sandbox:2026-10-16T11:40:11Z] Python Deterministic Scoring: 7 of 8 planted bugs caught (87.5%)."
+    ]
+   },
+   "deterministic_score": {
+    "total_tests_generated": 10,
+    "valid_baseline_tests": 7,
+    "confirmed_pr_failures_count": 3,
+    "flaky_filtered_count": 0,
+    "confirmed_pr_failures": [
+     {
+      "test_id": "test_sec_negative_refund_wallet_inflation",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-1",
+      "run_1_passed": false,
+      "run_2_passed": false,
+      "reproduced_twice": true,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Balance inflated to 150.0 via negative refund! settle_refund(-50.0) bypassed remaining_refundable check and credited wallet.",
+      "duration_ms": 45,
+      "max_attempts": 5,
+      "attempts_used": 3,
+      "breached_on_attempt": 3,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Probe direct over-refund above original charge (refund_amount=250.0 > 100.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 250.0, 'ik_over_1')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 250.0 exceeds maximum refundable 100.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Probe cumulative two-step partial refund exceeding ceiling (60.0 + 60.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 60.0, 'ik_p1'); ledger_core.settle_refund('ch_123', 60.0, 'ik_p2')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 60.0 exceeds maximum refundable 40.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 3,
+        "attack_hypothesis": "Invert sign to negative refund (-50.0) to bypass upper-bound '>' check and credit wallet",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')",
+        "sandbox_observation": "BREACHED: -50.0 <= 100.0 bypassed guard! User wallet inflated from 100.0 -> 150.0 (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_state_double_settlement_idempotency_race",
+      "attacker_id": "state",
+      "target_invariant_id": "INV-3",
+      "run_1_passed": false,
+      "run_2_passed": false,
+      "reproduced_twice": true,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Double deduction occurred during PENDING state! Retry with same idempotency_key executed second ledger deduction before SETTLED status.",
+      "duration_ms": 52,
+      "max_attempts": 5,
+      "attempts_used": 2,
+      "breached_on_attempt": 2,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Replay identical idempotency_key sequentially after status reaches SETTLED",
+        "payload_snippet": "settle_refund('ch_123', 50.0, 'ik_seq'); settle_refund('ch_123', 50.0, 'ik_seq')",
+        "sandbox_observation": "BLOCKED: Cached SETTLED receipt returned without second ledger deduction",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Inject concurrent retry while status is in-flight ('PENDING_SETTLEMENT') before commit",
+        "payload_snippet": "cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT'); settle_refund('ch_123', 50.0, 'ik_race')",
+        "sandbox_observation": "BREACHED: Guard only checks status == 'SETTLED'! Second ledger deduction executed during PENDING window (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_edge_float_rounding_jitter",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-4",
+      "run_1_passed": false,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Microsecond float jitter (0.30000000000000004 != 0.3) on run 1; passed cleanly on rerun 2. [FILTERED AS FLAKY]",
+      "duration_ms": 28,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     }
+    ],
+    "planted_bugs_total": 8,
+    "planted_bugs_caught": 7,
+    "detection_score_pct": 87.5,
+    "detection_score_label": "7 of 8 planted bugs caught (87.5%)",
+    "mutant_evaluations": [
+     {
+      "mutant_id": "M1",
+      "title": "Removed HMAC signature check on webhook callback",
+      "category": "security",
+      "description": "Replaced compare_digest with always-true check, allowing unauthenticated attackers to trigger fake refund callbacks.",
+      "diff_snippet": "- if not hmac.compare_digest(expected, signature):\n+ if False:",
+      "severity": "CRITICAL",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_sec_webhook_hmac_verification"
+      ],
+      "caught_by_attackers": [
+       "security"
+      ],
+      "raw_failed_test_ids": [
+       "test_sec_webhook_hmac_verification",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M2",
+      "title": "Cross-tenant account_id lookup missing owner match",
+      "category": "security",
+      "description": "Commented out account.tenant_id == tenant_id guard, exposing cross-tenant account queries.",
+      "diff_snippet": "- if account.tenant_id != tenant_id:\n+ if False and account.tenant_id != tenant_id:",
+      "severity": "CRITICAL",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_sec_tenant_isolation_guard"
+      ],
+      "caught_by_attackers": [
+       "security"
+      ],
+      "raw_failed_test_ids": [
+       "test_sec_tenant_isolation_guard",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M3",
+      "title": "Off-by-one >= max_refundable blocking exact 100% full refunds",
+      "category": "edge_cases",
+      "description": "Replaced > with >= in validate_refund_limits, causing full refunds to be erroneously rejected.",
+      "diff_snippet": "- if refund_amount > max_refundable:\n+ if refund_amount >= max_refundable:",
+      "severity": "HIGH",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_edge_exact_full_refund_boundary"
+      ],
+      "caught_by_attackers": [
+       "edge_cases"
+      ],
+      "raw_failed_test_ids": [
+       "test_edge_exact_full_refund_boundary",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M4",
+      "title": "Zero-amount transaction division by zero in fee calculator",
+      "category": "edge_cases",
+      "description": "Removed amount == 0 guard, causing ZeroDivisionError in legacy ratio calculation.",
+      "diff_snippet": "- if amount == 0:\n-     return 0.0\n+ val = 1.0 / amount",
+      "severity": "HIGH",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_edge_zero_amount_fee_calc"
+      ],
+      "caught_by_attackers": [
+       "edge_cases"
+      ],
+      "raw_failed_test_ids": [
+       "test_edge_zero_amount_fee_calc",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M5",
+      "title": "Missing rollback of reserved hold when gateway throws timeout",
+      "category": "state",
+      "description": "Removed release_hold call inside except block, leaking unreleased funds in hold state.",
+      "diff_snippet": "- self.gateway.release_hold(hold_id)\n+ pass # hold leaked",
+      "severity": "HIGH",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_state_gateway_timeout_rollback"
+      ],
+      "caught_by_attackers": [
+       "state"
+      ],
+      "raw_failed_test_ids": [
+       "test_state_gateway_timeout_rollback",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M6",
+      "title": "Dropped currency_iso field from V2 settlement receipt dict",
+      "category": "regression",
+      "description": "Omitted currency_iso from receipt dict, breaking downstream reporting schema.",
+      "diff_snippet": "- 'currency_iso': currency_iso,\n+ # dropped currency_iso field",
+      "severity": "MEDIUM",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_reg_receipt_schema_backward_compat"
+      ],
+      "caught_by_attackers": [
+       "unknown"
+      ],
+      "raw_failed_test_ids": [
+       "test_reg_receipt_schema_backward_compat",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M7",
+      "title": "Changed fee basis points rounding from ROUND_HALF_EVEN to int truncation",
+      "category": "regression",
+      "description": "Replaced Decimal quantize Banker's rounding with int() floor truncation, leaking rounding drift.",
+      "diff_snippet": "- return val.quantize(Decimal('0.001'), rounding=ROUND_HALF_EVEN)\n+ return Decimal(int(val * 1000)) / Decimal(1000)",
+      "severity": "MEDIUM",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_reg_basis_points_bankers_rounding"
+      ],
+      "caught_by_attackers": [
+       "unknown"
+      ],
+      "raw_failed_test_ids": [
+       "test_reg_basis_points_bankers_rounding",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M8",
+      "title": "Subtle clock-skew TTL expiration bypass on distributed shard failover",
+      "category": "state",
+      "description": "Off-by-one millisecond comparison on shard failover cache expiry when now_ms == token_expiry_ms.",
+      "diff_snippet": "- if now_ms > token_expiry_ms:\n+ if now_ms >= token_expiry_ms + 1000: # 1s drift window",
+      "severity": "HIGH",
+      "caught": false,
+      "caught_by_test_ids": [],
+      "caught_by_attackers": [],
+      "raw_failed_test_ids": [
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     }
+    ],
+    "surviving_mutants": [
+     {
+      "mutant_id": "M8",
+      "title": "Subtle clock-skew TTL expiration bypass on distributed shard failover",
+      "category": "state",
+      "description": "Off-by-one millisecond comparison on shard failover cache expiry when now_ms == token_expiry_ms.",
+      "diff_snippet": "- if now_ms > token_expiry_ms:\n+ if now_ms >= token_expiry_ms + 1000: # 1s drift window",
+      "severity": "HIGH",
+      "caught": false,
+      "caught_by_test_ids": [],
+      "caught_by_attackers": [],
+      "raw_failed_test_ids": [
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     }
+    ]
+   },
+   "one_card_summary": {
+    "headline_verdict": "REJECT_RECOMMENDED",
+    "residual_risk_level": "HIGH",
+    "one_line_takeaway": "PR introduces two critical vulnerabilities (negative refund wallet balance inflation and double settlement idempotency race) and leaves a distributed clock-skew race untested.",
+    "finding_highlights": [
+     "CRITICAL: Negative refund amounts bypass remaining_refundable upper-bound check, inflating user wallet balances and debiting merchant accounts.",
+     "HIGH: TOCTOU race condition during PENDING_SETTLEMENT state allows concurrent retries with identical idempotency keys to execute double ledger deductions.",
+     "VERIFICATION BENCHMARK: 7 of 8 planted bugs caught (87.5%) \u2014 verifier demonstrated high sensitivity across security, edge-case, and schema regression mutants.",
+     "UNCAUGHT MUTANT (M8): Shard failover clock-skew TTL expiration escaped test coverage; review distributed Redis token synchronization."
+    ],
+    "blind_spot_explanation": "Mutant M8 (distributed shard failover TTL boundary when now_ms == token_expiry_ms) survived because the generated test suite does not mock cross-shard clock-skew transitions. If merged, an attacker could potentially replay settlement tokens during shard failover within a 1-second drift window.",
+    "recommended_fix_snippet": "# Recommended Fix in acme_pay/ledger_core.py:\ndef settle_refund(self, charge_id: str, refund_amount: float, idempotency_key: str) -> dict:\n    charge = self.db.get_charge(charge_id)\n    # FIX 1: Explicitly validate positive non-zero refund amount\n    if refund_amount <= 0:\n        raise ValueError(f\"Refund amount must be strictly positive, got {refund_amount}\")\n    if refund_amount > charge.remaining_refundable:\n        raise ValueError(f\"Refund {refund_amount} exceeds maximum refundable {charge.remaining_refundable}\")\n\n    # FIX 2: Use atomic SETNX/distributed lock for idempotency transition\n    with self.cache.distributed_lock(f\"lock:{idempotency_key}\", timeout=10):\n        cached_state = self.cache.get(f\"idempotency:{idempotency_key}\")\n        if cached_state in (\"PENDING_SETTLEMENT\", \"SETTLED\"):\n            return self.cache.get(f\"receipt:{idempotency_key}\")\n        self.cache.set(f\"idempotency:{idempotency_key}\", \"PENDING_SETTLEMENT\", ttl=60)\n        self.db.adjust_wallet_balance(charge.user_id, +refund_amount)\n        self.db.adjust_merchant_balance(charge.merchant_id, -refund_amount)\n"
+   },
+   "self_healing_patch": null
+  },
+  "message": "One-Card Summary synthesized successfully."
+ },
+ {
+  "stage": "done",
+  "run_id": "run_6110034a2bb5",
+  "final_response": {
+   "run_id": "run_6110034a2bb5",
+   "pr_id": "pr-checkout-race",
+   "pr_title": "PR #412: AI-Generated Instant Refund & Partial Wallet Settlement",
+   "repo_name": "acme-pay/ledger-core",
+   "author": "devin-bot[ai]",
+   "phase_mode": "phase1_mvp",
+   "guardrail": {
+    "is_safe": true,
+    "risk_level": "SAFE",
+    "detected_threats": [],
+    "sanitized_summary": "No prompt injection, instruction override, or exfiltration payloads detected in diff or comments.",
+    "latency_ms": 68
+   },
+   "scope_triage": {
+    "scope_mode": "SINGLE_FILE_UNIT",
+    "selection_source": "agent_auto",
+    "primary_target_file": "acme_pay/ledger_core.py",
+    "mounted_files": [
+     "acme_pay/ledger_core.py"
+    ],
+    "skipped_heavy_paths": [
+     "migrations/*.sql (4.2MB)",
+     "frontend/dist/* (12.8MB)",
+     "poetry.lock (1.4MB)"
+    ],
+    "estimated_mount_size_kb": 9.2,
+    "rationale": "Target module ledger_core.py is self-contained with in-memory mocks for DB/cache/gateway; full repo tree and static assets skipped for fast isolated unit red-teaming."
+   },
+   "invariant_plan": {
+    "pr_summary": "Introduces instant refunds and partial balance settlement to ledger-core. Validates refund amounts, idempotency keys, and updates ledger balances.",
+    "invariants": [
+     {
+      "id": "INV-1",
+      "category": "security",
+      "title": "Balance Conservation & Non-Negative Refund Amount",
+      "formal_assertion": "assert refund_amount > 0 and new_wallet_balance <= original_charge",
+      "target_function": "settle_refund"
+     },
+     {
+      "id": "INV-2",
+      "category": "security",
+      "title": "HMAC Signature Verification & Multi-Tenant Isolation",
+      "formal_assertion": "assert verify_hmac(payload, sig) and account.tenant_id == request.tenant_id",
+      "target_function": "handle_refund_webhook"
+     },
+     {
+      "id": "INV-3",
+      "category": "state",
+      "title": "Idempotency State Consistency Under Concurrent Settling",
+      "formal_assertion": "assert ledger_deductions_count == 1 for identical idempotency_key",
+      "target_function": "settle_refund"
+     },
+     {
+      "id": "INV-4",
+      "category": "edge_cases",
+      "title": "Exact 100% Full Refund Boundary Equivalence",
+      "formal_assertion": "assert refund_amount <= remaining_refundable and remaining_refundable >= 0",
+      "target_function": "validate_refund_limits"
+     },
+     {
+      "id": "INV-5",
+      "category": "edge_cases",
+      "title": "Zero-Amount Transaction Safe Fee Calculation",
+      "formal_assertion": "assert calculate_settlement_fee(0, rate) == 0 without ZeroDivisionError",
+      "target_function": "calculate_settlement_fee"
+     },
+     {
+      "id": "INV-6",
+      "category": "state",
+      "title": "Atomic Rollback of Reserved Hold on Gateway Timeout",
+      "formal_assertion": "assert hold_status == 'RELEASED' when gateway.settle_hold() raises TimeoutError",
+      "target_function": "reserve_and_settle"
+     },
+     {
+      "id": "INV-7",
+      "category": "regression",
+      "title": "V2 Settlement Receipt Schema Backward Compatibility",
+      "formal_assertion": "assert 'currency_iso' in receipt and receipt['status'] == 'SETTLED'",
+      "target_function": "generate_receipt"
+     },
+     {
+      "id": "INV-8",
+      "category": "regression",
+      "title": "Banker's Rounding Preservation on Fee Basis Points",
+      "formal_assertion": "assert compute_basis_points(125, 3) == Decimal('0.125') using ROUND_HALF_EVEN",
+      "target_function": "compute_basis_points"
+     }
+    ],
+    "attack_plans": [
+     {
+      "attacker_id": "security",
+      "attacker_name": "Security & Invariant Attacker (gemini-3.8-flash)",
+      "focus_invariants": [
+       "INV-1",
+       "INV-2"
+      ],
+      "strategy": "Fuzz refund amounts with negative numbers and forged webhook signatures / cross-tenant account IDs."
+     },
+     {
+      "attacker_id": "edge_cases",
+      "attacker_name": "Edge-Case Boundary Attacker (gemini-3.8-flash)",
+      "focus_invariants": [
+       "INV-4",
+       "INV-5"
+      ],
+      "strategy": "Exercise boundary conditions at exact max refundable balance, zero amounts, and precision limits."
+     },
+     {
+      "attacker_id": "state",
+      "attacker_name": "State & Concurrency Attacker (gemini-3.8-flash)",
+      "focus_invariants": [
+       "INV-3",
+       "INV-6"
+      ],
+      "strategy": "Simulate concurrent retries while state is PENDING_SETTLEMENT and inject gateway timeout exceptions."
+     },
+     {
+      "attacker_id": "regression",
+      "attacker_name": "Regression & Contract Attacker (gemini-3.8-flash)",
+      "focus_invariants": [
+       "INV-7",
+       "INV-8"
+      ],
+      "strategy": "Verify V1/V2 settlement receipt dict schema and Banker's rounding on fractional fee basis points."
+     }
+    ]
+   },
+   "swarm_outputs": [
+    {
+     "attacker_id": "security",
+     "tests": [
+      {
+       "test_id": "test_sec_negative_refund_wallet_inflation",
+       "attacker_id": "security",
+       "target_invariant_id": "INV-1",
+       "description": "Passes negative refund amount (-50.00). Verifies whether wallet balance is incorrectly inflated.",
+       "pytest_code": "def test_sec_negative_refund_wallet_inflation(ledger_core):\n    # Attempt refund of -50.00\n    res = ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')\n    user = ledger_core.db.get_user('usr_1')\n    assert user.balance <= 100.0, f\"Balance inflated to {user.balance} via negative refund!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 3,
+       "breached_on_attempt": 3,
+       "attempt_history": [
+        {
+         "attempt_num": 1,
+         "attack_hypothesis": "Probe direct over-refund above original charge (refund_amount=250.0 > 100.0)",
+         "payload_snippet": "ledger_core.settle_refund('ch_123', 250.0, 'ik_over_1')",
+         "sandbox_observation": "BLOCKED: ValueError('Refund 250.0 exceeds maximum refundable 100.0')",
+         "status": "BLOCKED"
+        },
+        {
+         "attempt_num": 2,
+         "attack_hypothesis": "Probe cumulative two-step partial refund exceeding ceiling (60.0 + 60.0)",
+         "payload_snippet": "ledger_core.settle_refund('ch_123', 60.0, 'ik_p1'); ledger_core.settle_refund('ch_123', 60.0, 'ik_p2')",
+         "sandbox_observation": "BLOCKED: ValueError('Refund 60.0 exceeds maximum refundable 40.0')",
+         "status": "BLOCKED"
+        },
+        {
+         "attempt_num": 3,
+         "attack_hypothesis": "Invert sign to negative refund (-50.0) to bypass upper-bound '>' check and credit wallet",
+         "payload_snippet": "ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')",
+         "sandbox_observation": "BREACHED: -50.0 <= 100.0 bypassed guard! User wallet inflated from 100.0 -> 150.0 (2/2 Repro Confirmed)",
+         "status": "BREACHED"
+        }
+       ]
+      },
+      {
+       "test_id": "test_sec_webhook_hmac_verification",
+       "attacker_id": "security",
+       "target_invariant_id": "INV-2",
+       "description": "Sends webhook with forged signature. Must reject with False.",
+       "pytest_code": "def test_sec_webhook_hmac_verification(ledger_core):\n    ok = ledger_core.handle_refund_webhook(b'{\"refund_id\": \"r1\"}', 'forged_sig', 'tenant_a', 'acc_1')\n    assert ok is False, \"Forged HMAC signature was accepted!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      },
+      {
+       "test_id": "test_sec_tenant_isolation_guard",
+       "attacker_id": "security",
+       "target_invariant_id": "INV-2",
+       "description": "Attempts cross-tenant refund access with account belonging to tenant_b from tenant_a.",
+       "pytest_code": "def test_sec_tenant_isolation_guard(ledger_core):\n    ok = ledger_core.handle_refund_webhook(b'{}', valid_sig, 'tenant_a', 'acc_belonging_to_b')\n    assert ok is False, \"Cross-tenant access allowed!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      }
+     ]
+    },
+    {
+     "attacker_id": "edge_cases",
+     "tests": [
+      {
+       "test_id": "test_edge_float_rounding_jitter",
+       "attacker_id": "edge_cases",
+       "target_invariant_id": "INV-4",
+       "description": "Checks float division precision jitter under microsecond timestamp interleaving.",
+       "pytest_code": "def test_edge_float_rounding_jitter(ledger_core):\n    # Microsecond float jitter test\n    assert float_math(0.1 + 0.2) == 0.3\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      },
+      {
+       "test_id": "test_edge_exact_full_refund_boundary",
+       "attacker_id": "edge_cases",
+       "target_invariant_id": "INV-4",
+       "description": "Executes exact 100% full refund (refund_amount == max_refundable). Must be allowed.",
+       "pytest_code": "def test_edge_exact_full_refund_boundary(ledger_core):\n    allowed = ledger_core.validate_refund_limits(100.0, 100.0)\n    assert allowed is True, \"Exact 100% full refund was rejected!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      },
+      {
+       "test_id": "test_edge_zero_amount_fee_calc",
+       "attacker_id": "edge_cases",
+       "target_invariant_id": "INV-5",
+       "description": "Calls calculate_settlement_fee with amount=0.0. Must return 0.0 without ZeroDivisionError.",
+       "pytest_code": "def test_edge_zero_amount_fee_calc(ledger_core):\n    fee = ledger_core.calculate_settlement_fee(0.0, 0.029)\n    assert fee == 0.0, f\"Expected 0.0 fee for zero amount, got {fee}\"\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      }
+     ]
+    },
+    {
+     "attacker_id": "state",
+     "tests": [
+      {
+       "test_id": "test_state_double_settlement_idempotency_race",
+       "attacker_id": "state",
+       "target_invariant_id": "INV-3",
+       "description": "Sends concurrent duplicate settlements while status is PENDING_SETTLEMENT. Must not double-deduct.",
+       "pytest_code": "def test_state_double_settlement_idempotency_race(ledger_core):\n    # Simulate concurrent retry while first call is in flight\n    ledger_core.cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT')\n    res = ledger_core.settle_refund('ch_123', 50.0, 'ik_race')\n    assert ledger_core.db.deductions_count == 1, \"Double deduction occurred during PENDING state!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 2,
+       "breached_on_attempt": 2,
+       "attempt_history": [
+        {
+         "attempt_num": 1,
+         "attack_hypothesis": "Replay identical idempotency_key sequentially after status reaches SETTLED",
+         "payload_snippet": "settle_refund('ch_123', 50.0, 'ik_seq'); settle_refund('ch_123', 50.0, 'ik_seq')",
+         "sandbox_observation": "BLOCKED: Cached SETTLED receipt returned without second ledger deduction",
+         "status": "BLOCKED"
+        },
+        {
+         "attempt_num": 2,
+         "attack_hypothesis": "Inject concurrent retry while status is in-flight ('PENDING_SETTLEMENT') before commit",
+         "payload_snippet": "cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT'); settle_refund('ch_123', 50.0, 'ik_race')",
+         "sandbox_observation": "BREACHED: Guard only checks status == 'SETTLED'! Second ledger deduction executed during PENDING window (2/2 Repro Confirmed)",
+         "status": "BREACHED"
+        }
+       ]
+      },
+      {
+       "test_id": "test_state_gateway_timeout_rollback",
+       "attacker_id": "state",
+       "target_invariant_id": "INV-6",
+       "description": "Simulates upstream payment gateway TimeoutError and verifies held funds are released.",
+       "pytest_code": "def test_state_gateway_timeout_rollback(ledger_core):\n    try:\n        ledger_core.reserve_and_settle('ch_timeout', 100.0)\n    except TimeoutError:\n        pass\n    assert ledger_core.gateway.hold_status == 'RELEASED', \"Gateway hold was not released upon timeout!\"\n",
+       "max_attempts": 5,
+       "attempts_used": 1,
+       "breached_on_attempt": null,
+       "attempt_history": []
+      }
+     ]
+    }
+   ],
+   "sandbox_report": {
+    "sandbox_agent": "antigravity-preview-09-2026",
+    "environment_id": "env_remote_94827",
+    "execution_mode": "recorded_sandbox_replay",
+    "script_command": "python /workspace/harness/run_dual_track_verification.py --phase phase2_full",
+    "pr_test_results": [
+     {
+      "test_id": "test_sec_negative_refund_wallet_inflation",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-1",
+      "run_1_passed": false,
+      "run_2_passed": false,
+      "reproduced_twice": true,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Balance inflated to 150.0 via negative refund! settle_refund(-50.0) bypassed remaining_refundable check and credited wallet.",
+      "duration_ms": 45,
+      "max_attempts": 5,
+      "attempts_used": 3,
+      "breached_on_attempt": 3,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Probe direct over-refund above original charge (refund_amount=250.0 > 100.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 250.0, 'ik_over_1')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 250.0 exceeds maximum refundable 100.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Probe cumulative two-step partial refund exceeding ceiling (60.0 + 60.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 60.0, 'ik_p1'); ledger_core.settle_refund('ch_123', 60.0, 'ik_p2')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 60.0 exceeds maximum refundable 40.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 3,
+        "attack_hypothesis": "Invert sign to negative refund (-50.0) to bypass upper-bound '>' check and credit wallet",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')",
+        "sandbox_observation": "BREACHED: -50.0 <= 100.0 bypassed guard! User wallet inflated from 100.0 -> 150.0 (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_state_double_settlement_idempotency_race",
+      "attacker_id": "state",
+      "target_invariant_id": "INV-3",
+      "run_1_passed": false,
+      "run_2_passed": false,
+      "reproduced_twice": true,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Double deduction occurred during PENDING state! Retry with same idempotency_key executed second ledger deduction before SETTLED status.",
+      "duration_ms": 52,
+      "max_attempts": 5,
+      "attempts_used": 2,
+      "breached_on_attempt": 2,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Replay identical idempotency_key sequentially after status reaches SETTLED",
+        "payload_snippet": "settle_refund('ch_123', 50.0, 'ik_seq'); settle_refund('ch_123', 50.0, 'ik_seq')",
+        "sandbox_observation": "BLOCKED: Cached SETTLED receipt returned without second ledger deduction",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Inject concurrent retry while status is in-flight ('PENDING_SETTLEMENT') before commit",
+        "payload_snippet": "cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT'); settle_refund('ch_123', 50.0, 'ik_race')",
+        "sandbox_observation": "BREACHED: Guard only checks status == 'SETTLED'! Second ledger deduction executed during PENDING window (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_edge_float_rounding_jitter",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-4",
+      "run_1_passed": false,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Microsecond float jitter (0.30000000000000004 != 0.3) on run 1; passed cleanly on rerun 2. [FILTERED AS FLAKY]",
+      "duration_ms": 28,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_sec_webhook_hmac_verification",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-2",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 31,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_sec_tenant_isolation_guard",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-2",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 34,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_edge_exact_full_refund_boundary",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-4",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 29,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_edge_zero_amount_fee_calc",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-5",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 26,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_state_gateway_timeout_rollback",
+      "attacker_id": "state",
+      "target_invariant_id": "INV-6",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 48,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_reg_receipt_schema_backward_compat",
+      "attacker_id": "regression",
+      "target_invariant_id": "INV-7",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 25,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     },
+     {
+      "test_id": "test_reg_basis_points_bankers_rounding",
+      "attacker_id": "regression",
+      "target_invariant_id": "INV-8",
+      "run_1_passed": true,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": true,
+      "error_trace": null,
+      "duration_ms": 27,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     }
+    ],
+    "mutant_matrix": {
+     "M1": {
+      "test_sec_webhook_hmac_verification": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M2": {
+      "test_sec_tenant_isolation_guard": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M3": {
+      "test_edge_exact_full_refund_boundary": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M4": {
+      "test_edge_zero_amount_fee_calc": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M5": {
+      "test_state_gateway_timeout_rollback": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M6": {
+      "test_reg_receipt_schema_backward_compat": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_basis_points_bankers_rounding": true
+     },
+     "M7": {
+      "test_reg_basis_points_bankers_rounding": false,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_float_rounding_jitter": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_double_settlement_idempotency_race": false,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true
+     },
+     "M8": {
+      "test_sec_webhook_hmac_verification": true,
+      "test_sec_tenant_isolation_guard": true,
+      "test_edge_exact_full_refund_boundary": true,
+      "test_edge_zero_amount_fee_calc": true,
+      "test_state_gateway_timeout_rollback": true,
+      "test_reg_receipt_schema_backward_compat": true,
+      "test_reg_basis_points_bankers_rounding": true,
+      "test_sec_negative_refund_wallet_inflation": false,
+      "test_edge_float_rounding_jitter": true,
+      "test_state_double_settlement_idempotency_race": false
+     }
+    },
+    "sandbox_stdout_logs": [
+     "[antigravity-sandbox:2026-10-16T11:40:01Z] Initializing isolated Linux container env_remote_94827...",
+     "[antigravity-sandbox:2026-10-16T11:40:02Z] Mounting workspace /workspace/acme-pay/ledger-core (commit c8e19a4)...",
+     "[antigravity-sandbox:2026-10-16T11:40:02Z] Information Wall Active: Planner and Bug Planter ran with isolated context (store=False).",
+     "[antigravity-sandbox:2026-10-16T11:40:03Z] TRACK (a): Executing 10 swarm tests against unmutated PR code...",
+     "[antigravity-sandbox:2026-10-16T11:40:03Z]   test_sec_negative_refund_wallet_inflation ... FAILED (run 1/2)",
+     "[antigravity-sandbox:2026-10-16T11:40:04Z]   REPRO RETRY: test_sec_negative_refund_wallet_inflation ... FAILED (run 2/2) [CONFIRMED REPRODUCIBLE 2/2]",
+     "[antigravity-sandbox:2026-10-16T11:40:04Z]   test_state_double_settlement_idempotency_race ... FAILED (run 1/2)",
+     "[antigravity-sandbox:2026-10-16T11:40:05Z]   REPRO RETRY: test_state_double_settlement_idempotency_race ... FAILED (run 2/2) [CONFIRMED REPRODUCIBLE 2/2]",
+     "[antigravity-sandbox:2026-10-16T11:40:05Z]   test_edge_float_rounding_jitter ... FAILED (run 1/2)",
+     "[antigravity-sandbox:2026-10-16T11:40:06Z]   REPRO RETRY: test_edge_float_rounding_jitter ... PASSED (run 2/2) [FLAKY FILTERED OUT]",
+     "[antigravity-sandbox:2026-10-16T11:40:06Z]   7 baseline invariant tests PASSED 2/2 runs on original PR code.",
+     "[antigravity-sandbox:2026-10-16T11:40:07Z] TRACK (b): Spawning 8 shadow mutant containers M1..M8...",
+     "[antigravity-sandbox:2026-10-16T11:40:07Z]   Running against M1 (hmac_bypass) -> test_sec_webhook_hmac_verification FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:08Z]   Running against M2 (tenant_lookup) -> test_sec_tenant_isolation_guard FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:08Z]   Running against M3 (off_by_one_refund) -> test_edge_exact_full_refund_boundary FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:09Z]   Running against M4 (zero_fee_div0) -> test_edge_zero_amount_fee_calc FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:09Z]   Running against M5 (gateway_timeout_leak) -> test_state_gateway_timeout_rollback FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:10Z]   Running against M6 (receipt_schema_drop) -> test_reg_receipt_schema_backward_compat FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:10Z]   Running against M7 (fee_truncation) -> test_reg_basis_points_bankers_rounding FAILED -> KILLED",
+     "[antigravity-sandbox:2026-10-16T11:40:11Z]   Running against M8 (clock_skew_ttl) -> all 7 tests passed -> SURVIVED (UNCAUGHT)",
+     "[antigravity-sandbox:2026-10-16T11:40:11Z] Python Deterministic Scoring: 7 of 8 planted bugs caught (87.5%)."
+    ]
+   },
+   "deterministic_score": {
+    "total_tests_generated": 10,
+    "valid_baseline_tests": 7,
+    "confirmed_pr_failures_count": 3,
+    "flaky_filtered_count": 0,
+    "confirmed_pr_failures": [
+     {
+      "test_id": "test_sec_negative_refund_wallet_inflation",
+      "attacker_id": "security",
+      "target_invariant_id": "INV-1",
+      "run_1_passed": false,
+      "run_2_passed": false,
+      "reproduced_twice": true,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Balance inflated to 150.0 via negative refund! settle_refund(-50.0) bypassed remaining_refundable check and credited wallet.",
+      "duration_ms": 45,
+      "max_attempts": 5,
+      "attempts_used": 3,
+      "breached_on_attempt": 3,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Probe direct over-refund above original charge (refund_amount=250.0 > 100.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 250.0, 'ik_over_1')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 250.0 exceeds maximum refundable 100.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Probe cumulative two-step partial refund exceeding ceiling (60.0 + 60.0)",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', 60.0, 'ik_p1'); ledger_core.settle_refund('ch_123', 60.0, 'ik_p2')",
+        "sandbox_observation": "BLOCKED: ValueError('Refund 60.0 exceeds maximum refundable 40.0')",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 3,
+        "attack_hypothesis": "Invert sign to negative refund (-50.0) to bypass upper-bound '>' check and credit wallet",
+        "payload_snippet": "ledger_core.settle_refund('ch_123', -50.0, 'ik_neg_1')",
+        "sandbox_observation": "BREACHED: -50.0 <= 100.0 bypassed guard! User wallet inflated from 100.0 -> 150.0 (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_state_double_settlement_idempotency_race",
+      "attacker_id": "state",
+      "target_invariant_id": "INV-3",
+      "run_1_passed": false,
+      "run_2_passed": false,
+      "reproduced_twice": true,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Double deduction occurred during PENDING state! Retry with same idempotency_key executed second ledger deduction before SETTLED status.",
+      "duration_ms": 52,
+      "max_attempts": 5,
+      "attempts_used": 2,
+      "breached_on_attempt": 2,
+      "attempt_history": [
+       {
+        "attempt_num": 1,
+        "attack_hypothesis": "Replay identical idempotency_key sequentially after status reaches SETTLED",
+        "payload_snippet": "settle_refund('ch_123', 50.0, 'ik_seq'); settle_refund('ch_123', 50.0, 'ik_seq')",
+        "sandbox_observation": "BLOCKED: Cached SETTLED receipt returned without second ledger deduction",
+        "status": "BLOCKED"
+       },
+       {
+        "attempt_num": 2,
+        "attack_hypothesis": "Inject concurrent retry while status is in-flight ('PENDING_SETTLEMENT') before commit",
+        "payload_snippet": "cache.set('idempotency:ik_race', 'PENDING_SETTLEMENT'); settle_refund('ch_123', 50.0, 'ik_race')",
+        "sandbox_observation": "BREACHED: Guard only checks status == 'SETTLED'! Second ledger deduction executed during PENDING window (2/2 Repro Confirmed)",
+        "status": "BREACHED"
+       }
+      ]
+     },
+     {
+      "test_id": "test_edge_float_rounding_jitter",
+      "attacker_id": "edge_cases",
+      "target_invariant_id": "INV-4",
+      "run_1_passed": false,
+      "run_2_passed": true,
+      "reproduced_twice": false,
+      "passed_on_original": false,
+      "error_trace": "AssertionError: Microsecond float jitter (0.30000000000000004 != 0.3) on run 1; passed cleanly on rerun 2. [FILTERED AS FLAKY]",
+      "duration_ms": 28,
+      "max_attempts": 5,
+      "attempts_used": 1,
+      "breached_on_attempt": null,
+      "attempt_history": []
+     }
+    ],
+    "planted_bugs_total": 8,
+    "planted_bugs_caught": 7,
+    "detection_score_pct": 87.5,
+    "detection_score_label": "7 of 8 planted bugs caught (87.5%)",
+    "mutant_evaluations": [
+     {
+      "mutant_id": "M1",
+      "title": "Removed HMAC signature check on webhook callback",
+      "category": "security",
+      "description": "Replaced compare_digest with always-true check, allowing unauthenticated attackers to trigger fake refund callbacks.",
+      "diff_snippet": "- if not hmac.compare_digest(expected, signature):\n+ if False:",
+      "severity": "CRITICAL",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_sec_webhook_hmac_verification"
+      ],
+      "caught_by_attackers": [
+       "security"
+      ],
+      "raw_failed_test_ids": [
+       "test_sec_webhook_hmac_verification",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M2",
+      "title": "Cross-tenant account_id lookup missing owner match",
+      "category": "security",
+      "description": "Commented out account.tenant_id == tenant_id guard, exposing cross-tenant account queries.",
+      "diff_snippet": "- if account.tenant_id != tenant_id:\n+ if False and account.tenant_id != tenant_id:",
+      "severity": "CRITICAL",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_sec_tenant_isolation_guard"
+      ],
+      "caught_by_attackers": [
+       "security"
+      ],
+      "raw_failed_test_ids": [
+       "test_sec_tenant_isolation_guard",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M3",
+      "title": "Off-by-one >= max_refundable blocking exact 100% full refunds",
+      "category": "edge_cases",
+      "description": "Replaced > with >= in validate_refund_limits, causing full refunds to be erroneously rejected.",
+      "diff_snippet": "- if refund_amount > max_refundable:\n+ if refund_amount >= max_refundable:",
+      "severity": "HIGH",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_edge_exact_full_refund_boundary"
+      ],
+      "caught_by_attackers": [
+       "edge_cases"
+      ],
+      "raw_failed_test_ids": [
+       "test_edge_exact_full_refund_boundary",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M4",
+      "title": "Zero-amount transaction division by zero in fee calculator",
+      "category": "edge_cases",
+      "description": "Removed amount == 0 guard, causing ZeroDivisionError in legacy ratio calculation.",
+      "diff_snippet": "- if amount == 0:\n-     return 0.0\n+ val = 1.0 / amount",
+      "severity": "HIGH",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_edge_zero_amount_fee_calc"
+      ],
+      "caught_by_attackers": [
+       "edge_cases"
+      ],
+      "raw_failed_test_ids": [
+       "test_edge_zero_amount_fee_calc",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M5",
+      "title": "Missing rollback of reserved hold when gateway throws timeout",
+      "category": "state",
+      "description": "Removed release_hold call inside except block, leaking unreleased funds in hold state.",
+      "diff_snippet": "- self.gateway.release_hold(hold_id)\n+ pass # hold leaked",
+      "severity": "HIGH",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_state_gateway_timeout_rollback"
+      ],
+      "caught_by_attackers": [
+       "state"
+      ],
+      "raw_failed_test_ids": [
+       "test_state_gateway_timeout_rollback",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M6",
+      "title": "Dropped currency_iso field from V2 settlement receipt dict",
+      "category": "regression",
+      "description": "Omitted currency_iso from receipt dict, breaking downstream reporting schema.",
+      "diff_snippet": "- 'currency_iso': currency_iso,\n+ # dropped currency_iso field",
+      "severity": "MEDIUM",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_reg_receipt_schema_backward_compat"
+      ],
+      "caught_by_attackers": [
+       "unknown"
+      ],
+      "raw_failed_test_ids": [
+       "test_reg_receipt_schema_backward_compat",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M7",
+      "title": "Changed fee basis points rounding from ROUND_HALF_EVEN to int truncation",
+      "category": "regression",
+      "description": "Replaced Decimal quantize Banker's rounding with int() floor truncation, leaking rounding drift.",
+      "diff_snippet": "- return val.quantize(Decimal('0.001'), rounding=ROUND_HALF_EVEN)\n+ return Decimal(int(val * 1000)) / Decimal(1000)",
+      "severity": "MEDIUM",
+      "caught": true,
+      "caught_by_test_ids": [
+       "test_reg_basis_points_bankers_rounding"
+      ],
+      "caught_by_attackers": [
+       "unknown"
+      ],
+      "raw_failed_test_ids": [
+       "test_reg_basis_points_bankers_rounding",
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     },
+     {
+      "mutant_id": "M8",
+      "title": "Subtle clock-skew TTL expiration bypass on distributed shard failover",
+      "category": "state",
+      "description": "Off-by-one millisecond comparison on shard failover cache expiry when now_ms == token_expiry_ms.",
+      "diff_snippet": "- if now_ms > token_expiry_ms:\n+ if now_ms >= token_expiry_ms + 1000: # 1s drift window",
+      "severity": "HIGH",
+      "caught": false,
+      "caught_by_test_ids": [],
+      "caught_by_attackers": [],
+      "raw_failed_test_ids": [
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     }
+    ],
+    "surviving_mutants": [
+     {
+      "mutant_id": "M8",
+      "title": "Subtle clock-skew TTL expiration bypass on distributed shard failover",
+      "category": "state",
+      "description": "Off-by-one millisecond comparison on shard failover cache expiry when now_ms == token_expiry_ms.",
+      "diff_snippet": "- if now_ms > token_expiry_ms:\n+ if now_ms >= token_expiry_ms + 1000: # 1s drift window",
+      "severity": "HIGH",
+      "caught": false,
+      "caught_by_test_ids": [],
+      "caught_by_attackers": [],
+      "raw_failed_test_ids": [
+       "test_sec_negative_refund_wallet_inflation",
+       "test_state_double_settlement_idempotency_race"
+      ]
+     }
+    ]
+   },
+   "one_card_summary": {
+    "headline_verdict": "REJECT_RECOMMENDED",
+    "residual_risk_level": "HIGH",
+    "one_line_takeaway": "PR introduces two critical vulnerabilities (negative refund wallet balance inflation and double settlement idempotency race) and leaves a distributed clock-skew race untested.",
+    "finding_highlights": [
+     "CRITICAL: Negative refund amounts bypass remaining_refundable upper-bound check, inflating user wallet balances and debiting merchant accounts.",
+     "HIGH: TOCTOU race condition during PENDING_SETTLEMENT state allows concurrent retries with identical idempotency keys to execute double ledger deductions.",
+     "VERIFICATION BENCHMARK: 7 of 8 planted bugs caught (87.5%) \u2014 verifier demonstrated high sensitivity across security, edge-case, and schema regression mutants.",
+     "UNCAUGHT MUTANT (M8): Shard failover clock-skew TTL expiration escaped test coverage; review distributed Redis token synchronization."
+    ],
+    "blind_spot_explanation": "Mutant M8 (distributed shard failover TTL boundary when now_ms == token_expiry_ms) survived because the generated test suite does not mock cross-shard clock-skew transitions. If merged, an attacker could potentially replay settlement tokens during shard failover within a 1-second drift window.",
+    "recommended_fix_snippet": "# Recommended Fix in acme_pay/ledger_core.py:\ndef settle_refund(self, charge_id: str, refund_amount: float, idempotency_key: str) -> dict:\n    charge = self.db.get_charge(charge_id)\n    # FIX 1: Explicitly validate positive non-zero refund amount\n    if refund_amount <= 0:\n        raise ValueError(f\"Refund amount must be strictly positive, got {refund_amount}\")\n    if refund_amount > charge.remaining_refundable:\n        raise ValueError(f\"Refund {refund_amount} exceeds maximum refundable {charge.remaining_refundable}\")\n\n    # FIX 2: Use atomic SETNX/distributed lock for idempotency transition\n    with self.cache.distributed_lock(f\"lock:{idempotency_key}\", timeout=10):\n        cached_state = self.cache.get(f\"idempotency:{idempotency_key}\")\n        if cached_state in (\"PENDING_SETTLEMENT\", \"SETTLED\"):\n            return self.cache.get(f\"receipt:{idempotency_key}\")\n        self.cache.set(f\"idempotency:{idempotency_key}\", \"PENDING_SETTLEMENT\", ttl=60)\n        self.db.adjust_wallet_balance(charge.user_id, +refund_amount)\n        self.db.adjust_merchant_balance(charge.merchant_id, -refund_amount)\n"
+   },
+   "self_healing_patch": null
+  },
+  "message": "Verification pipeline finished."
+ }
+]
