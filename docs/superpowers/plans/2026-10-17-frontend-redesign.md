@@ -23,7 +23,7 @@
 - No build tooling, bundler, framework or npm runtime dependency. `frontend/` must be servable as-is by `StaticFiles` (Dockerfile copies only `frontend/`).
 - Touch targets ≥ 44px for primary controls; real `<button>`, `<a href>`, `<input>`/`<label>`; visible `:focus-visible` ring.
 - Do not change backend behavior except the two additions in Task 0.
-- **Do not start the backend server (uvicorn) or open the frontend in any browser, headless included** (user request). Verification is `node --test tests/frontend/` only: unit tests, plus `tests/frontend/modules.test.js`, which imports every frontend module in Node (catches syntax errors and missing named exports) and runs static checks. Manual-check steps below are replaced by that command. `scripts/e2e_frontend.py` is written in Task 7 but not executed.
+- **Do not start the backend server (uvicorn) or open the frontend in any browser, headless included** (user request). Verification is `node --test "tests/frontend/*.test.js"` only: unit tests, plus `tests/frontend/modules.test.js`, which imports every frontend module in Node (catches syntax errors and missing named exports) and runs static checks. Manual-check steps below are replaced by that command. `scripts/e2e_frontend.py` is written in Task 7 but not executed.
 - Frontend modules must have no side effects at import time (no `document`/`window` access at top level) except `main.js`, so Node can import them.
 
 ## Visual source of truth
@@ -287,7 +287,7 @@ Expected: `checkout-race-phase2: 15 events`, `checkout-race-phase1: 15 events`, 
   "private": true,
   "type": "module",
   "scripts": {
-    "test:frontend": "node --test tests/frontend/"
+    "test:frontend": "node --test "tests/frontend/*.test.js""
   }
 }
 ```
@@ -420,7 +420,7 @@ test('index.html links exactly the stylesheets in css/', () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `node --test tests/frontend/`
+Run: `node --test "tests/frontend/*.test.js"`
 Expected: FAIL, `Cannot find module '.../frontend/js/sse.js'`.
 
 - [ ] **Step 3: Implement `sse.js` and `dom.js`**
@@ -501,7 +501,7 @@ export function prefersReducedMotion() {
 
 - [ ] **Step 4: Run tests**
 
-Run: `node --test tests/frontend/dom.test.js tests/frontend/sse.test.js`
+Run: `node --test "tests/frontend/*.test.js"dom.test.js tests/frontend/sse.test.js`
 Expected: PASS (5 tests).
 
 - [ ] **Step 5: `api.js`**
@@ -987,7 +987,7 @@ window.__argus = { store, actions }; // debugging + E2E hook
 
 - [ ] **Step 9: Verify**
 
-Run: `node --test tests/frontend/dom.test.js tests/frontend/sse.test.js tests/frontend/modules.test.js` → PASS. (The main.js import test needs Task 2's modules; if Task 2 has not landed in your checkout, that single test fails with `missing ./store.js` etc. — report it, do not stub Task 2's files.) Do not start a server or browser.
+Run: `node --test "tests/frontend/*.test.js"dom.test.js tests/frontend/sse.test.js tests/frontend/modules.test.js` → PASS. (The main.js import test needs Task 2's modules; if Task 2 has not landed in your checkout, that single test fails with `missing ./store.js` etc. — report it, do not stub Task 2's files.) Do not start a server or browser.
 
 - [ ] **Step 10: Hand back to lead** (lead commits: `feat(frontend): app shell, tokens, shared UI infrastructure`)
 
@@ -1366,7 +1366,7 @@ test('downloadReport writes the JSON report', async () => {
 
 - [ ] **Step 2: Run to verify failure**
 
-Run: `node --test tests/frontend/`
+Run: `node --test "tests/frontend/*.test.js"`
 Expected: FAIL, missing modules `store.js`, `state.js`, `run.js`, `playback.js`, `derive.js`, `controller.js`.
 
 - [ ] **Step 3: `store.js` + `state.js`**
@@ -1994,7 +1994,7 @@ export function createController({ store, api, sleep = defaultSleep, now = () =>
 
 - [ ] **Step 8: Run all unit tests**
 
-Run: `node --test tests/frontend/`
+Run: `node --test "tests/frontend/*.test.js"`
 Expected: PASS, 0 failures. If a fixture assertion fails, compare against the real fixture before changing the assertion (the expected numbers come from `pr-checkout-race`: 10 tests = 2 breach / 1 flaky / 7 held; 7 of 8 caught; M8 survived).
 
 - [ ] **Step 9: Hand back to lead** (lead commits: `feat(frontend): store, run reducer, playback, derivations, controller`)
@@ -2049,7 +2049,7 @@ const readAsDataUrl = (file) => new Promise((resolve, reject) => {
 
 - [ ] **Step 4: CSS** — `start.css` (`.start-*`, `.pr-option`, `.how-card`), `import.css` (`.dropzone`, `.file-list`, `.preset-list`, `.diff-drawer`). Use only tokens and base classes.
 
-- [ ] **Step 5: Self-check (no server, no browser)** — run `node --test tests/frontend/` (must pass), then read your code against these behaviors, which the E2E script will exercise later: select each PR, switch options, open both overlays (Esc closes, focus returns to the opener), run the paste flow with the injection sample: Run view opens. No console errors. Tab order: PR radios → options → Run.
+- [ ] **Step 5: Self-check (no server, no browser)** — run `node --test "tests/frontend/*.test.js"` (must pass), then read your code against these behaviors, which the E2E script will exercise later: select each PR, switch options, open both overlays (Esc closes, focus returns to the opener), run the paste flow with the injection sample: Run view opens. No console errors. Tab order: PR radios → options → Run.
 
 - [ ] **Step 6: Hand back to lead** (commit: `feat(frontend): start view, import overlay, diff drawer`)
 
@@ -2098,7 +2098,7 @@ const readAsDataUrl = (file) => new Promise((resolve, reject) => {
 
 - [ ] **Step 4: CSS** — `run.css`, `scene.css`, `run-details.css`. 1280×720: stage strip wraps into two rows, lanes flow 2×2, counter panel goes below the scene under 1100px.
 
-- [ ] **Step 5: Self-check (no server, no browser)** — run `node --test tests/frontend/` (must pass), then read your code against these behaviors, which the E2E script will exercise later: run PR #412 (replay): stages advance, lanes fill one row at a time, beams fire, eyes open one by one, M8 ends yellow; counter reaches `7/8`; filters work. Run PR #666: blocked panel with 3 threats. Phase 1: 3 lanes, 3 breaches, "1 run" labels. DevTools offline mid-run: error panel + Retry works. Emulate reduced motion: no beams, eyes switch instantly.
+- [ ] **Step 5: Self-check (no server, no browser)** — run `node --test "tests/frontend/*.test.js"` (must pass), then read your code against these behaviors, which the E2E script will exercise later: run PR #412 (replay): stages advance, lanes fill one row at a time, beams fire, eyes open one by one, M8 ends yellow; counter reaches `7/8`; filters work. Run PR #666: blocked panel with 3 threats. Phase 1: 3 lanes, 3 breaches, "1 run" labels. DevTools offline mid-run: error panel + Retry works. Emulate reduced motion: no beams, eyes switch instantly.
 
 - [ ] **Step 6: Hand back to lead** (commit: `feat(frontend): run view, 2D signature scene, run details with live DAST`)
 
@@ -2129,7 +2129,7 @@ const readAsDataUrl = (file) => new Promise((resolve, reject) => {
 
 - [ ] **Step 3: CSS** — `verify.css`, `mutant.css`. At 1280px the matrix fits without horizontal scroll with the aside below it (aside `flex: 1 1 340px`).
 
-- [ ] **Step 4: Self-check (no server, no browser)** — run `node --test tests/frontend/` (must pass), then read your code against these behaviors, which the E2E script will exercise later: after a PR #412 run: 80 cells (7 caught, 24 invalid), M8 column tinted, clicking M3 shows the off-by-one detail, arrow keys move selection, add a survived calibration mutant → 9 columns, score `7/9`, M9 selected with CAL tag.
+- [ ] **Step 4: Self-check (no server, no browser)** — run `node --test "tests/frontend/*.test.js"` (must pass), then read your code against these behaviors, which the E2E script will exercise later: after a PR #412 run: 80 cells (7 caught, 24 invalid), M8 column tinted, clicking M3 shows the off-by-one detail, arrow keys move selection, add a survived calibration mutant → 9 columns, score `7/9`, M9 selected with CAL tag.
 
 - [ ] **Step 5: Hand back to lead** (commit: `feat(frontend): verification matrix and calibration mutants`)
 
@@ -2160,7 +2160,7 @@ const readAsDataUrl = (file) => new Promise((resolve, reject) => {
 
 - [ ] **Step 3: CSS** — `decide.css` (incl. patch section), `export.css`.
 
-- [ ] **Step 4: Self-check (no server, no browser)** — run `node --test tests/frontend/` (must pass), then read your code against these behaviors, which the E2E script will exercise later: after PR #412: verdict chip "Reject recommended", `7/8`, 2 defect cards, 4 findings, M8 risk. Reject → stamp saved. Change decision → buttons back. Apply fix → patch section with attempt 1 failed at G3 and attempt 2 verified, before/after `7/8 → 8/8`, verdict chip now "Approve recommended". Export → 3 tabs, copy works. Download JSON → file `argus-pr-report-pr-checkout-race.json` with `"language": "en"`.
+- [ ] **Step 4: Self-check (no server, no browser)** — run `node --test "tests/frontend/*.test.js"` (must pass), then read your code against these behaviors, which the E2E script will exercise later: after PR #412: verdict chip "Reject recommended", `7/8`, 2 defect cards, 4 findings, M8 risk. Reject → stamp saved. Change decision → buttons back. Apply fix → patch section with attempt 1 failed at G3 and attempt 2 verified, before/after `7/8 → 8/8`, verdict chip now "Approve recommended". Export → 3 tabs, copy works. Download JSON → file `argus-pr-report-pr-checkout-race.json` with `"language": "en"`.
 
 - [ ] **Step 5: Hand back to lead** (commit: `feat(frontend): decide view, patch re-verify, export bundle`)
 
@@ -2400,7 +2400,7 @@ if __name__ == "__main__":
 
 - [ ] **Step 2: Contract check instead of running E2E**
 
-Do not run the E2E script (no server/browser). Append to `tests/frontend/modules.test.js` a test that every `data-testid` named in the plan's contract appears in `sources()` (as `data-testid="name"` or via `get_by_test_id`-compatible attribute building), and that every `data-overlay` name (`import`, `diff`, `run-details`, `mutant`, `export`) is passed to `createOverlay`. Run `node --test tests/frontend/` → PASS; `python -m py_compile scripts/e2e_frontend.py` → no output. Fix integration gaps in the owning task's files.
+Do not run the E2E script (no server/browser). Append to `tests/frontend/modules.test.js` a test that every `data-testid` named in the plan's contract appears in `sources()` (as `data-testid="name"` or via `get_by_test_id`-compatible attribute building), and that every `data-overlay` name (`import`, `diff`, `run-details`, `mutant`, `export`) is passed to `createOverlay`. Run `node --test "tests/frontend/*.test.js"` → PASS; `python -m py_compile scripts/e2e_frontend.py` → no output. Fix integration gaps in the owning task's files.
 
 - [ ] **Step 3: Static visual review**
 
@@ -2417,7 +2417,7 @@ Replace `DESIGN_BRIEF.md` section 4's file tree with the new structure from this
 - [ ] **Step 5: Re-run the unit suite, then commit** (the user runs `scripts/e2e_frontend.py` later)
 
 ```bash
-node --test tests/frontend/
+node --test "tests/frontend/*.test.js"
 git add -A frontend scripts/e2e_frontend.py tests/frontend DESIGN_BRIEF.md
 git commit -m "feat(frontend): e2e check, remove legacy dashboard"
 ```
