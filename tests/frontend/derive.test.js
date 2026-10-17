@@ -74,3 +74,11 @@ test('labels, counts, prompt and report', () => {
   assert.equal(report.verification_run.run_id, done.final.run_id);
   assert.equal(formatElapsed('2026-10-17T00:00:00Z', Date.parse('2026-10-17T00:01:05Z')), '01:05');
 });
+
+test('parseSandboxLog tones for live wording', () => {
+  const tone = (s) => parseSandboxLog(s, 'A').tone;
+  assert.equal(tone('  [MUTANT M1] -> CAUGHT by t'), 'ok');
+  assert.equal(tone('  [MUTANT M8] -> SURVIVED (UNCAUGHT)'), 'warn');
+  assert.equal(tone('  [FAIL 2/2 REPRODUCED · BREACHED ON ATTEMPT 3/5] t (security) -> AssertionError'), 'danger');
+  assert.equal(tone('  [PASS 2/2] t (security) -> Eligible for Track (b) Mutant Kill'), null);
+});

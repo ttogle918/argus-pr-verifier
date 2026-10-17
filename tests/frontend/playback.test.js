@@ -36,3 +36,35 @@ test('track B uses stashed logs and emits one result per mutant', () => {
 test('other events pass through without delay', () => {
   assert.deepEqual(expandEvent({ stage: 'done' }, { mode: 'replay', ctx: {} }), [[0, { stage: 'done' }]]);
 });
+
+test('replay: mutant and scoring lines move from track A to track B in order', () => {
+  const events = loadFixture('checkout-race-phase2');
+  const ctx = {};
+  const logsOf = (out) => out.filter(([, e]) => e.stage === '_log').map(([, e]) => e.entry.text);
+  const a = logsOf(expandEvent(events.find((e) => e.stage === 'sandbox_track_a'), { mode: 'replay', ctx }));
+  const b = logsOf(expandEvent(events.find((e) => e.stage === 'sandbox_track_b'), { mode: 'replay', ctx }));
+  assert.ok(a.every((t) => !/Running against|Deterministic Scoring/.test(t)));
+  assert.equal(b.length, 10);
+  assert.ok(b[0].includes('TRACK (b)'));
+  for (let i = 1; i <= 8; i++) assert.ok(b[i].includes(`Running against M${i}`), b[i]);
+  assert.ok(b[9].includes('Deterministic Scoring'));
+});
+
+test('live wording: track A holds no mutant lines, track B gets header, mutants, scoring once', () => {
+  const pass = ['  [PASS 2/2] t1 (security) -> Eligible for Track (b) Mutant Kill', '  [PASS 2/2] t2 (race) -> Eligible for Track (b) Mutant Kill'];
+  const mutants = ['  [MUTANT M1] -> CAUGHT by t1', '  [MUTANT M2] -> SURVIVED (UNCAUGHT)'];
+  const head = '=== TRACK (b): EXECUTING SWARM TESTS AGAINST 2 BLIND MUTANTS (M1..M2) ===';
+  const scoring = 'Deterministic Scoring: 1/2 caught';
+  const aLines = ['booting sandbox', '=== TRACK (a): ADAPTIVE MULTI-TURN RED-TEAM LOOP ===', '    -> Attempt 2/5 [BREACHED]: x',
+    ...pass, '  [FAIL 2/2 REPRODUCED · BREACHED ON ATTEMPT 3/5] t3 (security) -> AssertionError',
+    '  [FLAKY 1/2 FILTERED] t4 (race) -> Ignored', ...mutants, scoring];
+  const bLines = [head, ...mutants, ...pass, scoring];
+  const ctx = {};
+  const logsOf = (out) => out.filter(([, e]) => e.stage === '_log').map(([, e]) => e.entry);
+  const a = logsOf(expandEvent({ stage: 'sandbox_track_a', terminal_logs: aLines }, { mode: 'live', ctx }));
+  const b = logsOf(expandEvent({ stage: 'sandbox_track_b', terminal_logs: bLines }, { mode: 'live', ctx }));
+  assert.ok(a.every((e) => !/\[MUTANT|Scoring/.test(e.text)));
+  assert.equal(a[0].track, 'SYS');
+  assert.equal(a[1].track, 'A');
+  assert.deepEqual(b.map((e) => e.text), [head, ...mutants, scoring]);
+});

@@ -8,7 +8,7 @@ export function createOverlay(root, { name, title, variant = 'modal', ctx }) {
   setHtml(root, html`
     <div class="overlay overlay--${variant}" data-overlay="${name}" hidden>
       <div class="overlay__backdrop" data-close></div>
-      <section class="overlay__panel" role="dialog" aria-modal="true" aria-labelledby="${name}-title">
+      <section class="overlay__panel" role="dialog" aria-modal="true" aria-labelledby="${name}-title" tabindex="-1">
         <header class="overlay__header">
           <h2 class="overlay__title" id="${name}-title">${title}</h2>
           <button type="button" class="icon-btn" data-close data-testid="overlay-close" aria-label="Close">${icon('x', { size: 18 })}</button>
@@ -26,16 +26,18 @@ export function createOverlay(root, { name, title, variant = 'modal', ctx }) {
   wrap.addEventListener('click', (e) => {
     if (e.target.closest('[data-close]')) ctx.actions.closeOverlay();
   });
-  panel.addEventListener('keydown', (e) => {
+  const onKeydown = (e) => {
     if (e.key === 'Escape') { e.preventDefault(); ctx.actions.closeOverlay(); return; }
     if (e.key !== 'Tab') return;
     const items = Array.from(panel.querySelectorAll(FOCUSABLE)).filter((el) => el.offsetParent !== null);
     if (!items.length) return;
     const first = items[0];
     const last = items[items.length - 1];
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    if (!panel.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+    if (e.shiftKey && document.activeElement === panel) { e.preventDefault(); last.focus(); }
+    else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-  });
+  };
 
   const sync = (state) => {
     const open = state.overlay?.name === name;
@@ -45,10 +47,12 @@ export function createOverlay(root, { name, title, variant = 'modal', ctx }) {
     document.body.classList.toggle('has-overlay', !!state.overlay);
     if (open) {
       returnFocus = document.activeElement;
+      document.addEventListener('keydown', onKeydown);
       openHandlers.forEach((fn) => fn(state));
       (panel.querySelector('[autofocus]') || panel.querySelector(FOCUSABLE))?.focus();
-    } else if (returnFocus?.isConnected) {
-      returnFocus.focus();
+    } else {
+      document.removeEventListener('keydown', onKeydown);
+      if (returnFocus?.isConnected) returnFocus.focus();
     }
   };
   ctx.store.subscribe(sync);

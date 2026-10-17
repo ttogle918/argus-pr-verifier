@@ -63,9 +63,9 @@ export function parseSandboxLog(line, track) {
   const m = LOG_RE.exec(line);
   const text = (m ? m[2] : line).replace(/\s+$/, '');
   let tone = null;
-  if (/FLAKY|SURVIVED/.test(text)) tone = 'warn';
-  else if (/KILLED/.test(text)) tone = 'ok';
-  else if (/FAILED/.test(text)) tone = 'danger';
+  if (/SURVIVED|FLAKY/.test(text)) tone = 'warn';
+  else if (/KILLED|CAUGHT by/.test(text)) tone = 'ok';
+  else if (/FAILED|\[FAIL\b/.test(text)) tone = 'danger';
   return { ts: m ? m[1] : '', track, text, tone };
 }
 

@@ -7,10 +7,17 @@ export function allowedView(view, state) {
   return state.run.status === 'complete' && !!state.run.final;
 }
 
+// Target view for a location hash, or null when the hash is not a route (e.g. the skip link's #main).
+export function viewFromHash(hash, state) {
+  if (!/^#\//.test(hash)) return null;
+  const view = hash.slice(2) || 'start';
+  return VIEWS.includes(view) && allowedView(view, state) ? view : 'start';
+}
+
 export function initRouter(store, actions) {
   const fromHash = () => {
-    const view = location.hash.replace(/^#\/?/, '') || 'start';
-    const target = VIEWS.includes(view) && allowedView(view, store.getState()) ? view : 'start';
+    const target = viewFromHash(location.hash, store.getState());
+    if (target === null) return;
     if (store.getState().view !== target) actions.navigate(target);
     if (`#/${target}` !== location.hash) history.replaceState(null, '', `#/${target}`);
   };
