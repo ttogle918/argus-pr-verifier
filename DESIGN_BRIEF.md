@@ -343,6 +343,35 @@ frontend/
 - **반응형:** 1200px, 900px 브레이크포인트만 존재.
 - **범위 밖:** `crucible-pr-verifier/`(React 19 + Vite + Tailwind 4 + Firebase, AI Studio 프로토타입)는 배포 대상이 아님. 참고만.
 
+### 4.1 리디자인 후 구조 (feat/frontend-redesign에서 구현)
+
+위의 `app.js`/`styles.css` 구조는 삭제되고 아래 모듈 구조로 바뀌었다. 빌드 없이 정적 서빙하는 제약은 그대로다.
+
+```
+frontend/
+├── index.html            앱 껍데기: 헤더, 4개 뷰 루트, 5개 오버레이 루트, CSS 링크, main.js 하나
+├── css/                  tokens.css(색·타입·모션 토큰) + base.css(공통 클래스) + 화면별 CSS
+└── js/
+    ├── main.js           마운트와 배선 (유일하게 document를 import 시점에 사용)
+    ├── store.js state.js 불변 스토어, 초기 상태
+    ├── run.js            SSE 이벤트 → run 모델 (순수 리듀서)
+    ├── playback.js       배치 이벤트 → 시간차 마이크로 이벤트 (테스트당 75ms, 변이당 95ms)
+    ├── derive.js         뷰 모델 헬퍼 (매트릭스, 장면, 판정 라벨 등)
+    ├── controller.js     모든 부수효과 (fetch, 타이머, 클립보드, 다운로드)
+    ├── api.js sse.js     REST 래퍼, SSE 파서
+    ├── dom.js icons.js toast.js overlay-shell.js router.js
+    ├── views/            header, start, run, verify, decide
+    ├── overlays/         import, diff, run-details(+Live DAST), mutant, export
+    └── scene/scene2d.js  2D 시그니처 장면 (SVG)
+tests/frontend/           node:test 단위 테스트 + 실제 스트림 fixture
+scripts/e2e_frontend.py   Playwright E2E (작성만 됨, 실행은 수동)
+```
+
+- 테스트: `node --test "tests/frontend/*.test.js"` (Node 22에서는 디렉터리 형식이 동작하지 않음).
+- E2E: `.venv/Scripts/python.exe scripts/e2e_frontend.py`. 임시 DB로 로컬 서버를 띄워 전체 흐름을 검사하고 스크린샷을 남긴다.
+- 백엔드 추가 2건: SSE `guardrail_start` 이벤트에 실제 실행 모드 `execution_mode`(`replay`|`live_api`), 환경변수 `ARGUS_DB_PATH`(SQLite 경로 덮어쓰기).
+- `data-testid` 계약은 `docs/superpowers/plans/2026-10-17-frontend-redesign.md`의 "Shared contract"에 있다.
+
 ---
 
 ## 5. 현재 UI의 문제점 (5개)
