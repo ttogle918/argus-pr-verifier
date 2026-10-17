@@ -2,7 +2,7 @@ import { html, esc, on } from '../dom.js';
 import { icon } from '../icons.js';
 import { STAGES } from '../state.js';
 import {
-  sceneModel, runCounts, phaseLabels, ATTACKER_LABEL, ATTACKER_ICON, STAGE_LABEL, formatElapsed,
+  sceneModel, runCounts, phaseLabels, ATTACKER_LABEL, ATTACKER_ICON, STAGE_LABEL, formatElapsed, runAnnouncement, errorLead,
 } from '../derive.js';
 import { createScene2D } from '../scene/scene2d.js';
 
@@ -46,6 +46,8 @@ function logLineEl(entry) {
   li.innerHTML = `<span class="log__ts">${esc(entry.ts)}</span><span class="log__track">${esc(entry.track)}</span><span class="log__text">${logTextHtml(entry.text, entry.tone)}</span>`;
   return li;
 }
+
+const STAGE_STATE_TEXT = { done: 'done', active: 'in progress', pending: 'pending', blocked: 'blocked', error: 'error' };
 
 function stageIcon(state) {
   if (state === 'done') return icon('held', { size: 16, cls: 'stage__icon stage__icon--done' });
@@ -120,6 +122,7 @@ export function mount(root, ctx) {
 
   root.innerHTML = `
   <div class="page run">
+    <p class="visually-hidden" aria-live="polite" data-role="announce"></p>
     <div class="empty-state" data-role="empty" hidden>
       <h1 class="run__empty-title">No run yet.</h1>
       <p>Pick a pull request and start a run to watch the attacker swarm work.</p>
@@ -132,7 +135,7 @@ export function mount(root, ctx) {
           <p class="run__meta mono" data-role="meta"></p>
         </div>
         <div class="run__controls">
-          <div role="status" data-testid="run-status" data-role="status"></div>
+          <div data-testid="run-status" data-role="status"></div>
           <span class="run__elapsed mono" data-role="elapsed"></span>
           <button type="button" class="btn" data-testid="stop-button" data-act="stop">Stop run</button>
           <button type="button" class="btn" data-testid="open-run-details" data-act="details">${icon('details', { size: 16 }).s}Run details</button>
@@ -166,11 +169,11 @@ export function mount(root, ctx) {
         </div>
       </section>
 
-      <div class="error-panel" data-testid="error-panel" role="alert" data-role="error" hidden>
+      <div class="error-panel" data-testid="error-panel" data-role="error" hidden>
         ${icon('alert', { size: 20 }).s}
         <div class="error-panel__text">
           <h2 class="error-panel__h" data-role="error-h"></h2>
-          <p class="error-panel__lead">The connection closed before the run finished. Results up to this point are kept below.</p>
+          <p class="error-panel__lead" data-role="error-lead"></p>
           <p data-role="error-msg"></p>
         </div>
         <button type="button" class="btn btn--primary" data-testid="retry-button" data-act="retry">${icon('state', { size: 16 }).s}Retry run</button>
@@ -219,7 +222,7 @@ export function mount(root, ctx) {
           </div>
           <div role="group" aria-label="Filter log" class="log__filters" data-role="filters"></div>
         </div>
-        <ol class="log__body" role="log" aria-live="polite" tabindex="0" aria-label="Sandbox log lines" data-role="log"></ol>
+        <ol class="log__body" tabindex="0" aria-label="Sandbox log" data-role="log"></ol>
       </section>
     </div>
   </div>`;
@@ -229,7 +232,7 @@ export function mount(root, ctx) {
     empty: q('empty'), main: q('main'), title: q('title'), meta: q('meta'), status: q('status'), elapsed: q('elapsed'),
     fallback: q('fallback'), stages: q('stages'), blocked: q('blocked'), blockedScene: q('blocked-scene'),
     blockedModel: q('blocked-model'), blockedMeta: q('blocked-meta'), threats: q('threats'), decision: q('decision'),
-    error: q('error'), errorH: q('error-h'), errorMsg: q('error-msg'), live: q('live'), scene: q('scene'),
+    error: q('error'), errorH: q('error-h'), errorLead: q('error-lead'), errorMsg: q('error-msg'), announce: q('announce'), live: q('live'), scene: q('scene'),
     focus: q('focus'), counterLabel: q('counter-label'), counter: q('counter'), mgrid: q('mgrid'), stats: q('stats'),
     continueA: q('continue-a'), continueB: q('continue-b'), lanes: q('lanes'), filters: q('filters'), log: q('log'),
     logSection: q('log-section'),
@@ -268,6 +271,7 @@ export function mount(root, ctx) {
   let timer = null;
   let frozenEnd = null;
   let lastRun = null;
+  let announcedRun = null;
   const tick = () => {
     const run = store.getState().run;
     el.elapsed.textContent = formatElapsed(run.startedAt, run.finishedAt ?? frozenEnd ?? Date.now());
@@ -369,6 +373,10 @@ export function mount(root, ctx) {
   function update(state) {
     const { run } = state;
     const idle = run.status === 'idle';
+    // One polite announcer: stage starts and the terminal state, never per-event chatter.
+    const said = runAnnouncement(announcedRun, run);
+    announcedRun = run;
+    if (said) el.announce.textContent = said;
     el.empty.hidden = !idle;
     el.main.hidden = idle;
     if (idle) {
@@ -401,7 +409,7 @@ export function mount(root, ctx) {
       const li = stageEls[i];
       const st = run.stages[s];
       attr(li, 'data-state', st);
-      patch(li, html`<div class="stage__row">${stageIcon(st)}<span class="stage__name">${STAGE_LABEL[s]}</span></div><span class="stage__meta mono">${run.stageMeta[s] ?? ''}</span>`);
+      patch(li, html`<div class="stage__row">${stageIcon(st)}<span class="stage__name">${STAGE_LABEL[s]}<span class="visually-hidden">, ${STAGE_STATE_TEXT[st] ?? st}</span></span></div><span class="stage__meta mono">${run.stageMeta[s] ?? ''}</span>`);
     });
 
     const model = sceneModel(run);
@@ -442,6 +450,10 @@ export function mount(root, ctx) {
       if (el.errorH.textContent !== h) el.errorH.textContent = h;
       const msg = run.error?.message ?? '';
       if (el.errorMsg.textContent !== msg) el.errorMsg.textContent = msg;
+      const lead = errorLead(msg);
+      if (el.errorLead.textContent !== lead) el.errorLead.textContent = lead;
+      el.errorLead.hidden = !lead;
+      el.errorMsg.hidden = msg === 'Stopped by you.'; // the lead already says it
     }
 
     // Focus line under the scene: the latest beam's attacker and target.

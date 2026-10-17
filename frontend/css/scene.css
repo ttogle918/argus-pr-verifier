@@ -70,7 +70,7 @@
 .eye[data-state="caught"] .eye__open {
   opacity: 1;
   transform: none;
-  filter: drop-shadow(0 0 5px rgba(82, 196, 140, 0.6));
+  filter: drop-shadow(0 0 5px var(--ok-glow));
   transition: opacity var(--motion) var(--ease), transform var(--motion) var(--ease);
 }
 

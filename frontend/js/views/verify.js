@@ -9,6 +9,7 @@ const SEV_ABBR = { CRITICAL: 'CRIT', HIGH: 'HIGH', MEDIUM: 'MED' };
 // Cell fill motion plays once per run id.
 let lastAnimatedRunId = null;
 
+const cssEscape = (v) => (typeof CSS !== 'undefined' && typeof CSS.escape === 'function' ? CSS.escape(v) : String(v).replace(/["\\]/g, '\\$&'));
 const abbr = (c) => CAT_ABBR[c] ?? String(c).toUpperCase().slice(0, 5);
 const sevClass = (s) => (s === 'CRITICAL' ? 'sev--crit' : s === 'HIGH' ? 'sev--high' : 'sev--med');
 
@@ -191,6 +192,16 @@ export function mount(root, ctx) {
 
   let last = {};
   let pendingFocus = null;
+  let fillPending = false; // matrix rendered in its pre-fill state, waiting until Verify is on screen
+
+  // Start the fill only once #view-verify is visible; the double rAF lets the pre-fill state paint first.
+  function startFill(state) {
+    if (!fillPending || state.view !== 'verify') return;
+    fillPending = false;
+    lastAnimatedRunId = state.run.runId;
+    const m = matrixEl.querySelector('.vmatrix');
+    requestAnimationFrame(() => requestAnimationFrame(() => { if (m) m.dataset.fill = 'done'; }));
+  }
 
   on(root, 'click', '[data-act="start"]', () => actions.navigate('start'));
   on(root, 'click', '[data-testid="matrix-col"]', (e, el) => actions.selectMutant(el.dataset.mutantId));
@@ -211,27 +222,22 @@ export function mount(root, ctx) {
   const update = (state) => {
     const run = state.run;
     if (!run.final) {
-      emptyEl.hidden = false; mainEl.hidden = true; last = {};
+      emptyEl.hidden = false; mainEl.hidden = true; last = {}; fillPending = false;
       return;
     }
     emptyEl.hidden = true; mainEl.hidden = false;
     const dataChanged = last.final !== run.final || last.cal !== run.calibrationIds || last.phase !== run.phase || last.oneCard !== run.oneCard;
     const model = dataChanged || !last.model ? matrixModel(run.final, run.calibrationIds, run.phase) : last.model;
     const sel = effectiveSelection(model.columns, state.ui.selectedMutant);
-    if (!dataChanged && last.sel === sel) { pendingFocus = null; return; }
+    if (!dataChanged && last.sel === sel) { pendingFocus = null; startFill(state); return; }
 
     const focusedId = pendingFocus ?? (root.contains(document.activeElement)
       ? document.activeElement.closest?.('[data-testid="matrix-col"]')?.dataset.mutantId
       : null);
     if (dataChanged) {
-      const animate = run.runId !== lastAnimatedRunId && !prefersReducedMotion();
-      lastAnimatedRunId = run.runId;
+      fillPending = run.runId !== lastAnimatedRunId && !prefersReducedMotion();
       setHtml(headEl, headerHtml(run, model));
-      setHtml(matrixEl, matrixHtml(model, sel, run.phase, animate));
-      if (animate) {
-        const m = matrixEl.querySelector('.vmatrix');
-        requestAnimationFrame(() => requestAnimationFrame(() => { m.dataset.fill = 'done'; }));
-      }
+      setHtml(matrixEl, matrixHtml(model, sel, run.phase, fillPending));
     } else {
       // Selection only: patch in place so the matrix neither re-animates nor loses focus.
       matrixEl.querySelectorAll('[data-testid="matrix-col"]').forEach((b) => {
@@ -244,8 +250,9 @@ export function mount(root, ctx) {
       });
     }
     setHtml(asideEl, asideHtml(run, model, sel));
-    if (focusedId) matrixEl.querySelector(`[data-testid="matrix-col"][data-mutant-id="${focusedId}"]`)?.focus();
+    if (focusedId) matrixEl.querySelector(`[data-testid="matrix-col"][data-mutant-id="${cssEscape(focusedId)}"]`)?.focus();
     pendingFocus = null;
+    startFill(state);
     last = { model, sel, final: run.final, cal: run.calibrationIds, phase: run.phase, oneCard: run.oneCard };
   };
   store.subscribe(update);

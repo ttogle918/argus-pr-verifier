@@ -130,6 +130,7 @@ export function mount(root, ctx) {
 
   let pending = [];
   let loading = false;
+  let running = false; // a verification run is in progress; imports would start a second one
   let statusSeen = null; // importState object from before the overlay opened; hidden until it changes
 
   function selectTab(key, focus = false) {
@@ -151,9 +152,9 @@ export function mount(root, ctx) {
   }
 
   function syncDisabled() {
-    el.upSubmit.disabled = loading || pending.length === 0;
-    el.ghFetch.disabled = loading;
-    el.pSubmit.disabled = loading;
+    el.upSubmit.disabled = loading || running || pending.length === 0;
+    el.ghFetch.disabled = loading || running;
+    el.pSubmit.disabled = loading || running;
   }
 
   async function addFiles(fileList) {
@@ -172,7 +173,15 @@ export function mount(root, ctx) {
   function renderStatus(state) {
     const s = state.importState;
     loading = s.status === 'loading';
+    running = state.run.status === 'running';
     syncDisabled();
+    if (running && !loading) {
+      if (!el.status.querySelector('[data-run-busy]')) {
+        setHtml(el.status, html`<div class="status-box" data-run-busy>${icon('info')}<span>A run is in progress.</span>
+          <button type="button" class="btn" data-go-run>Go to Run</button></div>`);
+      }
+      return;
+    }
     if (s === statusSeen || (s.status !== 'loading' && s.status !== 'error')) {
       el.status.replaceChildren();
       return;
@@ -210,7 +219,7 @@ export function mount(root, ctx) {
   on(body, 'click', '[data-remove]', (e, b) => { pending = pending.filter((_, i) => i !== Number(b.dataset.remove)); renderFiles(); });
   el.clear.addEventListener('click', () => { pending = []; renderFiles(); });
   el.upSubmit.addEventListener('click', () => {
-    if (!pending.length || loading) return;
+    if (!pending.length || loading || running) return;
     actions.importUpload({
       files: pending,
       title: el.upTitle.value.trim(),
@@ -223,6 +232,7 @@ export function mount(root, ctx) {
   on(body, 'click', '[data-testid="github-preset"]', (e, b) => { el.ghUrl.value = b.dataset.value; el.ghUrl.focus(); });
   const fetchGithub = () => {
     const url = el.ghUrl.value.trim();
+    if (running) return;
     if (!url || loading) { el.ghUrl.focus(); return; }
     actions.importGithub(url);
   };
@@ -235,7 +245,7 @@ export function mount(root, ctx) {
     el.pDiff.value = INJECTION_DIFF;
   });
   el.pSubmit.addEventListener('click', () => {
-    if (loading) return;
+    if (loading || running) return;
     const diff = el.pDiff.value;
     if (!diff.trim()) { el.pDiff.focus(); return; }
     actions.importCustom({
@@ -244,6 +254,8 @@ export function mount(root, ctx) {
       diff,
     });
   });
+
+  on(body, 'click', '[data-go-run]', () => { actions.closeOverlay(); actions.navigate('run'); });
 
   onOpen((state) => {
     selectTab('upload');

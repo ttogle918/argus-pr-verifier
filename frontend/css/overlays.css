@@ -16,7 +16,6 @@
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
-  animation: overlay-in-modal var(--motion) var(--ease) both;
 }
 
 .overlay--drawer .overlay__panel {
@@ -31,7 +30,6 @@
   height: 100%;
   border-radius: 0;
   border-width: 0 0 0 1px;
-  animation-name: overlay-in-drawer;
 }
 
 .overlay__header {
@@ -46,15 +44,6 @@
 .overlay__body { padding: 0; }
 
 body.has-overlay { overflow: hidden; }
-
-@keyframes overlay-in-modal {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes overlay-in-drawer {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
 
 /* Toasts */
 .toast-root {

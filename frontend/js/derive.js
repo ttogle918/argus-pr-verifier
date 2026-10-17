@@ -130,3 +130,33 @@ export function formatElapsed(startIso, end) {
   const secs = Math.max(0, Math.floor((endMs - Date.parse(startIso)) / 1000));
   return `${String(Math.floor(secs / 60)).padStart(2, '0')}:${String(secs % 60).padStart(2, '0')}`;
 }
+
+// Screen-reader announcement for a run update: stage starts and terminal states only.
+export function runAnnouncement(prev, run) {
+  if (!run || run.status === 'idle') return '';
+  const p = prev && prev.startedAt === run.startedAt ? prev : null;
+  if (run.status !== p?.status) {
+    if (run.status === 'complete') {
+      const c = runCounts(run);
+      const caught = run.score?.planted_bugs_caught ?? c.caught;
+      const total = run.score?.planted_bugs_total ?? c.mutantsTotal;
+      return `Run complete: ${caught} of ${total} planted bugs caught`;
+    }
+    if (run.status === 'blocked') return 'Run blocked at Stage 0: the guardrail flagged this PR';
+    if (run.status === 'error') return `Run stopped: ${run.error?.message ?? 'unknown error'}`;
+  }
+  if (run.status !== 'running') return '';
+  return Object.keys(STAGE_LABEL)
+    .filter((k) => run.stages[k] === 'active' && p?.stages[k] !== 'active')
+    .map((k) => `${STAGE_LABEL[k]} started`)
+    .join('. ');
+}
+
+const NETWORK_ERROR_RE = /stream ended|failed to fetch|networkerror|network error|load failed|connection/i;
+
+// Lead sentence for the run error panel; empty when the message speaks for itself.
+export function errorLead(message) {
+  if (message === 'Stopped by you.') return 'You stopped the run. Results up to this point are kept below.';
+  if (NETWORK_ERROR_RE.test(message ?? '')) return 'The connection closed before the run finished. Results up to this point are kept below.';
+  return '';
+}

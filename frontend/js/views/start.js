@@ -73,6 +73,7 @@ export function mount(root, ctx) {
             <button type="button" class="btn" data-testid="open-diff">${icon('code')}View PR diff</button>
             <button type="button" class="btn btn--ghost" data-testid="open-import">${icon('plus')}Import PR</button>
           </div>
+          <p class="start-note start-note--busy" data-run-note hidden>${icon('info', { size: 14 })}<span>A run is in progress.</span> <a href="#/run">Go to Run</a></p>
           <p class="start-note" data-mode-note></p>
         </div>
       </div>
@@ -106,6 +107,10 @@ export function mount(root, ctx) {
   const prsEl = $('[data-prs]', root);
   const noteEl = $('[data-mode-note]', root);
   const scopeEl = $('[data-testid="scope-select"]', root);
+  const runBtn = $('[data-testid="run-button"]', root);
+  const runNoteEl = $('[data-run-note]', root);
+  runBtn.setAttribute('aria-describedby', 'start-run-note');
+  runNoteEl.id = 'start-run-note';
   const scene = createScene2D($('[data-scene]', root));
   scene.update(sceneModel(initialRun()));
 
@@ -114,7 +119,11 @@ export function mount(root, ctx) {
   on(root, 'change', 'input[name="mode"]', (e, el) => actions.setOptions({ mode: el.value }));
   scopeEl.addEventListener('change', () => actions.setOptions({ scope: scopeEl.value }));
   on(root, 'click', '[data-retry]', () => actions.loadPrs());
-  on(root, 'click', '[data-testid="run-button"]', () => actions.run());
+  // aria-disabled (not disabled) while a run is in progress, so the button keeps keyboard focus.
+  on(root, 'click', '[data-testid="run-button"]', (e, b) => {
+    if (b.getAttribute('aria-disabled') === 'true') return;
+    actions.run();
+  });
   on(root, 'click', '[data-testid="open-diff"]', () => actions.openOverlay('diff'));
   on(root, 'click', '[data-testid="open-import"]', () => actions.openOverlay('import'));
 
@@ -134,6 +143,9 @@ export function mount(root, ctx) {
     for (const input of root.querySelectorAll('input[name="mode"]')) input.checked = input.value === state.options.mode;
     if (scopeEl.value !== state.options.scope) scopeEl.value = state.options.scope;
     noteEl.textContent = MODE_NOTE[state.options.mode] ?? '';
+    const busy = state.run.status === 'running';
+    runBtn.setAttribute('aria-disabled', busy ? 'true' : 'false');
+    runNoteEl.hidden = !busy;
   };
   store.subscribe(update);
   update(store.getState());

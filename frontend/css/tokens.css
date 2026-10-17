@@ -34,6 +34,7 @@
   --ok-text: #7FD6AA;
   --ok-tint: rgba(82, 196, 140, 0.12);
   --ok-border: rgba(82, 196, 140, 0.5);
+  --ok-glow: rgba(82, 196, 140, 0.6);
 
   --warn: #E5C04B;
   --warn-text: #EBCF72;

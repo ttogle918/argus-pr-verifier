@@ -5,7 +5,7 @@ import { reduceRunEvent } from '../../frontend/js/run.js';
 import { initialRun } from '../../frontend/js/state.js';
 import {
   classifyTest, matrixModel, parseSandboxLog, sceneModel, verdictInfo, riskTone,
-  fixPrompt, reportPayload, runCounts, phaseLabels, formatElapsed,
+  fixPrompt, reportPayload, runCounts, phaseLabels, formatElapsed, runAnnouncement, errorLead,
 } from '../../frontend/js/derive.js';
 
 const r = (r1, r2) => ({ run_1_passed: r1, run_2_passed: r2 });
@@ -81,4 +81,27 @@ test('parseSandboxLog tones for live wording', () => {
   assert.equal(tone('  [MUTANT M8] -> SURVIVED (UNCAUGHT)'), 'warn');
   assert.equal(tone('  [FAIL 2/2 REPRODUCED · BREACHED ON ATTEMPT 3/5] t (security) -> AssertionError'), 'danger');
   assert.equal(tone('  [PASS 2/2] t (security) -> Eligible for Track (b) Mutant Kill'), null);
+});
+
+test('runAnnouncement speaks on stage starts and terminal states only', () => {
+  const events = loadFixture('checkout-race-phase2');
+  const a = replay(events, START, { stopAfter: 'sandbox_start' });
+  const b = replay(events, START, { stopAfter: 'sandbox_track_a' });
+  assert.equal(runAnnouncement(a, b), 'Sandbox B started');
+  assert.equal(runAnnouncement(b, b), '');
+  const done = replay(events);
+  assert.equal(runAnnouncement(b, done), 'Run complete: 7 of 8 planted bugs caught');
+  assert.equal(runAnnouncement(done, { ...done }), '');
+  const err = reduceRunEvent(b, { stage: '_error', message: 'boom' });
+  assert.equal(runAnnouncement(b, err), 'Run stopped: boom');
+  const blocked = replay(loadFixture('prompt-injection-blocked'));
+  assert.match(runAnnouncement(null, blocked), /^Run blocked/);
+  assert.equal(runAnnouncement(null, initialRun()), '');
+});
+
+test('errorLead explains only network and stream failures', () => {
+  assert.equal(errorLead('Stopped by you.'), 'You stopped the run. Results up to this point are kept below.');
+  assert.equal(errorLead('The stream ended before the run finished.'), 'The connection closed before the run finished. Results up to this point are kept below.');
+  assert.equal(errorLead('Failed to fetch'), 'The connection closed before the run finished. Results up to this point are kept below.');
+  assert.equal(errorLead('PR not found'), '');
 });

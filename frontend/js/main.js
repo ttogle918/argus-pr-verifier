@@ -19,8 +19,11 @@ function downloadText(filename, text) {
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
+  a.hidden = true;
+  document.body.appendChild(a); // Firefox ignores clicks on detached anchors
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 const store = createStore(initialState());

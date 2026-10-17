@@ -16,6 +16,13 @@ async function asJson(res) {
   return body;
 }
 
+// Throws with the server's `detail` for a non-2xx response, the same way asJson does.
+async function throwIfNotOk(res) {
+  if (res.ok) return;
+  const body = await res.json().catch(() => ({}));
+  throw new Error(detailMessage(body?.detail) || `HTTP ${res.status}`);
+}
+
 const post = (url, body) =>
   fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(asJson);
 
@@ -39,7 +46,8 @@ export const api = {
       body: JSON.stringify(body),
       signal,
     });
-    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+    await throwIfNotOk(res);
+    if (!res.body) throw new Error(`HTTP ${res.status}`);
     const reader = res.body.getReader();
     const decoder = new TextDecoder('utf-8');
     let buffer = '';

@@ -33,6 +33,7 @@
 .start-actions-wrap { display: flex; flex-direction: column; gap: 14px; }
 .start-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .start-note { font-size: 14px; line-height: 1.55; color: var(--text-muted); max-width: 620px; }
+.start-note--busy { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--text); }
 
 .start-scene { flex: 1 1 560px; min-width: 0; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
 .start-scene__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px; }
