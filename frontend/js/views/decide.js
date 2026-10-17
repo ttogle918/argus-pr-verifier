@@ -203,7 +203,7 @@ function patchHtml(state) {
   const s = run.score;
   const oc = run.oneCard;
   if (patch.status === 'running') {
-    return html`<h2 class="decide-h2">Apply fix &amp; re-verify</h2>
+    return html`<h2 class="decide-h2" id="patch-h" data-testid="patch-heading" tabindex="-1">Apply fix &amp; re-verify</h2>
       <div class="status-box status-box--ai" role="status">${icon('spinner', { size: 16 })}<span>Re-verifying in the sandbox. The patch loop runs four gates per attempt and feeds each counterexample into the next one.</span></div>`;
   }
   if (patch.status === 'error') {
@@ -225,7 +225,7 @@ function patchHtml(state) {
     <div class="patch__head">
       <div class="patch__titles">
         <p class="eyebrow">Decide &middot; apply fix &amp; re-verify</p>
-        <h2 class="patch__h">${heading}</h2>
+        <h2 class="patch__h" id="patch-h" data-testid="patch-heading" tabindex="-1">${heading}</h2>
         ${rep ? html`<p class="mono decide-meta">${rep.patch_session_id} &middot; final patch ${rep.final_patch_id}${run.prTitle ? ` · [PATCHED] ${run.prTitle}` : ''}</p>` : ''}
       </div>
       ${rep ? html`<ol class="patch__slots" aria-label="Patch attempts">
@@ -314,6 +314,7 @@ export function mount(root, ctx) {
   let mode = null;
   let regionEls = {};
   const seen = {};
+  let pendingFocus = null;
 
   const region = (key, deps, render) => {
     const prev = seen[key];
@@ -346,6 +347,33 @@ export function mount(root, ctx) {
     if (state.patch.status !== 'idle') region('patch', [state.patch, run.score, run.oneCard, run.prTitle], () => patchHtml(state));
     else delete seen.patch;
     region('gate', [state.decision, final, run.oneCard], () => gateHtml(state));
+    applyPendingFocus(state);
+  }
+
+  function applyPendingFocus(state) {
+    if (!pendingFocus) return;
+    const d = state.decision;
+    let el = null;
+    if (pendingFocus === 'decided') {
+      if (!d || d.status === 'saving') return;
+      el = $('[data-testid="change-decision"]', root) || $('[data-testid="decision-stamp"]', root);
+    } else if (pendingFocus === 'note') {
+      if (d) return;
+      el = $('#reviewer-note', root);
+    } else if (pendingFocus === 'patch') {
+      if (state.patch.status === 'idle') return;
+      el = $('#patch-h', root);
+      if (state.patch.status === 'running') { el?.focus?.(); pendingFocus = 'patch-done'; return; }
+    } else if (pendingFocus === 'patch-done') {
+      if (state.patch.status === 'running') return;
+      pendingFocus = null;
+      const a = typeof document !== 'undefined' ? document.activeElement : null;
+      if (a && a !== document.body && !regionEls.patch?.contains(a)) return;
+      $('#patch-h', root)?.focus?.();
+      return;
+    }
+    pendingFocus = null;
+    el?.focus?.();
   }
 
   on(root, 'click', '[data-act]', (e, el) => {
@@ -354,21 +382,22 @@ export function mount(root, ctx) {
     switch (act) {
       case 'go-start': actions.navigate('start'); break;
       case 'see-matrix': e.preventDefault(); actions.navigate('verify'); break;
-      case 'apply': actions.applyPatch(); break;
-      case 'retry-patch': actions.applyPatch(); break;
+      case 'apply':
+      case 'retry-patch': pendingFocus = 'patch'; actions.applyPatch(); break;
       case 'copy-prompt':
         actions.copyFixPrompt().then((ok) => showToast(ok ? 'Fix prompt copied' : "Couldn't copy", ok ? 'ok' : 'danger'));
         break;
       case 'approve':
       case 'reject': {
         const note = $('[data-testid="reviewer-note"]', root)?.value ?? '';
+        pendingFocus = 'decided';
         actions.decide(act === 'approve' ? 'APPROVE_MERGE' : 'REJECT_MERGE', note);
         break;
       }
       case 'retry-decision':
-        if (state.decision) actions.decide(state.decision.decision, state.decision.note);
+        if (state.decision) { pendingFocus = 'decided'; actions.decide(state.decision.decision, state.decision.note); }
         break;
-      case 'change': actions.clearDecision(); break;
+      case 'change': pendingFocus = 'note'; actions.clearDecision(); break;
       case 'export': actions.exportBundle(); break;
       case 'download': actions.downloadReport(); break;
       case 'back-to-decision': {

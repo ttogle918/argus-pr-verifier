@@ -31,6 +31,7 @@ export function mount(root, ctx) {
   const { body, onOpen } = createOverlay(root, { name: 'export', title: 'Verified PR bundle', variant: 'modal', ctx });
   let tab = 'tests';
   let lastSig = null;
+  let focusTab = null;
 
   function render(state) {
     const { bundle, run } = state;
@@ -83,11 +84,17 @@ export function mount(root, ctx) {
   function update(state) {
     const { bundle, run } = state;
     const sig = [bundle.status, bundle.data, bundle.error, run.score, tab];
-    if (lastSig && sig.length === lastSig.length && sig.every((v, i) => Object.is(v, lastSig[i]))) return;
+    if (lastSig && sig.length === lastSig.length && sig.every((v, i) => Object.is(v, lastSig[i]))) {
+      if (focusTab) $(`[data-tab="${focusTab}"]`, body)?.focus();
+      focusTab = null;
+      return;
+    }
     lastSig = sig;
-    const hadFocus = body.contains(document.activeElement) ? document.activeElement?.dataset?.tab : null;
+    const saved = body.contains(document.activeElement) ? document.activeElement?.dataset?.tab : null;
+    const target = focusTab || saved;
+    focusTab = null;
     setHtml(body, render(state));
-    if (hadFocus) $(`[data-tab="${hadFocus}"]`, body)?.focus();
+    if (target) $(`[data-tab="${target}"]`, body)?.focus();
   }
 
   const selectTab = (k) => {
@@ -98,12 +105,17 @@ export function mount(root, ctx) {
   on(body, 'click', '[data-testid="export-tab"]', (e, el) => selectTab(el.dataset.tab));
   body.addEventListener('keydown', (e) => {
     const el = e.target.closest?.('[role="tab"]');
-    if (!el || (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft')) return;
+    if (!el || !['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
     e.preventDefault();
     const tabs = $$('[role="tab"]', body);
     const i = tabs.indexOf(el);
-    const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
-    selectTab(next.dataset.tab);
+    let n = i;
+    if (e.key === 'ArrowRight') n = (i + 1) % tabs.length;
+    else if (e.key === 'ArrowLeft') n = (i + tabs.length - 1) % tabs.length;
+    else if (e.key === 'Home') n = 0;
+    else n = tabs.length - 1;
+    focusTab = tabs[n].dataset.tab;
+    selectTab(focusTab);
   });
   on(body, 'click', '[data-act="retry"]', () => actions.exportBundle());
   on(body, 'click', '[data-act="copy"]', async () => {

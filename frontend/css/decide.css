@@ -17,6 +17,7 @@
 }
 .decide-verdict--danger { color: var(--danger-text); background: var(--danger-tint); border-color: var(--danger-border); }
 .decide-verdict--warn { color: var(--warn-text); background: var(--warn-tint); border-color: var(--warn-border); }
+.decide-verdict--muted { color: var(--text-muted); background: var(--surface-2); border-color: var(--border-strong); }
 .decide-verdict--ok { color: var(--ok-text); background: var(--ok-tint); border-color: var(--ok-border); }
 .decide-risk {
   display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px;
