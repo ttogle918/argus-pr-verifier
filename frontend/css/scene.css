@@ -3,7 +3,6 @@
   position: relative;
   width: 100%;
   background: var(--bg-sunken);
-  transition: opacity var(--motion) var(--ease);
 }
 .scene--dimmed { opacity: 0.4; }
 .scene__svg { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; }

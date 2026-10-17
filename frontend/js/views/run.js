@@ -170,6 +170,7 @@ export function mount(root, ctx) {
         ${icon('alert', { size: 20 }).s}
         <div class="error-panel__text">
           <h2 class="error-panel__h" data-role="error-h"></h2>
+          <p class="error-panel__lead">The connection closed before the run finished. Results up to this point are kept below.</p>
           <p data-role="error-msg"></p>
         </div>
         <button type="button" class="btn btn--primary" data-testid="retry-button" data-act="retry">${icon('state', { size: 16 }).s}Retry run</button>
@@ -206,7 +207,7 @@ export function mount(root, ctx) {
             </ul>
           </div>
           <div class="lanes__grid" data-role="lanes"></div>
-          <button type="button" class="btn btn--primary btn--lg lanes__continue" data-act="verify" data-role="continue-b" hidden>See verification matrix ${icon('arrowRight', { size: 16 }).s}</button>
+          <button type="button" class="btn btn--primary btn--lg lanes__continue" data-testid="continue-verify" data-act="verify" data-role="continue-b" hidden>See verification matrix ${icon('arrowRight', { size: 16 }).s}</button>
         </section>
       </div>
 
@@ -251,7 +252,9 @@ export function mount(root, ctx) {
       case 'retry': actions.retry(); break;
       case 'details': actions.openOverlay('run-details'); break;
       case 'verify': actions.navigate('verify'); break;
-      case 'reject': actions.decide('REJECT_MERGE', ''); break;
+      case 'reject':
+        if (t.getAttribute('aria-disabled') === 'true') break;
+        actions.decide('REJECT_MERGE', ''); break;
       case 'open-log':
         el.logSection.scrollIntoView({ block: 'start' });
         el.log.focus({ preventScroll: true });
@@ -421,6 +424,7 @@ export function mount(root, ctx) {
       const d = state.decision;
       const mine = d?.decision === 'REJECT_MERGE' ? d : null;
       rejectBtn.disabled = !!mine && mine.status !== 'error';
+      rejectBtn.setAttribute('aria-disabled', run.final ? 'false' : 'true');
       const line = !mine ? ''
         : mine.status === 'saving' ? 'Saving decision…'
           : mine.status === 'saved' ? 'Merge rejected · recorded'
@@ -433,7 +437,7 @@ export function mount(root, ctx) {
     scene.update(model);
 
     if (run.status === 'error') {
-      const where = run.error?.stage ? STAGE_LABEL[run.error.stage] : 'the run';
+      const where = run.error?.stage ? (STAGE_LABEL[run.error.stage] ?? 'the run') : 'the run';
       const h = `Run stopped during ${where}`;
       if (el.errorH.textContent !== h) el.errorH.textContent = h;
       const msg = run.error?.message ?? '';

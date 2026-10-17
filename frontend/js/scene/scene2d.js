@@ -1,5 +1,5 @@
 import { icon } from '../icons.js';
-import { prefersReducedMotion } from '../dom.js';
+import { esc, prefersReducedMotion } from '../dom.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const CX = 320;
@@ -58,18 +58,20 @@ export function createScene2D(container) {
   const attackersLayer = svg.querySelector('.scene__attackers');
   const beamsLayer = svg.querySelector('.scene__beams');
   let eyeCount = 0;
+  let eyeIdKey = '';
   let attackerKey = '';
   let lastSeq = null;
   let attackerIds = [];
 
-  function buildEyes(n) {
+  function buildEyes(n, mutants = []) {
     eyesLayer.textContent = '';
     for (let i = 0; i < n; i++) {
       const [x, y] = ringPos(i, n);
       const g = document.createElementNS(SVG_NS, 'g');
       g.setAttribute('class', 'eye');
       g.setAttribute('data-testid', 'scene-eye');
-      g.setAttribute('data-mutant-id', `M${i + 1}`);
+      const mid = String(mutants[i]?.id ?? `M${i + 1}`);
+      g.setAttribute('data-mutant-id', mid);
       g.setAttribute('data-state', 'dormant');
       g.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
       g.innerHTML = `
@@ -77,7 +79,8 @@ export function createScene2D(container) {
           <g class="eye__lid">${CLOSED_GLYPH}</g>
           <g class="eye__open">${OPEN_GLYPH}</g>
         </g>
-        <text class="eye__label" y="28" text-anchor="middle">M${i + 1}</text>`;
+        <text class="eye__label" y="28" text-anchor="middle"></text>`;
+      g.querySelector('.eye__label').textContent = mid;
       eyesLayer.appendChild(g);
     }
     eyeCount = n;
@@ -94,12 +97,24 @@ export function createScene2D(container) {
       g.innerHTML = `
         <circle class="attacker__disc" r="15"/>
         <g class="attacker__icon" transform="translate(-7.5 -7.5)">${icon(ATTACKER_GLYPH[id] ?? 'info', { size: 15 })}</g>
-        <text class="attacker__label" y="30" text-anchor="middle">${ATTACKER_NAME[id] ?? String(id).toUpperCase()}</text>`;
+        <text class="attacker__label" y="30" text-anchor="middle">${esc(ATTACKER_NAME[id] ?? String(id).toUpperCase())}</text>`;
       attackersLayer.appendChild(g);
     });
   }
 
+  let liveBeam = null;
+  let beamTimer = null;
+  function clearBeam() {
+    if (beamTimer) clearTimeout(beamTimer);
+    beamTimer = null;
+    if (liveBeam) liveBeam.remove();
+    liveBeam = null;
+  }
+
   function fireBeam(beam, mutants) {
+    // Hidden view or backgrounded tab: CSS animations never finish, so skip.
+    if (document.hidden || !container.getClientRects().length) return;
+    clearBeam();
     const idx = attackerIds.indexOf(beam.attackerId);
     const from = idx === -1 ? [CX, CY] : CORNERS[idx % CORNERS.length];
     let to;
@@ -114,8 +129,15 @@ export function createScene2D(container) {
     line.setAttribute('x2', to[0].toFixed(1));
     line.setAttribute('y2', to[1].toFixed(1));
     line.style.setProperty('--beam-len', len.toFixed(1));
-    line.addEventListener('animationend', () => line.remove());
+    const done = () => {
+      if (liveBeam === line) clearBeam();
+      else line.remove();
+    };
+    line.addEventListener('animationend', done);
+    line.addEventListener('animationcancel', done);
     beamsLayer.appendChild(line);
+    liveBeam = line;
+    beamTimer = setTimeout(done, 600);
   }
 
   return {
@@ -128,7 +150,11 @@ export function createScene2D(container) {
 
       const mutants = model.mutants ?? [];
       const n = Math.max(8, mutants.length);
-      if (n !== eyeCount) buildEyes(n);
+      const idKey = mutants.map((m) => m.id).join('|');
+      if (n !== eyeCount || idKey !== eyeIdKey) {
+        eyeIdKey = idKey;
+        buildEyes(n, mutants);
+      }
       const eyes = eyesLayer.children;
       for (let i = 0; i < eyes.length; i++) {
         const m = mutants[i];
