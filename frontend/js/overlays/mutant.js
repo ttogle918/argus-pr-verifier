@@ -19,7 +19,8 @@ export function mount(root, ctx) {
     <p class="mform__lede">Add a bug of your own and see how the score moves. You choose whether a valid test catches it; no new tests run. It is tagged <strong>Calibration</strong> everywhere it appears so it is never mistaken for a swarm result.</p>
     <form class="mform" novalidate>
       <div class="field"><label class="field__label" for="m-title">Bug title</label>
-        <input id="m-title" class="input" type="text" required autocomplete="off" placeholder="Negative fee bypass on partial refunds" data-testid="mutant-title"></div>
+        <input id="m-title" class="input" type="text" required autocomplete="off" placeholder="Negative fee bypass on partial refunds" data-testid="mutant-title">
+        <p class="field__error" id="m-title-err" data-testid="mutant-title-error" hidden>${icon('alert', { size: 14 })}<span>Enter a bug title.</span></p></div>
       <div class="field"><label class="field__label" for="m-cat">Category</label>
         <select id="m-cat" class="select" data-testid="mutant-category">
           <option value="security">Security</option><option value="edge_cases">Edge case</option>
@@ -40,6 +41,8 @@ export function mount(root, ctx) {
     </form>`);
   const form = body.querySelector('form');
   const titleEl = body.querySelector('#m-title');
+  const titleErr = body.querySelector('#m-title-err');
+  const clearTitleError = () => { titleEl.removeAttribute('aria-invalid'); titleEl.removeAttribute('aria-describedby'); titleErr.hidden = true; };
   const catEl = body.querySelector('#m-cat');
   const descEl = body.querySelector('#m-desc');
   const previewEl = body.querySelector('[data-testid="mutant-preview"]');
@@ -73,16 +76,19 @@ export function mount(root, ctx) {
     form.reset();
     titleEl.value = '';
     descEl.value = DEFAULT_DESC;
-    titleEl.removeAttribute('aria-invalid');
+    clearTitleError();
     render(state);
   });
-  form.addEventListener('input', () => { titleEl.removeAttribute('aria-invalid'); render(store.getState()); });
+  form.addEventListener('input', () => { clearTitleError(); render(store.getState()); });
   form.addEventListener('change', () => render(store.getState()));
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     if (store.getState().mutantForm.status === 'saving') return;
     const title = titleEl.value.trim();
-    if (!title) { titleEl.setAttribute('aria-invalid', 'true'); titleEl.focus(); return; }
+    if (!title) {
+      titleEl.setAttribute('aria-invalid', 'true'); titleEl.setAttribute('aria-describedby', 'm-title-err');
+      titleErr.hidden = false; titleEl.focus(); return;
+    }
     actions.addMutant({ title, category: catEl.value, description: descEl.value.trim() || DEFAULT_DESC, caught: outcome() === 'caught' });
   });
   store.subscribe(render);

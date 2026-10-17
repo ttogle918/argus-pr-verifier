@@ -13,3 +13,6 @@
 .mform__note { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-muted); }
 .mform__actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .mform .input[aria-invalid="true"] { border-color: var(--danger); }
+
+.field__error { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 13px; color: var(--danger-text); }
+.field__error[hidden] { display: none; }

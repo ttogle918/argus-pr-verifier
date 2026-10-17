@@ -218,11 +218,11 @@ export function mount(root, ctx) {
     const dataChanged = last.final !== run.final || last.cal !== run.calibrationIds || last.phase !== run.phase || last.oneCard !== run.oneCard;
     const model = dataChanged || !last.model ? matrixModel(run.final, run.calibrationIds, run.phase) : last.model;
     const sel = effectiveSelection(model.columns, state.ui.selectedMutant);
-    if (!dataChanged && last.sel === sel) return;
+    if (!dataChanged && last.sel === sel) { pendingFocus = null; return; }
 
-    const focusedId = pendingFocus ?? root.contains(document.activeElement)
-      ? (pendingFocus ?? document.activeElement.closest?.('[data-testid="matrix-col"]')?.dataset.mutantId)
-      : null;
+    const focusedId = pendingFocus ?? (root.contains(document.activeElement)
+      ? document.activeElement.closest?.('[data-testid="matrix-col"]')?.dataset.mutantId
+      : null);
     if (dataChanged) {
       const animate = run.runId !== lastAnimatedRunId && !prefersReducedMotion();
       lastAnimatedRunId = run.runId;
