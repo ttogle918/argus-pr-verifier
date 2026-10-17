@@ -1,8 +1,18 @@
 import { parseSseBuffer } from './sse.js';
 
+function detailMessage(detail) {
+  if (!detail) return '';
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const msgs = detail.map((d) => d?.msg).filter(Boolean);
+    if (msgs.length) return msgs.join('; ');
+  }
+  return JSON.stringify(detail);
+}
+
 async function asJson(res) {
   const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.detail || `HTTP ${res.status}`);
+  if (!res.ok) throw new Error(detailMessage(body.detail) || `HTTP ${res.status}`);
   return body;
 }
 

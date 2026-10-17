@@ -38,6 +38,7 @@ function sampleChip(state) {
 export function mount(root, ctx) {
   on(root, 'click', '.nav-link[aria-disabled="true"]', (e) => e.preventDefault());
 
+  let last = null;
   const update = (state) => {
     const links = NAV.map(([view, num, label]) => {
       const current = state.view === view;
@@ -46,10 +47,15 @@ export function mount(root, ctx) {
         ${current ? html`aria-current="page"` : ''}
         ${disabled ? html`aria-disabled="true" tabindex="-1"` : ''}><span class="mono nav-link__num">${num}</span>${label}</a>`;
     });
-    setHtml(root, html`
+    const markup = html`
       <div class="app-header__brand">${ARGUS_LOGO}<span class="app-header__name">Argus-PR</span></div>
       <nav class="app-header__nav" aria-label="Workflow">${links}</nav>
-      <div class="app-header__chips">${modeChip(state)}${sampleChip(state)}</div>`);
+      <div class="app-header__chips">${modeChip(state)}${sampleChip(state)}</div>`;
+    // Re-rendering destroys the focused nav link; only touch the DOM when the output changed.
+    const str = String(markup.s);
+    if (str === last) return;
+    last = str;
+    setHtml(root, markup);
   };
 
   ctx.store.subscribe(update);

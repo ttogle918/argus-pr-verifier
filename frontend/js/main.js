@@ -42,10 +42,13 @@ exportOverlay.mount(byId('overlay-export'), ctx);
 let lastView = null;
 store.subscribe((s) => {
   if (s.view === lastView) return;
+  const firstLoad = lastView === null;
   lastView = s.view;
   for (const v of ['start', 'run', 'verify', 'decide']) byId(`view-${v}`).hidden = s.view !== v;
   window.scrollTo(0, 0);
+  if (!firstLoad) byId(`view-${s.view}`).focus({ preventScroll: true });
 });
+for (const v of ['start', 'run', 'verify', 'decide']) byId(`view-${v}`).tabIndex = -1;
 byId('view-start').hidden = false;
 
 initRouter(store, actions);

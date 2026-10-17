@@ -1,4 +1,4 @@
-import { raw } from './dom.js';
+import { raw, esc } from './dom.js';
 
 const STROKE = {
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
@@ -43,8 +43,8 @@ export const ARGUS_LOGO = raw('<svg viewBox="0 0 24 24" width="26" height="26" a
 
 // icon('check', { size: 16, label: 'Caught' }) - decorative unless label is given.
 export function icon(name, { size = 16, label = null, cls = '' } = {}) {
-  const a11y = label ? `role="img" aria-label="${label}"` : 'aria-hidden="true"';
-  const klass = `icon icon--${name}${cls ? ` ${cls}` : ''}`;
+  const a11y = label ? `role="img" aria-label="${esc(label)}"` : 'aria-hidden="true"';
+  const klass = `icon icon--${name}${cls ? ` ${esc(cls)}` : ''}`;
   if (EYE[name]) {
     return raw(`<svg class="${klass}" viewBox="0 0 40 24" width="${Math.round(size * 1.67)}" height="${size}" ${a11y} fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">${EYE[name]}</svg>`);
   }
