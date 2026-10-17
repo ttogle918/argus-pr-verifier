@@ -46,8 +46,8 @@
   --ai-tint: rgba(106, 163, 247, 0.10);
   --ai-border: rgba(106, 163, 247, 0.45);
 
-  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --font-sans: 'IBM Plex Sans', 'IBM Plex Sans KR', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'IBM Plex Sans KR', ui-monospace, 'Cascadia Code', Consolas, monospace;
   --fs-xs: 12px;
   --fs-sm: 13px;
   --fs-base: 15px;

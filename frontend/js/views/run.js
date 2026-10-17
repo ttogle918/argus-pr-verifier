@@ -273,6 +273,8 @@ export function mount(root, ctx) {
   let lastRun = null;
   let announcedRun = null;
   const tick = () => {
+    // A language change remounts the view; the interval of the old root stops here.
+    if (!root.isConnected) { clearInterval(timer); timer = null; return; }
     const run = store.getState().run;
     el.elapsed.textContent = formatElapsed(run.startedAt, run.finishedAt ?? frozenEnd ?? Date.now());
   };

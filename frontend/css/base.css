@@ -15,6 +15,8 @@ a { color: var(--text); }
 a:hover { color: var(--text-strong); }
 button, input, select, textarea { font: inherit; color: inherit; }
 main:focus { outline: none; }
+/* Korean wraps at word boundaries, like English. */
+:lang(ko) { word-break: keep-all; overflow-wrap: break-word; }
 
 .skip-link {
   position: absolute;
@@ -71,6 +73,24 @@ main:focus { outline: none; }
 .app-header__name { font-size: var(--fs-lg); font-weight: 600; letter-spacing: 0.01em; }
 .app-header__nav { display: flex; flex-wrap: wrap; gap: 4px; }
 .app-header__chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.lang-toggle { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 5px; overflow: hidden; }
+.lang-toggle__btn {
+  min-width: 36px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.lang-toggle__btn + .lang-toggle__btn { border-left: 1px solid var(--border-strong); }
+.lang-toggle__btn:hover { color: var(--text); background: var(--surface-hover); }
+.lang-toggle__btn[aria-pressed="true"] { color: var(--text-strong); background: var(--surface-3); }
+.lang-toggle__btn:focus-visible { outline-offset: -2px; }
 
 .nav-link {
   display: inline-flex;

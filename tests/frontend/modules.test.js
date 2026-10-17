@@ -35,8 +35,9 @@ test("main.js imports point at existing files and exported names", async () => {
   }
 });
 
-test('no Hangul in the frontend sources', () => {
-  for (const f of own) {
+// Korean copy lives only in the translation tables under js/i18n/.
+test('no Hangul in the frontend sources outside js/i18n/', () => {
+  for (const f of own.filter((x) => !rel(x).startsWith('js/i18n/'))) {
     const hit = readFileSync(f, 'utf8').match(/[\uAC00-\uD7A3]+/);
     assert.equal(hit, null, `${rel(f)} contains "${hit?.[0]}"`);
   }

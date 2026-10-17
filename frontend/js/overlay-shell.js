@@ -1,5 +1,6 @@
 import { html, setHtml } from './dom.js';
 import { icon } from './icons.js';
+import { t } from './i18n.js';
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -11,7 +12,7 @@ export function createOverlay(root, { name, title, variant = 'modal', ctx }) {
       <section class="overlay__panel" role="dialog" aria-modal="true" aria-labelledby="${name}-title" tabindex="-1">
         <header class="overlay__header">
           <h2 class="overlay__title" id="${name}-title">${title}</h2>
-          <button type="button" class="icon-btn" data-close data-testid="overlay-close" aria-label="Close">${icon('x', { size: 18 })}</button>
+          <button type="button" class="icon-btn" data-close data-testid="overlay-close" aria-label="${t('Close')}">${icon('x', { size: 18 })}</button>
         </header>
         <div class="overlay__body"></div>
       </section>

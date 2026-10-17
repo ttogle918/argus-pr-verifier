@@ -1,3 +1,5 @@
+import { t } from './i18n.js';
+
 export const ATTACKER_LABEL = { security: 'Security', edge_cases: 'Edge Case', state: 'State', regression: 'Regression' };
 export const ATTACKER_ICON = { security: 'security', edge_cases: 'edge_cases', state: 'state', regression: 'regression' };
 export const STAGE_LABEL = {
@@ -17,8 +19,8 @@ export function classifyTest(result, phase) {
 
 export function phaseLabels(phase) {
   return phase === 'phase1_mvp'
-    ? { repro: '1 run', held: 'Held', name: 'Phase 1 · 3 attackers · 1 run' }
-    : { repro: '2/2 repro', held: 'Held 2/2', name: 'Phase 2 · 4 attackers · 2× repro' };
+    ? { repro: t('1 run'), held: t('Held'), name: t('Phase 1 · 3 attackers · 1 run') }
+    : { repro: t('2/2 repro'), held: t('Held 2/2'), name: t('Phase 2 · 4 attackers · 2× repro') };
 }
 
 export function runCounts(run) {
@@ -82,16 +84,17 @@ export function sceneModel(run) {
   const c = runCounts(run);
   const survivors = run.mutants.filter((m) => m.status === 'survived').map((m) => m.id);
   const summary = stage === 'blocked'
-    ? 'Blocked at Stage 0. No attackers were dispatched.'
+    ? t('Blocked at Stage 0. No attackers were dispatched.')
     : stage === 'final'
-      ? `${c.caught} of ${c.mutantsTotal} hidden mutants caught.${survivors.length ? ` ${survivors.join(', ')} survived.` : ''}`
+      ? t('{caught} of {total} hidden mutants caught.', { caught: c.caught, total: c.mutantsTotal })
+        + (survivors.length ? ` ${t('{ids} survived.', { ids: survivors.join(', ') })}` : '')
       : stage === 'idle'
-        ? 'Waiting for a run.'
-        : `${c.caught} of ${c.mutantsTotal || 8} hidden mutants caught so far.`;
+        ? t('Waiting for a run.')
+        : t('{caught} of {total} hidden mutants caught so far.', { caught: c.caught, total: c.mutantsTotal || 8 });
   return {
     stage,
     dimmed: run.status === 'error',
-    attackers: run.attackers.map((id) => ({ id, label: ATTACKER_LABEL[id] ?? id })),
+    attackers: run.attackers.map((id) => ({ id, label: ATTACKER_LABEL[id] ? t(ATTACKER_LABEL[id]) : id })),
     mutants: run.mutants.map((m) => ({ id: m.id, status: m.status })),
     beam: run.lastBeam,
     summary,
@@ -103,7 +106,7 @@ const VERDICT = {
   CAUTION_REVIEW: { label: 'Review with caution', tone: 'warn', icon: 'warn' },
   APPROVE_RECOMMENDED: { label: 'Approve recommended', tone: 'ok', icon: 'check' },
 };
-export const verdictInfo = (v) => VERDICT[v] ?? { label: v, tone: 'muted', icon: 'info' };
+export const verdictInfo = (v) => (VERDICT[v] ? { ...VERDICT[v], label: t(VERDICT[v].label) } : { label: v, tone: 'muted', icon: 'info' });
 export const riskTone = (level) => ({ CRITICAL: 'danger', HIGH: 'danger', MODERATE: 'warn', LOW: 'ok' }[level] ?? 'muted');
 
 export function fixPrompt(final) {
@@ -140,15 +143,15 @@ export function runAnnouncement(prev, run) {
       const c = runCounts(run);
       const caught = run.score?.planted_bugs_caught ?? c.caught;
       const total = run.score?.planted_bugs_total ?? c.mutantsTotal;
-      return `Run complete: ${caught} of ${total} planted bugs caught`;
+      return t('Run complete: {caught} of {total} planted bugs caught', { caught, total });
     }
-    if (run.status === 'blocked') return 'Run blocked at Stage 0: the guardrail flagged this PR';
-    if (run.status === 'error') return `Run stopped: ${run.error?.message ?? 'unknown error'}`;
+    if (run.status === 'blocked') return t('Run blocked at Stage 0: the guardrail flagged this PR');
+    if (run.status === 'error') return t('Run stopped: {message}', { message: t(run.error?.message ?? 'unknown error') });
   }
   if (run.status !== 'running') return '';
   return Object.keys(STAGE_LABEL)
     .filter((k) => run.stages[k] === 'active' && p?.stages[k] !== 'active')
-    .map((k) => `${STAGE_LABEL[k]} started`)
+    .map((k) => t('{stage} started', { stage: t(STAGE_LABEL[k]) }))
     .join('. ');
 }
 
@@ -156,7 +159,7 @@ const NETWORK_ERROR_RE = /stream ended|failed to fetch|networkerror|network erro
 
 // Lead sentence for the run error panel; empty when the message speaks for itself.
 export function errorLead(message) {
-  if (message === 'Stopped by you.') return 'You stopped the run. Results up to this point are kept below.';
-  if (NETWORK_ERROR_RE.test(message ?? '')) return 'The connection closed before the run finished. Results up to this point are kept below.';
+  if (message === 'Stopped by you.') return t('You stopped the run. Results up to this point are kept below.');
+  if (NETWORK_ERROR_RE.test(message ?? '')) return t('The connection closed before the run finished. Results up to this point are kept below.');
   return '';
 }
