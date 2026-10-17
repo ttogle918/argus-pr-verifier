@@ -1,0 +1,81 @@
+.overlay { position: fixed; inset: 0; z-index: 50; }
+.overlay__backdrop { position: absolute; inset: 0; background: var(--backdrop); }
+
+.overlay__panel {
+  position: absolute;
+  top: 48px;
+  left: 50%;
+  width: calc(100% - 2 * var(--gutter));
+  max-width: 780px;
+  max-height: calc(100vh - 96px);
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  animation: overlay-in-modal var(--motion) var(--ease) both;
+}
+
+.overlay--drawer .overlay__panel {
+  top: 0;
+  right: 0;
+  left: auto;
+  bottom: 0;
+  width: min(980px, 100%);
+  max-width: none;
+  max-height: none;
+  height: 100%;
+  border-radius: 0;
+  border-width: 0 0 0 1px;
+  animation-name: overlay-in-drawer;
+}
+
+.overlay__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 12px 12px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.overlay__title { font-size: var(--fs-xl); font-weight: 600; line-height: 1.25; }
+.overlay__body { padding: 0; }
+
+body.has-overlay { overflow: hidden; }
+
+@keyframes overlay-in-modal {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+@keyframes overlay-in-drawer {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Toasts */
+.toast-root {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 14px;
+}
+.toast--ok { color: var(--ok-text); border-color: var(--ok-border); }
+.toast--danger { color: var(--danger-text); border-color: var(--danger-border); }
