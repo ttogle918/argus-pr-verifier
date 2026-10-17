@@ -1,1 +1,15 @@
-/* mutant.css: owned by a later task */
+/* Calibration mutant overlay */
+.mform__lede { margin: 0 0 16px; font-size: var(--fs-md); color: var(--text-muted); max-width: 640px; }
+.mform__lede strong { color: var(--text-2); font-weight: 600; }
+.mform { display: flex; flex-direction: column; gap: 16px; }
+.mform__opt { color: var(--text-faint); }
+.mform__outcome { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.mform__outcome legend { padding: 0; margin-bottom: 8px; }
+.mform__pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.mform__pills .choice { min-height: 44px; }
+.mform__preview { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; }
+.mform__score { margin: 0; font-size: var(--fs-md); color: var(--text-2); }
+.mform__score strong { color: var(--text-strong); font-size: var(--fs-xl); }
+.mform__note { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-muted); }
+.mform__actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.mform .input[aria-invalid="true"] { border-color: var(--danger); }
