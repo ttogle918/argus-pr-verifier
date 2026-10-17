@@ -1,5 +1,6 @@
 import { icon } from '../icons.js';
 import { esc, prefersReducedMotion } from '../dom.js';
+import { t } from '../i18n.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const CX = 320;
@@ -49,7 +50,7 @@ export function createScene2D(container) {
       <g class="scene__attackers"></g>
       <g class="scene__blocked">
         <g transform="translate(${CX - 14} ${CY - 34})" class="scene__blocked-icon">${icon('ban', { size: 28 })}</g>
-        <text class="scene__blocked-label" x="${CX}" y="${CY + 20}" text-anchor="middle">BLOCKED · STAGE 0</text>
+        <text class="scene__blocked-label" x="${CX}" y="${CY + 20}" text-anchor="middle">${t('BLOCKED · STAGE 0')}</text>
       </g>
     </svg>`;
 
@@ -97,7 +98,7 @@ export function createScene2D(container) {
       g.innerHTML = `
         <circle class="attacker__disc" r="15"/>
         <g class="attacker__icon" transform="translate(-7.5 -7.5)">${icon(ATTACKER_GLYPH[id] ?? 'info', { size: 15 })}</g>
-        <text class="attacker__label" y="30" text-anchor="middle">${esc(ATTACKER_NAME[id] ?? String(id).toUpperCase())}</text>`;
+        <text class="attacker__label" y="30" text-anchor="middle">${esc(ATTACKER_NAME[id] ? t(ATTACKER_NAME[id]) : String(id).toUpperCase())}</text>`;
       attackersLayer.appendChild(g);
     });
   }
@@ -162,7 +163,7 @@ export function createScene2D(container) {
         const el = eyes[i];
         if (el.getAttribute('data-state') !== st) el.setAttribute('data-state', st);
         const label = el.querySelector('.eye__label');
-        const text = st === 'survived' ? `${el.getAttribute('data-mutant-id')} · survived` : el.getAttribute('data-mutant-id');
+        const text = st === 'survived' ? `${el.getAttribute('data-mutant-id')} · ${t('survived')}` : el.getAttribute('data-mutant-id');
         if (label.textContent !== text) label.textContent = text;
       }
 

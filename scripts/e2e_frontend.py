@@ -197,6 +197,21 @@ def main():
             expect(tid(page, "run-status")).to_contain_text("Complete", timeout=RUN_TIMEOUT)
             expect(tid(page, "caught-counter")).to_have_text("6/8")
 
+            # Korean toggle keeps the finished run and translates the chrome; English comes back clean
+            tid(page, "lang-ko").click()
+            expect(page.locator("html")).to_have_attribute("lang", "ko")
+            expect(tid(page, "lang-ko")).to_be_focused()
+            expect(tid(page, "nav-run")).to_contain_text("실행")
+            expect(tid(page, "caught-counter")).to_have_text("6/8")
+            page.screenshot(path=str(SHOTS / "7-run-ko-1440.png"), full_page=True)
+            tid(page, "nav-verify").click()
+            page.screenshot(path=str(SHOTS / "8-verify-ko-1440.png"), full_page=True)
+            tid(page, "nav-decide").click()
+            page.screenshot(path=str(SHOTS / "9-decide-ko-1440.png"), full_page=True)
+            tid(page, "lang-en").click()
+            expect(page.locator("html")).to_have_attribute("lang", "en")
+            no_hangul(page, "decide after switching back to English")
+
             # Reduced motion still completes (not pr-checkout-race: add-mutant changed its server-side sample)
             rm = browser.new_page(viewport={"width": 1280, "height": 720}, reduced_motion="reduce")
             rm.on("pageerror", lambda e: errors.append(str(e)))

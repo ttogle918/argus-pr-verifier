@@ -2,6 +2,7 @@ import { html, raw, esc, setHtml, on, $, $$ } from '../dom.js';
 import { icon } from '../icons.js';
 import { createOverlay } from '../overlay-shell.js';
 import { showToast } from '../toast.js';
+import { t } from '../i18n.js';
 
 const CI_PATH = '.github/workflows/argus-security-regression.yml';
 const TABS = [['tests', 'Regression tests'], ['patch', 'Patch diff'], ['ci', 'CI workflow']];
@@ -28,24 +29,24 @@ export function bundleFile(bundle, tab) {
 
 export function mount(root, ctx) {
   const { store, actions } = ctx;
-  const { body, onOpen } = createOverlay(root, { name: 'export', title: 'Verified PR bundle', variant: 'modal', ctx });
+  const { body, onOpen } = createOverlay(root, { name: 'export', title: t('Verified PR bundle'), variant: 'modal', ctx });
   let tab = 'tests';
   let lastSig = null;
   let focusTab = null;
 
   function render(state) {
     const { bundle, run } = state;
-    const intro = html`<p class="export-sub">The verified patch, plus regression tests pinned from the proven exploits, plus a CI gate that runs them on every push.</p>`;
-    const footer = html`<div class="export-foot"><button type="button" class="btn" data-close>Close</button></div>`;
+    const intro = html`<p class="export-sub">${t('The verified patch, plus regression tests pinned from the proven exploits, plus a CI gate that runs them on every push.')}</p>`;
+    const footer = html`<div class="export-foot"><button type="button" class="btn" data-close>${t('Close')}</button></div>`;
     if (bundle.status === 'running' || bundle.status === 'idle') {
       return html`<div class="export">${intro}
-        <div class="status-box status-box--ai" role="status">${icon('spinner', { size: 16 })}<span>Building the verified PR bundle&hellip;</span></div>
+        <div class="status-box status-box--ai" role="status">${icon('spinner', { size: 16 })}<span>${t('Building the verified PR bundle…')}</span></div>
         ${footer}</div>`;
     }
     if (bundle.status === 'error') {
       return html`<div class="export">${intro}
-        <div class="status-box status-box--danger" role="alert">${icon('alert', { size: 16 })}<span>Couldn't build the bundle: ${bundle.error || 'unknown error'}</span>
-          <button type="button" class="btn" data-act="retry">Retry</button></div>
+        <div class="status-box status-box--danger" role="alert">${icon('alert', { size: 16 })}<span>${t("Couldn't build the bundle: {message}", { message: bundle.error ? t(bundle.error) : t('unknown error') })}</span>
+          <button type="button" class="btn" data-act="retry">${t('Retry')}</button></div>
         ${footer}</div>`;
     }
     const b = bundle.data;
@@ -56,21 +57,21 @@ export function mount(root, ctx) {
     return html`<div class="export">
       ${intro}
       <dl class="export-facts">
-        ${dl('Branch', b.branch_name)}
-        ${dl('Patch', b.patch_id)}
-        ${dl('Pinned from', `${proven} proven exploits`)}
-        ${dl('After patch', s ? `${s.confirmed_pr_failures_count} defects · ${s.planted_bugs_caught}/${s.planted_bugs_total} caught` : 'n/a')}
+        ${dl(t('Branch'), b.branch_name)}
+        ${dl(t('Patch'), b.patch_id)}
+        ${dl(t('Pinned from'), t('{n} proven exploits', { n: proven }))}
+        ${dl(t('After patch'), s ? t('{defects} defects · {caught}/{total} caught', { defects: s.confirmed_pr_failures_count, caught: s.planted_bugs_caught, total: s.planted_bugs_total }) : t('n/a'))}
       </dl>
       <p class="mono export-commit">${b.commit_Title ?? b.commit_title ?? ''}</p>
-      <div class="tabs export-tabs" role="tablist" aria-label="Bundle files">
-        ${TABS.map(([k, label]) => html`<button type="button" class="tab" role="tab" id="export-tab-${k}" aria-selected="${k === tab}" tabindex="${k === tab ? 0 : -1}" aria-controls="export-panel" data-testid="export-tab" data-tab="${k}">${label}</button>`)}
+      <div class="tabs export-tabs" role="tablist" aria-label="${t('Bundle files')}">
+        ${TABS.map(([k, label]) => html`<button type="button" class="tab" role="tab" id="export-tab-${k}" aria-selected="${k === tab}" tabindex="${k === tab ? 0 : -1}" aria-controls="export-panel" data-testid="export-tab" data-tab="${k}">${t(label)}</button>`)}
       </div>
       <div class="export-panel" id="export-panel" role="tabpanel" aria-labelledby="export-tab-${tab}">
         <div class="export-file">
           <code class="mono export-path">${file.path}</code>
           <div class="export-file__tools">
-            ${file.proven ? html`<span class="chip">TIER: PROVEN</span>` : ''}
-            <button type="button" class="btn" data-testid="export-copy" data-act="copy">${icon('copy', { size: 15 })}Copy</button>
+            ${file.proven ? html`<span class="chip">${t('TIER: PROVEN')}</span>` : ''}
+            <button type="button" class="btn" data-testid="export-copy" data-act="copy">${icon('copy', { size: 15 })}${t('Copy')}</button>
           </div>
         </div>
         <pre class="code export-code" data-testid="export-code" tabindex="0">${file.diff
@@ -123,7 +124,7 @@ export function mount(root, ctx) {
     if (!bundle.data) return;
     const file = bundleFile(bundle.data, tab);
     const ok = await actions.copyText(file.content);
-    showToast(ok ? `Copied ${file.label}` : "Couldn't copy", ok ? 'ok' : 'danger');
+    showToast(ok ? t('Copied {label}', { label: t(file.label) }) : t("Couldn't copy"), ok ? 'ok' : 'danger');
   });
 
   onOpen(() => { tab = 'tests'; lastSig = null; update(store.getState()); });

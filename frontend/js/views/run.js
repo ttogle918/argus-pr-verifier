@@ -5,6 +5,7 @@ import {
   sceneModel, runCounts, phaseLabels, ATTACKER_LABEL, ATTACKER_ICON, STAGE_LABEL, formatElapsed, runAnnouncement, errorLead,
 } from '../derive.js';
 import { createScene2D } from '../scene/scene2d.js';
+import { t } from '../i18n.js';
 
 const FILTERS = [['all', 'All'], ['a', 'Track A'], ['b', 'Track B'], ['fail', 'Failures only']];
 const LOG_CMD = 'antigravity-preview-09-2026 · python /workspace/harness/run_dual_track_verification.py';
@@ -59,19 +60,19 @@ function stageIcon(state) {
 function statusPill(run) {
   if (run.status === 'running') {
     const active = STAGES.find((k) => run.stages[k] === 'active');
-    const label = active ? `${STAGE_LABEL[active]} ${run.stageMeta[active] ?? ''}`.trim() : 'Starting';
-    return html`<span class="chip chip--ai run-pill">${icon('spinner', { size: 16 })}Running · ${label}</span>`;
+    const label = active ? `${t(STAGE_LABEL[active])} ${run.stageMeta[active] ?? ''}`.trim() : t('Starting');
+    return html`<span class="chip chip--ai run-pill">${icon('spinner', { size: 16 })}${t('Running · {label}', { label })}</span>`;
   }
-  if (run.status === 'complete') return html`<span class="chip run-pill">${icon('check', { size: 16 })}Complete</span>`;
-  if (run.status === 'blocked') return html`<span class="chip chip--danger run-pill">${icon('ban', { size: 16 })}Blocked at Stage 0</span>`;
-  if (run.status === 'error') return html`<span class="chip chip--danger run-pill">${icon('breach', { size: 16 })}Stopped</span>`;
-  return html`<span class="chip run-pill">Idle</span>`;
+  if (run.status === 'complete') return html`<span class="chip run-pill">${icon('check', { size: 16 })}${t('Complete')}</span>`;
+  if (run.status === 'blocked') return html`<span class="chip chip--danger run-pill">${icon('ban', { size: 16 })}${t('Blocked at Stage 0')}</span>`;
+  if (run.status === 'error') return html`<span class="chip chip--danger run-pill">${icon('breach', { size: 16 })}${t('Stopped')}</span>`;
+  return html`<span class="chip run-pill">${t('Idle')}</span>`;
 }
 
 function mutantCell(m, i) {
   const id = m?.id ?? `M${i + 1}`;
   const status = m?.status ?? 'sealed';
-  const text = { caught: 'caught', testing: 'testing now', survived: 'survived', sealed: 'sealed, not tested yet' }[status];
+  const text = t({ caught: 'caught', testing: 'testing now', survived: 'survived', sealed: 'sealed, not tested yet' }[status]);
   const glyph = status === 'caught' ? icon('check', { size: 16 })
     : status === 'testing' ? icon('spinner', { size: 16 })
       : icon('eyeClosed', { size: 11 });
@@ -79,41 +80,41 @@ function mutantCell(m, i) {
 }
 
 function laneStatus(run, tests, planned) {
-  const resolved = tests.filter((t) => t.outcome !== 'pending').length;
-  const kills = new Set(tests.flatMap((t) => t.kills)).size;
-  const pending = tests.some((t) => t.outcome === 'pending') && run.stages.sandbox_a === 'active';
-  if (!tests.length) return { text: planned ? 'Writing tests' : 'Waiting', tone: '' };
-  const text = `${resolved}/${tests.length}${kills ? ` · ${kills} kill${kills > 1 ? 's' : ''}` : ''}`;
+  const resolved = tests.filter((x) => x.outcome !== 'pending').length;
+  const kills = new Set(tests.flatMap((x) => x.kills)).size;
+  const pending = tests.some((x) => x.outcome === 'pending') && run.stages.sandbox_a === 'active';
+  if (!tests.length) return { text: planned ? t('Writing tests') : t('Waiting'), tone: '' };
+  const text = `${resolved}/${tests.length}${kills ? ` · ${t(kills > 1 ? '{n} kills' : '{n} kill', { n: kills })}` : ''}`;
   return { text, tone: pending ? 'chip--ai' : '' };
 }
 
-function testRowHtml(run, t, labels) {
-  const iconName = { breach: 'breach', flaky: 'warn', held: 'held', pending: 'pending' }[t.outcome];
+function testRowHtml(run, test, labels) {
+  const iconName = { breach: 'breach', flaky: 'warn', held: 'held', pending: 'pending' }[test.outcome];
   let result;
   let pips = '';
   const extras = [];
-  if (t.outcome === 'breach') {
-    const attempt = t.breachedOnAttempt ? ` · attempt ${t.breachedOnAttempt}/${t.maxAttempts}` : '';
-    result = html`<span class="chip chip--danger">Breached · ${labels.repro}${attempt}</span>`;
-    if (t.breachedOnAttempt) {
-      const max = t.maxAttempts || 5;
+  if (test.outcome === 'breach') {
+    const attempt = test.breachedOnAttempt ? ` · ${t('attempt {n}/{max}', { n: test.breachedOnAttempt, max: test.maxAttempts })}` : '';
+    result = html`<span class="chip chip--danger">${t('Breached · {repro}', { repro: labels.repro })}${attempt}</span>`;
+    if (test.breachedOnAttempt) {
+      const max = test.maxAttempts || 5;
       const cells = Array.from({ length: max }, (_, k) => {
         const n = k + 1;
-        return html`<span class="pip ${n < t.breachedOnAttempt ? 'pip--used' : n === t.breachedOnAttempt ? 'pip--hit' : 'pip--empty'}"></span>`;
+        return html`<span class="pip ${n < test.breachedOnAttempt ? 'pip--used' : n === test.breachedOnAttempt ? 'pip--hit' : 'pip--empty'}"></span>`;
       });
-      pips = html`<span class="pips" role="img" aria-label="Breached on attempt ${t.breachedOnAttempt} of ${max}">${cells}</span>`;
+      pips = html`<span class="pips" role="img" aria-label="${t('Breached on attempt {n} of {max}', { n: test.breachedOnAttempt, max })}">${cells}</span>`;
     }
-  } else if (t.outcome === 'flaky') {
-    result = html`<span class="chip chip--warn">Flaky · failed 1/2 · filtered out</span>`;
-  } else if (t.outcome === 'held') {
+  } else if (test.outcome === 'flaky') {
+    result = html`<span class="chip chip--warn">${t('Flaky · failed 1/2 · filtered out')}</span>`;
+  } else if (test.outcome === 'held') {
     result = html`<span class="chip">${labels.held}</span>`;
-    for (const k of t.kills) extras.push(html`<span class="chip chip--ok">✓ Caught ${k}</span>`);
-    if (!t.kills.length && run.stages.sandbox_b === 'active') extras.push(html`<span class="chip chip--quiet">Waiting</span>`);
+    for (const k of test.kills) extras.push(html`<span class="chip chip--ok">✓ ${t('Caught {id}', { id: k })}</span>`);
+    if (!test.kills.length && run.stages.sandbox_b === 'active') extras.push(html`<span class="chip chip--quiet">${t('Waiting')}</span>`);
   } else {
-    result = html`<span class="chip">Queued</span>`;
+    result = html`<span class="chip">${t('Queued')}</span>`;
   }
   return html`
-    <div class="ltest__head">${icon(iconName, { size: 16, cls: `ltest__icon ltest__icon--${t.outcome}` })}<code class="ltest__id">${t.id}</code><span class="ltest__inv">${t.invariantId}</span></div>
+    <div class="ltest__head">${icon(iconName, { size: 16, cls: `ltest__icon ltest__icon--${test.outcome}` })}<code class="ltest__id">${test.id}</code><span class="ltest__inv">${test.invariantId}</span></div>
     <div class="ltest__result">${result}${pips}${extras}</div>`;
 }
 
@@ -124,9 +125,9 @@ export function mount(root, ctx) {
   <div class="page run">
     <p class="visually-hidden" aria-live="polite" data-role="announce"></p>
     <div class="empty-state" data-role="empty" hidden>
-      <h1 class="run__empty-title">No run yet.</h1>
-      <p>Pick a pull request and start a run to watch the attacker swarm work.</p>
-      <a class="btn btn--primary" href="#/start">Go to Start</a>
+      <h1 class="run__empty-title">${t('No run yet.')}</h1>
+      <p>${t('Pick a pull request and start a run to watch the attacker swarm work.')}</p>
+      <a class="btn btn--primary" href="#/start">${t('Go to Start')}</a>
     </div>
     <div class="run__main" data-role="main" hidden>
       <section class="run__title">
@@ -137,33 +138,33 @@ export function mount(root, ctx) {
         <div class="run__controls">
           <div data-testid="run-status" data-role="status"></div>
           <span class="run__elapsed mono" data-role="elapsed"></span>
-          <button type="button" class="btn" data-testid="stop-button" data-act="stop">Stop run</button>
-          <button type="button" class="btn" data-testid="open-run-details" data-act="details">${icon('details', { size: 16 }).s}Run details</button>
+          <button type="button" class="btn" data-testid="stop-button" data-act="stop">${t('Stop run')}</button>
+          <button type="button" class="btn" data-testid="open-run-details" data-act="details">${icon('details', { size: 16 }).s}${t('Run details')}</button>
         </div>
       </section>
       <div class="status-box status-box--warn run__fallback" data-testid="live-fallback-banner" data-role="fallback" hidden>
         <span class="chip chip--warn">${icon('replay', { size: 14 }).s}LIVE → REPLAY</span>
         <div>
-          <h2 class="run__fallback-h">Live API isn't configured on this server, so this run uses recorded replay.</h2>
-          <p>Set <code class="mono">GEMINI_API_KEY</code> on the server to call Gemini and the sandbox for real. Results below are recorded traces.</p>
+          <h2 class="run__fallback-h">${t("Live API isn't configured on this server, so this run uses recorded replay.")}</h2>
+          <p>${t('Set {key} on the server to call Gemini and the sandbox for real. Results below are recorded traces.', { key: '<code class="mono">GEMINI_API_KEY</code>' })}</p>
         </div>
       </div>
-      <ol class="stages" aria-label="Pipeline stages" data-role="stages"></ol>
+      <ol class="stages" aria-label="${t('Pipeline stages')}" data-role="stages"></ol>
 
       <section class="blocked panel" data-testid="blocked-panel" data-role="blocked" aria-labelledby="blocked-h" hidden>
         <div class="blocked__scene" data-role="blocked-scene"></div>
         <div class="blocked__body">
           <div class="blocked__chips">
-            <span class="chip chip--danger run-pill">${icon('ban', { size: 16 }).s}Blocked at Stage 0</span>
+            <span class="chip chip--danger run-pill">${icon('ban', { size: 16 }).s}${t('Blocked at Stage 0')}</span>
             <span class="mono blocked__model" data-role="blocked-model"></span>
           </div>
-          <h2 id="blocked-h" class="blocked__h">This PR tries to manipulate the verifier. No attacker or sandbox ran.</h2>
+          <h2 id="blocked-h" class="blocked__h">${t('This PR tries to manipulate the verifier. No attacker or sandbox ran.')}</h2>
           <p class="mono run__meta" data-role="blocked-meta"></p>
-          <ul class="blocked__threats" aria-label="Detected threats" data-role="threats"></ul>
+          <ul class="blocked__threats" aria-label="${t('Detected threats')}" data-role="threats"></ul>
           <div class="blocked__actions">
-            <button type="button" class="btn btn--danger btn--lg" data-act="reject">Reject merge</button>
-            <button type="button" class="btn btn--lg" data-act="details">View flagged lines in diff</button>
-            <a class="btn btn--ghost btn--lg" href="#/start">Back to Start</a>
+            <button type="button" class="btn btn--danger btn--lg" data-act="reject">${t('Reject merge')}</button>
+            <button type="button" class="btn btn--lg" data-act="details">${t('View flagged lines in diff')}</button>
+            <a class="btn btn--ghost btn--lg" href="#/start">${t('Back to Start')}</a>
           </div>
           <p class="blocked__decision" role="status" data-role="decision"></p>
         </div>
@@ -176,8 +177,8 @@ export function mount(root, ctx) {
           <p class="error-panel__lead" data-role="error-lead"></p>
           <p data-role="error-msg"></p>
         </div>
-        <button type="button" class="btn btn--primary" data-testid="retry-button" data-act="retry">${icon('state', { size: 16 }).s}Retry run</button>
-        <button type="button" class="btn" data-act="open-log">Open log</button>
+        <button type="button" class="btn btn--primary" data-testid="retry-button" data-act="retry">${icon('state', { size: 16 }).s}${t('Retry run')}</button>
+        <button type="button" class="btn" data-act="open-log">${t('Open log')}</button>
       </div>
 
       <div data-role="live">
@@ -191,38 +192,38 @@ export function mount(root, ctx) {
               <span class="label-caps" data-role="counter-label"></span>
               <div class="counter__num mono" data-testid="caught-counter" data-role="counter"></div>
             </div>
-            <ul class="mgrid" aria-label="Mutant status" data-role="mgrid"></ul>
-            <p class="counter__note">Caught = passes on the PR and fails on the mutant.</p>
+            <ul class="mgrid" aria-label="${t('Mutant status')}" data-role="mgrid"></ul>
+            <p class="counter__note">${t('Caught = passes on the PR and fails on the mutant.')}</p>
             <dl class="counter__stats" data-role="stats"></dl>
-            <p class="counter__lock">${icon('lock', { size: 16 }).s}Mutants were planted in a separate Argon session (store=False). No attacker saw them.</p>
-            <button type="button" class="btn btn--primary btn--lg" data-testid="continue-verify" data-act="verify" data-role="continue-a" hidden>See verification matrix ${icon('arrowRight', { size: 16 }).s}</button>
+            <p class="counter__lock">${icon('lock', { size: 16 }).s}${t('Mutants were planted in a separate Argon session (store=False). No attacker saw them.')}</p>
+            <button type="button" class="btn btn--primary btn--lg" data-testid="continue-verify" data-act="verify" data-role="continue-a" hidden>${t('See verification matrix')} ${icon('arrowRight', { size: 16 }).s}</button>
           </div>
         </section>
 
         <section class="lanes" aria-labelledby="lanes-h">
           <div class="lanes__head">
-            <h2 id="lanes-h" class="lanes__h">Attacker lanes</h2>
+            <h2 id="lanes-h" class="lanes__h">${t('Attacker lanes')}</h2>
             <ul class="legend">
-              <li>${icon('breach', { size: 14, cls: 'legend__bad' }).s}Breached the PR</li>
-              <li>${icon('warn', { size: 14, cls: 'legend__warn' }).s}Flaky, filtered</li>
-              <li>${icon('held', { size: 14 }).s}Held on PR (valid test)</li>
-              <li>${icon('check', { size: 14, cls: 'legend__ok' }).s}Caught a mutant</li>
+              <li>${icon('breach', { size: 14, cls: 'legend__bad' }).s}${t('Breached the PR')}</li>
+              <li>${icon('warn', { size: 14, cls: 'legend__warn' }).s}${t('Flaky, filtered')}</li>
+              <li>${icon('held', { size: 14 }).s}${t('Held on PR (valid test)')}</li>
+              <li>${icon('check', { size: 14, cls: 'legend__ok' }).s}${t('Caught a mutant')}</li>
             </ul>
           </div>
           <div class="lanes__grid" data-role="lanes"></div>
-          <button type="button" class="btn btn--primary btn--lg lanes__continue" data-testid="continue-verify" data-act="verify" data-role="continue-b" hidden>See verification matrix ${icon('arrowRight', { size: 16 }).s}</button>
+          <button type="button" class="btn btn--primary btn--lg lanes__continue" data-testid="continue-verify" data-act="verify" data-role="continue-b" hidden>${t('See verification matrix')} ${icon('arrowRight', { size: 16 }).s}</button>
         </section>
       </div>
 
       <section class="log panel panel--sunken" aria-labelledby="log-h" tabindex="-1" data-role="log-section">
         <div class="log__head">
           <div class="log__title">
-            <h2 id="log-h" class="log__h">Sandbox log</h2>
+            <h2 id="log-h" class="log__h">${t('Sandbox log')}</h2>
             <span class="mono log__cmd">${LOG_CMD}</span>
           </div>
-          <div role="group" aria-label="Filter log" class="log__filters" data-role="filters"></div>
+          <div role="group" aria-label="${t('Filter log')}" class="log__filters" data-role="filters"></div>
         </div>
-        <ol class="log__body" tabindex="0" aria-label="Sandbox log" data-role="log"></ol>
+        <ol class="log__body" tabindex="0" aria-label="${t('Sandbox log')}" data-role="log"></ol>
       </section>
     </div>
   </div>`;
@@ -247,7 +248,7 @@ export function mount(root, ctx) {
   el.stages.innerHTML = STAGES.map((s) => `<li class="stage" data-testid="stage" data-stage="${s}" data-state="pending"></li>`).join('');
   const stageEls = Array.from(el.stages.children);
   // Filter buttons: built once, only aria-pressed changes.
-  el.filters.innerHTML = FILTERS.map(([v, label]) => `<button type="button" class="log__filter" data-testid="log-filter" data-filter="${v}" aria-pressed="false">${label}</button>`).join('');
+  el.filters.innerHTML = FILTERS.map(([v, label]) => `<button type="button" class="log__filter" data-testid="log-filter" data-filter="${v}" aria-pressed="false">${t(label)}</button>`).join('');
 
   on(root, 'click', '[data-act]', (e, t) => {
     switch (t.dataset.act) {
@@ -318,7 +319,7 @@ export function mount(root, ctx) {
       if (el.lanes.children[idx] !== lane.article) el.lanes.insertBefore(lane.article, el.lanes.children[idx] ?? null);
       const plan = plans.find((p) => p.attacker_id === id);
       const tests = run.testOrder.map((tid) => run.tests[tid]).filter((t) => t.attackerId === id);
-      patch(lane.name, html`${icon(ATTACKER_ICON[id] ?? 'info', { size: 16 })}${ATTACKER_LABEL[id] ?? id}`);
+      patch(lane.name, html`${icon(ATTACKER_ICON[id] ?? 'info', { size: 16 })}${ATTACKER_LABEL[id] ? t(ATTACKER_LABEL[id]) : id}`);
       const st = laneStatus(run, tests, !!plan);
       lane.status.className = `chip lane__status ${st.tone}`.trim();
       if (lane.status.textContent !== st.text) lane.status.textContent = st.text;
@@ -411,7 +412,7 @@ export function mount(root, ctx) {
       const li = stageEls[i];
       const st = run.stages[s];
       attr(li, 'data-state', st);
-      patch(li, html`<div class="stage__row">${stageIcon(st)}<span class="stage__name">${STAGE_LABEL[s]}<span class="visually-hidden">, ${STAGE_STATE_TEXT[st] ?? st}</span></span></div><span class="stage__meta mono">${run.stageMeta[s] ?? ''}</span>`);
+      patch(li, html`<div class="stage__row">${stageIcon(st)}<span class="stage__name">${t(STAGE_LABEL[s])}<span class="visually-hidden">, ${t(STAGE_STATE_TEXT[st] ?? st)}</span></span></div><span class="stage__meta mono">${run.stageMeta[s] ?? ''}</span>`);
     });
 
     const model = sceneModel(run);
@@ -436,9 +437,9 @@ export function mount(root, ctx) {
       rejectBtn.disabled = !!mine && mine.status !== 'error';
       rejectBtn.setAttribute('aria-disabled', run.final ? 'false' : 'true');
       const line = !mine ? ''
-        : mine.status === 'saving' ? 'Saving decision…'
-          : mine.status === 'saved' ? 'Merge rejected · recorded'
-            : `Could not record the decision: ${mine.error ?? 'unknown error'}`;
+        : mine.status === 'saving' ? t('Saving decision…')
+          : mine.status === 'saved' ? t('Merge rejected · recorded')
+            : t('Could not record the decision: {error}', { error: t(mine.error ?? 'unknown error') });
       patch(el.decision, mine ? html`${icon(mine.status === 'error' ? 'alert' : mine.status === 'saved' ? 'check' : 'spinner', { size: 16 })}${line}` : '');
       el.decision.classList.toggle('blocked__decision--error', mine?.status === 'error');
       return;
@@ -447,11 +448,12 @@ export function mount(root, ctx) {
     scene.update(model);
 
     if (run.status === 'error') {
-      const where = run.error?.stage ? (STAGE_LABEL[run.error.stage] ?? 'the run') : 'the run';
-      const h = `Run stopped during ${where}`;
+      const where = run.error?.stage && STAGE_LABEL[run.error.stage] ? t(STAGE_LABEL[run.error.stage]) : t('the run');
+      const h = t('Run stopped during {where}', { where });
       if (el.errorH.textContent !== h) el.errorH.textContent = h;
       const msg = run.error?.message ?? '';
-      if (el.errorMsg.textContent !== msg) el.errorMsg.textContent = msg;
+      const msgText = t(msg);
+      if (el.errorMsg.textContent !== msgText) el.errorMsg.textContent = msgText;
       const lead = errorLead(msg);
       if (el.errorLead.textContent !== lead) el.errorLead.textContent = lead;
       el.errorLead.hidden = !lead;
@@ -460,22 +462,22 @@ export function mount(root, ctx) {
 
     // Focus line under the scene: the latest beam's attacker and target.
     const beam = run.lastBeam;
-    const focus = beam?.attackerId ? `${(ATTACKER_LABEL[beam.attackerId] ?? beam.attackerId).toUpperCase()}${beam.mutantId ? ` → ${beam.mutantId}` : ''}` : '';
+    const focus = beam?.attackerId ? `${(ATTACKER_LABEL[beam.attackerId] ? t(ATTACKER_LABEL[beam.attackerId]) : beam.attackerId).toUpperCase()}${beam.mutantId ? ` → ${beam.mutantId}` : ''}` : '';
     if (el.focus.textContent !== focus) el.focus.textContent = focus;
 
     // Counter panel
     const c = runCounts(run);
     const total = c.mutantsTotal || 8;
     const done = run.status === 'complete';
-    const counterLabel = done ? 'Planted bugs caught' : 'Planted bugs caught so far';
+    const counterLabel = done ? t('Planted bugs caught') : t('Planted bugs caught so far');
     if (el.counterLabel.textContent !== counterLabel) el.counterLabel.textContent = counterLabel;
     patch(el.counter, html`<span class="counter__caught">${c.caught}</span><span class="counter__total">/${total}</span>`);
     const cells = Array.from({ length: total }, (_, i) => mutantCell(run.mutants[i], i));
     patch(el.mgrid, html`${cells}`);
     patch(el.stats, html`
-      <div class="stat"><dt>${icon('breach', { size: 16, cls: 'stat__bad' })}Confirmed defects (${labels.repro})</dt><dd class="stat__bad">${c.breach}</dd></div>
-      ${run.phase === 'phase1_mvp' ? '' : html`<div class="stat"><dt>${icon('warn', { size: 16, cls: 'stat__warn' })}Flaky, filtered out (1/2)</dt><dd class="stat__warn">${c.flaky}</dd></div>`}
-      <div class="stat"><dt>${icon('held', { size: 16 })}Valid baseline tests</dt><dd>${c.held}<span class="stat__of"> / ${c.total}</span></dd></div>`);
+      <div class="stat"><dt>${icon('breach', { size: 16, cls: 'stat__bad' })}${t('Confirmed defects ({repro})', { repro: labels.repro })}</dt><dd class="stat__bad">${c.breach}</dd></div>
+      ${run.phase === 'phase1_mvp' ? '' : html`<div class="stat"><dt>${icon('warn', { size: 16, cls: 'stat__warn' })}${t('Flaky, filtered out (1/2)')}</dt><dd class="stat__warn">${c.flaky}</dd></div>`}
+      <div class="stat"><dt>${icon('held', { size: 16 })}${t('Valid baseline tests')}</dt><dd>${c.held}<span class="stat__of"> / ${c.total}</span></dd></div>`);
     el.continueA.hidden = !done;
     el.continueB.hidden = !done;
 

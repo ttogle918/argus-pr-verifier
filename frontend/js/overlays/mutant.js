@@ -1,5 +1,6 @@
 import { html, setHtml } from '../dom.js';
 import { icon } from '../icons.js';
+import { t } from '../i18n.js';
 import { createOverlay } from '../overlay-shell.js';
 import { matrixModel } from '../derive.js';
 
@@ -14,28 +15,28 @@ export function previewScore(caught, total, willCatch) {
 
 export function mount(root, ctx) {
   const { store, actions } = ctx;
-  const { body, onOpen } = createOverlay(root, { name: 'mutant', title: 'Plant a calibration mutant', variant: 'modal', ctx });
+  const { body, onOpen } = createOverlay(root, { name: 'mutant', title: t('Plant a calibration mutant'), variant: 'modal', ctx });
   setHtml(body, html`
-    <p class="mform__lede">Add a bug of your own and see how the score moves. You choose whether a valid test catches it; no new tests run. It is tagged <strong>Calibration</strong> everywhere it appears so it is never mistaken for a swarm result.</p>
+    <p class="mform__lede">${t('Add a bug of your own and see how the score moves. You choose whether a valid test catches it; no new tests run. It is tagged')} <strong>${t('Calibration')}</strong> ${t('everywhere it appears so it is never mistaken for a swarm result.')}</p>
     <form class="mform" novalidate>
-      <div class="field"><label class="field__label" for="m-title">Bug title</label>
-        <input id="m-title" class="input" type="text" required autocomplete="off" placeholder="Negative fee bypass on partial refunds" data-testid="mutant-title">
-        <p class="field__error" id="m-title-err" data-testid="mutant-title-error" hidden>${icon('alert', { size: 14 })}<span>Enter a bug title.</span></p></div>
-      <div class="field"><label class="field__label" for="m-cat">Category</label>
+      <div class="field"><label class="field__label" for="m-title">${t('Bug title')}</label>
+        <input id="m-title" class="input" type="text" required autocomplete="off" placeholder="${t('Negative fee bypass on partial refunds')}" data-testid="mutant-title">
+        <p class="field__error" id="m-title-err" data-testid="mutant-title-error" hidden>${icon('alert', { size: 14 })}<span>${t('Enter a bug title.')}</span></p></div>
+      <div class="field"><label class="field__label" for="m-cat">${t('Category')}</label>
         <select id="m-cat" class="select" data-testid="mutant-category">
-          <option value="security">Security</option><option value="edge_cases">Edge case</option>
-          <option value="state">State / concurrency</option><option value="regression">Regression</option></select></div>
-      <div class="field"><label class="field__label" for="m-desc">Description <span class="mform__opt">(optional)</span></label>
+          <option value="security">${t('Security')}</option><option value="edge_cases">${t('Edge case')}</option>
+          <option value="state">${t('State / concurrency')}</option><option value="regression">${t('Regression')}</option></select></div>
+      <div class="field"><label class="field__label" for="m-desc">${t('Description')} <span class="mform__opt">${t('(optional)')}</span></label>
         <textarea id="m-desc" class="textarea" rows="3"></textarea></div>
-      <fieldset class="mform__outcome"><legend class="field__label">Assumed outcome</legend>
+      <fieldset class="mform__outcome"><legend class="field__label">${t('Assumed outcome')}</legend>
         <div class="mform__pills">
-          <label class="choice" data-testid="mutant-outcome" data-value="caught"><input type="radio" name="m-outcome" value="caught">Caught by a valid test</label>
-          <label class="choice" data-testid="mutant-outcome" data-value="survived"><input type="radio" name="m-outcome" value="survived" checked>Survived every test</label>
+          <label class="choice" data-testid="mutant-outcome" data-value="caught"><input type="radio" name="m-outcome" value="caught">${t('Caught by a valid test')}</label>
+          <label class="choice" data-testid="mutant-outcome" data-value="survived"><input type="radio" name="m-outcome" value="survived" checked>${t('Survived every test')}</label>
         </div></fieldset>
       <div class="mform__preview panel" data-testid="mutant-preview" aria-live="polite"></div>
       <div class="status-box status-box--danger" role="alert" hidden></div>
       <div class="mform__actions">
-        <button type="button" class="btn" data-close>Cancel</button>
+        <button type="button" class="btn" data-close>${t('Cancel')}</button>
         <button type="submit" class="btn btn--primary" data-testid="mutant-submit"></button>
       </div>
     </form>`);
@@ -62,14 +63,14 @@ export function mount(root, ctx) {
     const p = previewScore(caught, total, outcome() === 'caught');
     const saving = state.mutantForm.status === 'saving';
     setHtml(previewEl, html`
-      <span class="label-caps">After recalculation</span>
-      <p class="mform__score mono">Score after adding: <strong>${p.c}/${p.t}</strong> (${p.pct}%) · was ${p.before}</p>
-      <p class="mform__note">${icon('info', { size: 14 })}Planted as M${total + 1}. The matrix gains a dashed Calibration column.</p>`);
+      <span class="label-caps">${t('After recalculation')}</span>
+      <p class="mform__score mono">${t('Score after adding:')} <strong>${p.c}/${p.t}</strong> (${p.pct}%) · ${t('was {before}', { before: p.before })}</p>
+      <p class="mform__note">${icon('info', { size: 14 })}${t('Planted as M{n}. The matrix gains a dashed Calibration column.', { n: total + 1 })}</p>`);
     submit.disabled = saving;
-    submit.textContent = saving ? 'Recalculating…' : `Add M${total + 1} and recalculate`;
+    submit.textContent = saving ? t('Recalculating…') : t('Add M{n} and recalculate', { n: total + 1 });
     const err = state.mutantForm.status === 'error' ? state.mutantForm.error : null;
     errEl.hidden = !err;
-    errEl.textContent = err ? String(err) : '';
+    errEl.textContent = err ? t(String(err)) : '';
   };
 
   onOpen((state) => {

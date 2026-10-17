@@ -4,6 +4,8 @@ import { createScene2D } from '../scene/scene2d.js';
 import { sceneModel } from '../derive.js';
 import { initialRun } from '../state.js';
 
+import { t } from '../i18n.js';
+
 const PHASES = [
   { value: 'phase2_full', label: 'Phase 2 · 4 attackers · 2× repro' },
   { value: 'phase1_mvp', label: 'Phase 1 · 3 attackers · 1 run' },
@@ -24,15 +26,15 @@ const MODE_NOTE = {
 };
 
 const pill = (name, testid, o) => html`
-  <label class="choice"><input type="radio" name="${name}" value="${o.value}" data-testid="${testid}" data-value="${o.value}">${o.label}</label>`;
+  <label class="choice"><input type="radio" name="${name}" value="${o.value}" data-testid="${testid}" data-value="${o.value}">${t(o.label)}</label>`;
 
 function prRows(state) {
   if (state.prsStatus === 'loading') {
     return html`<div class="start-skeletons" aria-busy="true">${[0, 1, 2].map(() => html`<div class="pr-option pr-option--skeleton"></div>`)}</div>`;
   }
   if (state.prsStatus === 'error') {
-    return html`<div class="status-box status-box--danger" role="alert">${icon('alert', { size: 16 })}<span>Couldn't load sample pull requests.</span>
-      <button type="button" class="btn" data-retry>Retry</button></div>`;
+    return html`<div class="status-box status-box--danger" role="alert">${icon('alert', { size: 16 })}<span>${t("Couldn't load sample pull requests.")}</span>
+      <button type="button" class="btn" data-retry>${t('Retry')}</button></div>`;
   }
   return html`${state.prs.map((pr) => html`
     <label class="pr-option" data-testid="pr-option" data-pr-id="${pr.id}">
@@ -41,7 +43,7 @@ function prRows(state) {
         <span class="pr-option__title">${pr.title}</span>
         <span class="pr-option__meta mono">${pr.repo_name} · ${pr.author}</span>
       </span>
-      ${pr.is_adversarial ? html`<span class="chip chip--danger">${icon('warn', { size: 12 })}Injection sample</span>` : ''}
+      ${pr.is_adversarial ? html`<span class="chip chip--danger">${icon('warn', { size: 12 })}${t('Injection sample')}</span>` : ''}
     </label>`)}`;
 }
 
@@ -52,53 +54,53 @@ export function mount(root, ctx) {
     <section class="start-hero">
       <div class="start-main">
         <div class="start-intro">
-          <p class="eyebrow">Pre-merge red-teaming for AI-written pull requests</p>
-          <h1 class="start-title">Break the PR before it breaks production.</h1>
-          <p class="start-lead">An attacker swarm writes tests designed to break your pull request. Eight bugs are hidden in a sealed copy the attackers never see, so you also learn how far to trust those tests.</p>
+          <p class="eyebrow">${t('Pre-merge red-teaming for AI-written pull requests')}</p>
+          <h1 class="start-title">${t('Break the PR before it breaks production.')}</h1>
+          <p class="start-lead">${t('An attacker swarm writes tests designed to break your pull request. Eight bugs are hidden in a sealed copy the attackers never see, so you also learn how far to trust those tests.')}</p>
         </div>
-        <fieldset class="start-fieldset"><legend class="label-caps">Pull request</legend>
+        <fieldset class="start-fieldset"><legend class="label-caps">${t('Pull request')}</legend>
           <div class="start-prs" data-prs></div>
         </fieldset>
         <div class="start-options">
-          <fieldset class="start-fieldset"><legend class="label-caps">Attack depth</legend>
+          <fieldset class="start-fieldset"><legend class="label-caps">${t('Attack depth')}</legend>
             <div class="start-pills">${PHASES.map((o) => pill('phase', 'phase-option', o))}</div></fieldset>
-          <fieldset class="start-fieldset"><legend class="label-caps">Execution</legend>
+          <fieldset class="start-fieldset"><legend class="label-caps">${t('Execution')}</legend>
             <div class="start-pills">${MODES.map((o) => pill('mode', 'mode-option', o))}</div></fieldset>
-          <div class="start-fieldset"><label class="label-caps" for="start-scope">Sandbox scope</label>
-            <select class="select start-scope" id="start-scope" data-testid="scope-select">${SCOPES.map((o) => html`<option value="${o.value}">${o.label}</option>`)}</select></div>
+          <div class="start-fieldset"><label class="label-caps" for="start-scope">${t('Sandbox scope')}</label>
+            <select class="select start-scope" id="start-scope" data-testid="scope-select">${SCOPES.map((o) => html`<option value="${o.value}">${t(o.label)}</option>`)}</select></div>
         </div>
         <div class="start-actions-wrap">
           <div class="start-actions">
-            <button type="button" class="btn btn--primary btn--lg" data-testid="run-button">${icon('play', { size: 18 })}Run verification</button>
-            <button type="button" class="btn" data-testid="open-diff">${icon('code')}View PR diff</button>
-            <button type="button" class="btn btn--ghost" data-testid="open-import">${icon('plus')}Import PR</button>
+            <button type="button" class="btn btn--primary btn--lg" data-testid="run-button">${icon('play', { size: 18 })}${t('Run verification')}</button>
+            <button type="button" class="btn" data-testid="open-diff">${icon('code')}${t('View PR diff')}</button>
+            <button type="button" class="btn btn--ghost" data-testid="open-import">${icon('plus')}${t('Import PR')}</button>
           </div>
-          <p class="start-note start-note--busy" data-run-note hidden>${icon('info', { size: 14 })}<span>A run is in progress.</span> <a href="#/run">Go to Run</a></p>
+          <p class="start-note start-note--busy" data-run-note hidden>${icon('info', { size: 14 })}<span>${t('A run is in progress.')}</span> <a href="#/run">${t('Go to Run')}</a></p>
           <p class="start-note" data-mode-note></p>
         </div>
       </div>
       <div class="panel start-scene">
-        <div class="start-scene__head"><span class="label-caps">Hidden mutants</span><span class="mono start-scene__meta">8 to be planted · 0 caught</span></div>
+        <div class="start-scene__head"><span class="label-caps">${t('Hidden mutants')}</span><span class="mono start-scene__meta">${t('8 to be planted · 0 caught')}</span></div>
         <div class="start-scene__canvas" data-scene></div>
-        <p class="start-note">Eight subtle bugs go into a sealed copy of this PR. The attackers never see them. Every one their tests catch opens an eye. The ones they miss stay shut.</p>
+        <p class="start-note">${t('Eight subtle bugs go into a sealed copy of this PR. The attackers never see them. Every one their tests catch opens an eye. The ones they miss stay shut.')}</p>
         <ul class="start-legend">
-          <li class="start-legend__item start-legend__item--sealed">${icon('eyeClosed', { size: 17 })}Sealed</li>
-          <li class="start-legend__item start-legend__item--caught">${icon('eyeOpen', { size: 17 })}Caught</li>
-          <li class="start-legend__item start-legend__item--survived">${icon('eyeClosed', { size: 17 })}Survived</li>
+          <li class="start-legend__item start-legend__item--sealed">${icon('eyeClosed', { size: 17 })}${t('Sealed')}</li>
+          <li class="start-legend__item start-legend__item--caught">${icon('eyeOpen', { size: 17 })}${t('Caught')}</li>
+          <li class="start-legend__item start-legend__item--survived">${icon('eyeClosed', { size: 17 })}${t('Survived')}</li>
         </ul>
       </div>
     </section>
     <section aria-labelledby="how-title" class="start-how">
-      <h2 class="start-how__title" id="how-title">How a run works</h2>
+      <h2 class="start-how__title" id="how-title">${t('How a run works')}</h2>
       <div class="start-how__grid">
-        <div class="how-card"><span class="how-card__num mono">01</span><h3>Extract invariants</h3>
-          <p>Gemini 4 Argon reads the diff and writes the properties the PR must keep, then plans one attack per category.</p>
+        <div class="how-card"><span class="how-card__num mono">01</span><h3>${t('Extract invariants')}</h3>
+          <p>${t('Gemini 4 Argon reads the diff and writes the properties the PR must keep, then plans one attack per category.')}</p>
           <span class="how-card__foot mono">gemini-4-argon · store=False</span></div>
-        <div class="how-card"><span class="how-card__num mono">02</span><h3>Attack in parallel</h3>
-          <p>Security, Edge Case, State and Regression agents write breaking tests, adapting over up to five attempts. Failures count only if they reproduce twice.</p>
+        <div class="how-card"><span class="how-card__num mono">02</span><h3>${t('Attack in parallel')}</h3>
+          <p>${t('Security, Edge Case, State and Regression agents write breaking tests, adapting over up to five attempts. Failures count only if they reproduce twice.')}</p>
           <span class="how-card__foot mono">4× gemini-3.8-flash · antigravity sandbox</span></div>
-        <div class="how-card"><span class="how-card__num mono">03</span><h3>Score against hidden bugs</h3>
-          <p>A test catches a planted bug only if it passes on the PR and fails on the mutant. The score is computed in Python, never estimated by a model.</p>
+        <div class="how-card"><span class="how-card__num mono">03</span><h3>${t('Score against hidden bugs')}</h3>
+          <p>${t('A test catches a planted bug only if it passes on the PR and fails on the mutant. The score is computed in Python, never estimated by a model.')}</p>
           <code class="how-card__foot mono">Caught(m) ⇔ Pass(PR) ∧ Fail(m)</code></div>
       </div>
     </section>
@@ -142,7 +144,8 @@ export function mount(root, ctx) {
     for (const input of root.querySelectorAll('input[name="phase"]')) input.checked = input.value === state.options.phase;
     for (const input of root.querySelectorAll('input[name="mode"]')) input.checked = input.value === state.options.mode;
     if (scopeEl.value !== state.options.scope) scopeEl.value = state.options.scope;
-    noteEl.textContent = MODE_NOTE[state.options.mode] ?? '';
+    const note = MODE_NOTE[state.options.mode];
+    noteEl.textContent = note ? t(note) : '';
     const busy = state.run.status === 'running';
     runBtn.setAttribute('aria-disabled', busy ? 'true' : 'false');
     runNoteEl.hidden = !busy;

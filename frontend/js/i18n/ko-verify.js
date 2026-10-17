@@ -1,3 +1,87 @@
 // Korean copy for the verify screen and its overlays. Keys are the exact English strings passed to t().
 export const KO_VERIFY = {
+  // Empty state
+  'Run a verification first.': '먼저 검증을 실행하세요.',
+  'Go to Start': '시작으로 이동',
+
+  // Hero
+  'Verification matrix': '검증 매트릭스',
+  'Every valid attack test was run against each hidden mutant. A mutant counts as caught only when a test passes on the PR and fails on the mutant.':
+    '유효한 공격 테스트를 숨겨진 mutant마다 모두 실행했습니다. 테스트가 PR에서는 통과하고 mutant에서는 실패할 때만 해당 mutant를 탐지한 것으로 봅니다.',
+  'completed in {time}': '{time} 소요',
+  'planted bugs caught': '심어둔 버그 탐지',
+  'Detection': '탐지율',
+  'Tests': '테스트',
+  '{run} run · {valid} valid': '{run}개 실행 · {valid}개 유효',
+  'Survived': '생존',
+  'None': '없음',
+
+  // Legend and cell states (state words must stay visible/accessible wherever shown)
+  'Legend': '범례',
+  'Caught': '탐지',
+  'Invalid': '무효',
+  'passed on PR, failed on mutant': 'PR에서 통과, mutant에서 실패',
+  'test passed on mutant too': '테스트가 mutant에서도 통과',
+  'test failed on the PR, excluded': '테스트가 PR에서 실패하여 제외',
+  'caught': '탐지',
+  'survived': '생존',
+  'invalid': '무효',
+  '{test} on {mutant}: {state}': '{mutant}에 대한 {test}: {state}',
+
+  // Matrix
+  'Attack tests by planted mutant': '심어둔 mutant별 공격 테스트',
+  'Attack test': '공격 테스트',
+  'Mutant verdict': 'Mutant 판정',
+  'SEC': '보안',
+  'EDGE': '엣지',
+  'STATE': '상태',
+  'REG': '회귀',
+  'CAL': '보정',
+  '{id} · defect, failed on PR': '{id} · 결함, PR에서 실패',
+  '{id} · defect, failed 2/2 on PR': '{id} · 결함, PR에서 2/2 실패',
+  '{id} · flaky, failed on PR': '{id} · Flaky, PR에서 실패',
+  '{id} · flaky, failed 1/2 on PR': '{id} · Flaky, PR에서 1/2 실패',
+  '{id} · held on PR': '{id} · PR에서 통과',
+  '{id} · held 2/2 on PR': '{id} · PR에서 2/2 통과',
+
+  // Selected mutant panel
+  'Selected mutant': '선택한 mutant',
+  'Edge case': '엣지 케이스',
+  'CALIBRATION': '보정용',
+  'Calibration': '보정용',
+  'Planted change': '심어둔 변경',
+  'Caught by': '탐지한 테스트',
+  'None. All {n} valid tests passed on this mutant.': '없음. 유효한 테스트 {n}개 모두 이 mutant에서 통과했습니다.',
+  'Calibration mutant: you set its outcome.': '보정용 mutant: 결과를 직접 지정했습니다.',
+  'Why it survived': '생존한 이유',
+  '{n} test excluded from scoring': '점수에서 제외된 테스트 {n}개',
+  '{n} tests excluded from scoring': '점수에서 제외된 테스트 {n}개',
+  'They failed on the original PR, so a failure on a mutant proves nothing.': '원본 PR에서 실패했으므로 mutant에서의 실패는 아무것도 증명하지 못합니다.',
+  'DEFECT': '결함',
+  'FLAKY': 'Flaky',
+  '+ Plant calibration mutant': '+ 보정용 mutant 심기',
+  'Continue to decision': '결정으로 계속',
+
+  // Calibration mutant overlay
+  'Plant a calibration mutant': '보정용 mutant 심기',
+  'Add a bug of your own and see how the score moves. You choose whether a valid test catches it; no new tests run. It is tagged':
+    '직접 만든 버그를 추가하고 점수가 어떻게 달라지는지 확인하세요. 유효한 테스트가 탐지할지는 직접 선택하며, 새 테스트는 실행되지 않습니다. 이 mutant에는 나타나는 모든 곳에',
+  'everywhere it appears so it is never mistaken for a swarm result.': '태그가 붙어 swarm 결과로 오인되지 않습니다.',
+  'Bug title': '버그 제목',
+  'Negative fee bypass on partial refunds': '부분 환불 시 음수 수수료 우회',
+  'Enter a bug title.': '버그 제목을 입력하세요.',
+  'Category': '카테고리',
+  'State / concurrency': '상태 / 동시성',
+  'Description': '설명',
+  '(optional)': '(선택)',
+  'Assumed outcome': '가정한 결과',
+  'Caught by a valid test': '유효한 테스트가 탐지',
+  'Survived every test': '모든 테스트에서 생존',
+  'Cancel': '취소',
+  'After recalculation': '재계산 후',
+  'Score after adding:': '추가 후 점수:',
+  'was {before}': '기존 {before}',
+  'Planted as M{n}. The matrix gains a dashed Calibration column.': 'M{n}(으)로 심습니다. 매트릭스에 점선 보정용 열이 추가됩니다.',
+  'Recalculating…': '재계산 중…',
+  'Add M{n} and recalculate': 'M{n} 추가 후 재계산',
 };

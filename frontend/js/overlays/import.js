@@ -1,6 +1,7 @@
 import { html, setHtml, on, $, $$ } from '../dom.js';
 import { icon } from '../icons.js';
 import { createOverlay } from '../overlay-shell.js';
+import { t } from '../i18n.js';
 
 const TABS = [
   { key: 'upload', label: 'Upload files', icon: 'upload' },
@@ -38,69 +39,69 @@ export function formatSize(bytes) {
 
 export function mount(root, ctx) {
   const { store, actions } = ctx;
-  const { body, onOpen } = createOverlay(root, { name: 'import', title: 'Import a pull request', variant: 'modal', ctx });
+  const { body, onOpen } = createOverlay(root, { name: 'import', title: t('Import a pull request'), variant: 'modal', ctx });
 
   setHtml(body, html`
   <div class="import">
-    <p class="import__head">It joins the PR list on Start and is selected for the next run.</p>
-    <div class="tabs" role="tablist" aria-label="Import source">
-      ${TABS.map((t) => html`<button type="button" class="tab" role="tab" id="import-tab-${t.key}" aria-controls="import-panel-${t.key}" data-testid="import-tab" data-tab="${t.key}">${icon(t.icon)}${t.label}</button>`)}
+    <p class="import__head">${t('It joins the PR list on Start and is selected for the next run.')}</p>
+    <div class="tabs" role="tablist" aria-label="${t('Import source')}">
+      ${TABS.map((tab) => html`<button type="button" class="tab" role="tab" id="import-tab-${tab.key}" aria-controls="import-panel-${tab.key}" data-testid="import-tab" data-tab="${tab.key}">${icon(tab.icon)}${t(tab.label)}</button>`)}
     </div>
 
     <div class="import-panel" role="tabpanel" id="import-panel-upload" aria-labelledby="import-tab-upload" data-panel="upload">
       <label class="dropzone" data-dropzone>
         <input type="file" multiple class="visually-hidden" data-testid="upload-input" accept="${ACCEPT}">
         ${icon('upload', { size: 28 })}
-        <span class="dropzone__title">Drop files or a .zip here, or <u>browse</u></span>
-        <span class="dropzone__hint">Source files (<code class="mono">.py .ts .tsx .js .go .java .rs</code>), patches (<code class="mono">.diff .patch</code>), benchmarks (<code class="mono">.jsonl</code>), or a whole folder as <code class="mono">.zip</code></span>
+        <span class="dropzone__title">${t('Drop files or a .zip here, or')} <u>${t('browse')}</u></span>
+        <span class="dropzone__hint">${t('Source files')} (<code class="mono">.py .ts .tsx .js .go .java .rs</code>), ${t('patches')} (<code class="mono">.diff .patch</code>), ${t('benchmarks')} (<code class="mono">.jsonl</code>), ${t('or a whole folder as')} <code class="mono">.zip</code></span>
       </label>
-      <ul class="file-list" aria-label="Selected files" data-file-list hidden></ul>
+      <ul class="file-list" aria-label="${t('Selected files')}" data-file-list hidden></ul>
       <div class="import-row">
-        <div class="field"><label class="field__label" for="up-title">PR title <span class="field__opt">(optional)</span></label>
-          <input class="input" id="up-title" type="text" placeholder="Defaults to the file name"></div>
-        <div class="field"><label class="field__label" for="up-repo">Repository</label>
+        <div class="field"><label class="field__label" for="up-title">${t('PR title')} <span class="field__opt">${t('(optional)')}</span></label>
+          <input class="input" id="up-title" type="text" placeholder="${t('Defaults to the file name')}"></div>
+        <div class="field"><label class="field__label" for="up-repo">${t('Repository')}</label>
           <input class="input input--mono" id="up-repo" type="text" value="local-upload/workspace"></div>
       </div>
-      <div class="field"><label class="field__label" for="up-entry">Entry file <span class="field__opt">(optional, for multi-file or .zip uploads)</span></label>
+      <div class="field"><label class="field__label" for="up-entry">${t('Entry file')} <span class="field__opt">${t('(optional, for multi-file or .zip uploads)')}</span></label>
         <input class="input input--mono" id="up-entry" type="text" placeholder="src/pages/RefundCheckoutPage.tsx">
-        <span class="field__hint">Argus slices the import graph from this file and mounts only what it reaches. Leave empty to auto-detect.</span></div>
+        <span class="field__hint">${t('Argus slices the import graph from this file and mounts only what it reaches. Leave empty to auto-detect.')}</span></div>
       <div class="import-actions">
-        <button type="button" class="btn" data-clear-files>Clear files</button>
-        <button type="button" class="btn btn--primary" data-testid="upload-submit" disabled>${icon('play', { size: 14 })}Import and run</button>
+        <button type="button" class="btn" data-clear-files>${t('Clear files')}</button>
+        <button type="button" class="btn btn--primary" data-testid="upload-submit" disabled>${icon('play', { size: 14 })}${t('Import and run')}</button>
       </div>
     </div>
 
     <div class="import-panel" role="tabpanel" id="import-panel-github" aria-labelledby="import-tab-github" data-panel="github" hidden>
       <div class="field">
-        <label class="field__label" for="gh-url">Public GitHub PR URL or <code class="mono">owner/repo#number</code></label>
+        <label class="field__label" for="gh-url">${t('Public GitHub PR URL or')} <code class="mono">owner/repo#number</code></label>
         <div class="import-gh">
           <input class="input input--mono" id="gh-url" type="text" data-testid="github-url" placeholder="https://github.com/pallets/flask/pull/5402" autocomplete="off">
-          <button type="button" class="btn btn--primary" data-testid="github-fetch">Fetch PR</button>
+          <button type="button" class="btn btn--primary" data-testid="github-fetch">${t('Fetch PR')}</button>
         </div>
-        <span class="field__hint">Uses the sandbox scope chosen on Start.</span>
+        <span class="field__hint">${t('Uses the sandbox scope chosen on Start.')}</span>
       </div>
       <div class="field">
-        <span class="label-caps">Try one</span>
+        <span class="label-caps">${t('Try one')}</span>
         <div class="preset-list">${PRESETS.map((p) => html`<button type="button" class="btn" data-testid="github-preset" data-value="${p}">${p}</button>`)}</div>
       </div>
     </div>
 
     <div class="import-panel" role="tabpanel" id="import-panel-paste" aria-labelledby="import-tab-paste" data-panel="paste" hidden>
       <div class="import-row">
-        <div class="field"><label class="field__label" for="p-title">PR title</label>
+        <div class="field"><label class="field__label" for="p-title">${t('PR title')}</label>
           <input class="input" id="p-title" type="text" data-testid="paste-title" value="PR #901: AI Async Escrow Batch Payout"></div>
-        <div class="field"><label class="field__label" for="p-repo">Repository (owner/repo)</label>
+        <div class="field"><label class="field__label" for="p-repo">${t('Repository (owner/repo)')}</label>
           <input class="input input--mono" id="p-repo" type="text" data-testid="paste-repo" value="fintech-core/escrow-engine"></div>
       </div>
       <div class="field">
         <div class="import-paste-head">
-          <label class="field__label" for="p-diff">Unified diff or Python code</label>
-          <button type="button" class="btn" data-testid="fill-injection-sample">Fill a prompt-injection sample</button>
+          <label class="field__label" for="p-diff">${t('Unified diff or Python code')}</label>
+          <button type="button" class="btn" data-testid="fill-injection-sample">${t('Fill a prompt-injection sample')}</button>
         </div>
         <textarea class="textarea" id="p-diff" rows="7" data-testid="paste-diff" spellcheck="false"></textarea>
       </div>
       <div class="import-actions">
-        <button type="button" class="btn btn--primary" data-testid="paste-submit">${icon('play', { size: 14 })}Add PR and run</button>
+        <button type="button" class="btn btn--primary" data-testid="paste-submit">${icon('play', { size: 14 })}${t('Add PR and run')}</button>
       </div>
     </div>
 
@@ -147,7 +148,7 @@ export function mount(root, ctx) {
     el.fileList.hidden = pending.length === 0;
     setHtml(el.fileList, html`${pending.map((f, i) => html`
       <li class="file-list__item">${icon('file')}<code class="file-list__name">${f.filename}</code><span class="file-list__size">${formatSize(f.size)}</span>
-        <button type="button" class="icon-btn" data-remove="${i}" aria-label="Remove ${f.filename}">${icon('x')}</button></li>`)}`);
+        <button type="button" class="icon-btn" data-remove="${i}" aria-label="${t('Remove {name}', { name: f.filename })}">${icon('x')}</button></li>`)}`);
     syncDisabled();
   }
 
@@ -177,8 +178,8 @@ export function mount(root, ctx) {
     syncDisabled();
     if (running && !loading) {
       if (!el.status.querySelector('[data-run-busy]')) {
-        setHtml(el.status, html`<div class="status-box" data-run-busy>${icon('info')}<span>A run is in progress.</span>
-          <button type="button" class="btn" data-go-run>Go to Run</button></div>`);
+        setHtml(el.status, html`<div class="status-box" data-run-busy>${icon('info')}<span>${t('A run is in progress.')}</span>
+          <button type="button" class="btn" data-go-run>${t('Go to Run')}</button></div>`);
       }
       return;
     }
@@ -187,9 +188,9 @@ export function mount(root, ctx) {
       return;
     }
     if (s.status === 'loading') {
-      setHtml(el.status, html`<div class="status-box status-box--ai">${icon('spinner')}<span>Importing…</span></div>`);
+      setHtml(el.status, html`<div class="status-box status-box--ai">${icon('spinner')}<span>${t('Importing…')}</span></div>`);
     } else {
-      setHtml(el.status, html`<div class="status-box status-box--danger">${icon('alert')}<span>${s.message || 'Import failed.'}</span></div>`);
+      setHtml(el.status, html`<div class="status-box status-box--danger">${icon('alert')}<span>${t(s.message || 'Import failed.')}</span></div>`);
     }
   }
 
